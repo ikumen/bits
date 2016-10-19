@@ -1,0 +1,21 @@
+{
+  "name": "bits",
+  "description": "Micro blog engine powered by GitHub Gists",
+  "main": "index.js",
+  "authors": [
+    "ikumen@gnoht.com"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/ikumen/bits",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "marked": "^0.3.6"
+  }
+}

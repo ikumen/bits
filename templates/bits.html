@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.7.0/styles/github-gist.min.css">
+	<link href="https://fonts.googleapis.com/css?family=Roboto+Slab:300" rel="stylesheet">
+	<style>
+		html, body {
+		}
+		code {
+			padding: 0.2em;
+	    background-color: #eee;
+		}
+
+		pre {
+			padding: 0.5em;
+	    overflow: auto;
+	    line-height: 1.4;
+		}
+
+		pre, code {
+			border-radius: 3px;
+		}
+
+		pre > code, pre {
+			background-color: #f7f7f7;
+		}
+	</style>
+</head>
+<body>
+<div id="content"></div>
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.7.0/highlight.min.js"></script>
+<script src="/static/lib/marked/marked.min.js"></script>
+<script>
+	hljs.initHighlightingOnLoad();
+	marked.setOptions({
+	  gfm: true,
+	  tables: true,
+	  breaks: false,
+	  pedantic: false,
+	  sanitize: false,
+	  smartLists: false,
+	  smartypants: true,
+	  highlight: function (code) {
+			return hljs.highlightAuto(code).value
+		}
+	});	
+
+	var xhr = new XMLHttpRequest();
+	xhr.addEventListener('load', function() {
+		document.getElementById('content').innerHTML =
+			marked(this.responseText);
+		console.log('got content')
+	});
+	xhr.open('GET', '{{gist.files['README.md'].url}}');
+	xhr.send();  	
+</script>
+</body>
+</html>

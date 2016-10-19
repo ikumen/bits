@@ -1,0 +1,4 @@
+-f lib
+python-slugify==1.2.1
+Unidecode==0.4.19
+virtualenv==15.0.3

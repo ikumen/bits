@@ -1,0 +1,409 @@
+/***************/
+/* MEYER RESET */
+/***************/
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed,
+figure, figcaption, footer, header, hgroup,
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 100%;
+  font: inherit;
+  vertical-align: baseline;
+}
+
+article, aside, details, figcaption, figure,
+footer, header, hgroup, menu, nav, section {
+  display: block;
+}
+
+body {
+  line-height: 1;
+}
+
+ol, ul {
+  list-style: none;
+}
+
+blockquote, q {
+  quotes: none;
+}
+
+blockquote:before, blockquote:after,
+q:before, q:after {
+  content: '';
+  content: none;
+}
+
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+*, *:before, *:after {
+  -moz-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+/**************/
+/* BASE RULES */
+/**************/
+html {
+  font-size: 100%;
+}
+
+body {
+  font: 1em;
+  line-height: 1.65em;
+  font-weight: 300;
+  font-family: 'Roboto Slab', serif;
+  /*font-family: 'Helvetica';*/
+  color: #444;
+}
+
+.container {
+  margin: 0 auto;
+  max-width: 800px;
+  padding: 0 10px;
+  width: 100%;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: #444;
+  line-height: 1.7;
+  margin: 1em 0 15px;
+  padding: 0;
+  font-weight: bolder;
+}
+@media screen and (max-width: 640px) {
+  h1, h2, h3, h4, h5, h6 {
+    line-height: 1.4;
+  }
+}
+h1 a, h2 a, h3 a, h4 a, h5 a, h6 a {
+  color: inherit;
+}
+
+h1 {
+  font-size: 2em;
+  line-height: 1.1em;
+}
+
+h2 {
+  font-size: 24px;
+}
+
+h3 {
+  font-size: 20px;
+}
+
+h4 {
+  font-size: 18px;
+  color: #444;
+}
+
+p {
+  margin: 15px 0;
+}
+
+a {
+  color: #4183C4;
+  text-decoration: none;
+  cursor: pointer;
+  font-weight: bolder;
+}
+a:hover, a:active {
+  color: #4183C4;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+.icon-selected {
+  color: #4183C4;
+}
+
+th {
+  font-weight: 500;
+}
+
+td, th {
+  padding: 0 8px;
+  border: 1px solid #eee;
+}
+
+ul, ol {
+  margin: 15px 0;
+  padding-left: 30px;
+}
+
+ul {
+  list-style-type: disc;
+}
+
+ol {
+  list-style-type: decimal;
+}
+
+ol ul, ul ol, ul ul, ol ol {
+  margin: 0;
+}
+
+ol li p {
+  margin: 0;
+}
+
+ul.posts {
+  list-style: none;
+}
+
+ul ul, ol ul {
+  list-style-type: circle;
+}
+
+em, i {
+  font-style: italic;
+}
+
+strong, b {
+  font-weight: bold;
+}
+
+img {
+  max-width: 100%;
+}
+
+.gmnoprint img {
+  max-width: none;
+}
+
+.post-meta {
+  margin: 30px 0;
+  color: #666;
+}
+.post-meta .taglist {
+  float: right;
+}
+
+.taglist {
+  color: #ccc;
+}
+.taglist a {
+  color: inherit;
+}
+.taglist a:hover {
+  color: #4183C4;
+}
+
+::-moz-selection {
+  color: #000;
+  background: #eee;
+}
+
+::selection {
+  color: #000;
+  background: #eee;
+}
+
+.clearfix:before,
+.clearfix:after {
+  content: " ";
+  display: table;
+}
+
+.clearfix:after {
+  clear: both;
+}
+
+/*********************/
+/* LAYOUT / SECTIONS */
+/*********************/
+.wrapper-masthead {
+  margin-bottom: 50px;
+}
+
+.masthead {
+  padding: 20px 0;
+  border-bottom: 1px solid #eee;
+  text-align: center;
+}
+
+.masthead {
+  padding: 0 0 20px 0;
+  border-bottom: 1px solid #eee;
+  text-align: center;
+}
+
+.site-logo a, .site-logo a:hover {
+  text-decoration: none;
+  color: #444;
+}
+.site-logo i {
+  font-size: smaller;
+}
+
+.tag {
+  background: #eee;
+  padding: 2px 6px;
+  line-height: 2em;
+  border-radius: .2em;
+  -moz-border-radius: .2em;
+  -webkit-border-radius: .2em;
+}
+.tag span {
+  font-size: .9em;
+  color: #aaa;
+}
+
+.site-avatar {
+  float: none;
+  width: 7em;
+  height: 7em;
+  margin: 0 auto;
+  display: block;
+}
+.site-avatar img {
+  border-radius: 4.5em;
+  -moz-border-radius: 4.5em;
+  -webkit-border-radius: 4.5em;
+  border: none;
+  /*opacity: .7;*/
+}
+@media screen and (max-width: 640px) {
+  .site-avatar {
+    width: 5em;
+    height: 5em;
+  }
+}
+
+.site-info {
+  float: none;
+  display: block;
+  margin: 0 auto;
+}
+
+.site-name {
+  margin: 0;
+  color: #444;
+  cursor: pointer;
+  font-size: 28px;
+  letter-spacing: 1px;
+}
+
+.site-description {
+  margin: 3px 0;
+  color: #666;
+}
+
+@media screen and (max-width: 640px) {
+  .mobile-disabled {
+    display: none;
+  }
+}
+
+nav {
+  float: none;
+  font-family: "Bree Serif", sans-serif;
+  display: block;
+  font-size: 1.4em;
+}
+nav a {
+  margin: 0 10px;
+  color: #ccc;
+  text-align: right;
+  font-weight: 300;
+  letter-spacing: 1px;
+}
+@media screen and (max-width: 640px) {
+  nav a {
+    margin: 0 5px;
+  }
+}
+nav a:hover {
+  color: #4183C4;
+}
+
+    code {
+      padding: 0.2em;
+      background-color: #eee;
+      font-family: monospace;
+    }
+
+    pre {
+      padding: 0.5em;
+      overflow: auto;
+      line-height: 1.4;
+    }
+
+    pre, code {
+      border-radius: 3px;
+    }
+
+    pre > code, pre {
+      background-color: #f7f7f7;
+    }
+
+.posts > .post {
+  color: #ccc;
+  padding-bottom: .2em;
+}
+.posts > .post a {
+  font-size: 0.9em;
+  font-weight: 300;
+}
+.posts > .post time {
+  font-size: 1em;
+  font-family: sans-serif;
+  font-weight: 300;
+}
+.posts > .post .taglist {
+  font-size: .9em;
+}
+
+.post blockquote {
+  margin: 0 1em;
+  border-left: 1px solid #666;
+  padding: .1em 1em;
+  color: #666;
+  font-size: 1em;
+  font-style: italic;
+}
+.post .comments {
+  margin-top: 10px;
+}
+.post .read-more {
+  text-transform: uppercase;
+  font-size: 15px;
+}
+.post .entry {
+  margin-top: 2em;
+}
+
+.wrapper-footer {
+  margin-top: 50px;
+}
+
+footer {
+  border-top: 1px solid #eee;
+  padding: 20px 0;
+  font-size: .9em;
+  color: #aaa;
+  text-align: center;
+}
+
+.text-center {
+  text-align: center;
+}
+

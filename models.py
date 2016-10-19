@@ -42,5 +42,5 @@ class Post(ndb.Model):
 	# date created/updated
 	created_at = ndb.DateTimeProperty()
 	updated_at = ndb.DateTimeProperty()
-	# all the files that make up this post		
-	files = ndb.JsonProperty()
+	file = ndb.StringProperty()
+	tags = ndb.StringProperty(repeated=True)

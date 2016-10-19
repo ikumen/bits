@@ -1,0 +1,103 @@
+{% set active_page = 'posts' %}
+{% extends "layout-default.html" %}
+
+{% block body %}
+<article>
+	<h1>{{post.title}}</h1>
+	<div id="content"></div>
+</article>
+
+{% endblock %}
+
+{% block script %}
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.7.0/highlight.min.js"></script>
+<script src="/static/lib/marked/marked.min.js"></script>
+<script>
+	hljs.initHighlightingOnLoad();
+	marked.setOptions({
+	  gfm: true,
+	  tables: true,
+	  breaks: false,
+	  pedantic: false,
+	  sanitize: false,
+	  smartLists: false,
+	  smartypants: true,
+	  highlight: function (code) {
+			return hljs.highlightAuto(code).value
+		}
+	});	
+
+
+	var PostMeta = function(data) {
+		var lines = data.trim().split(/\n/)
+		var meta = {}
+		var key = '';			// current key
+		var value = '';		// current value
+
+		function addKeyValue(m, k, v) {
+			if(k && v) {
+				if(k === 'tags') {
+					v = v.substring(1).split(/\-/);  
+				}
+				m[k] = v;
+			}
+		}
+
+		for(var i=0; i < lines.length; i++) {
+			var matches = lines[i].match(/^\s*(title|created_at|tags):([\s\S]*)$/);
+			if(matches && matches[1] !== key) {
+				addKeyValue(meta, key, value);
+				key = matches[1];
+				value = matches[2].trim();
+			} else {
+				matches = lines[i].match(/^\s*-([\s\S]*)$/)
+				if(matches && matches.length == 2) {
+					value = value + '-' + matches[1].trim()
+				}
+			}
+		}
+		addKeyValue(meta, key, value);
+		return meta;
+	}
+
+	var xhr = function(f, m, cb) {
+		if(!cb && typeof m === 'function') {
+			cb = m;
+			m = 'GET';
+		}
+		var _xhr = new XMLHttpRequest();
+		_xhr.addEventListener('load', cb);
+		_xhr.open(m, f);
+		_xhr.send();
+	}
+
+	var Post = function(file, elOrCb) {
+		var meta, content;
+
+		new xhr(file, function() {
+			var matches = this.responseText.match(/^\s*---([\s\S]*?)---([\s\S]*)$/);
+			meta = new PostMeta(matches[1]);
+			content = matches[2];
+			if(elOrCb) {
+				if(typeof elOrCb === 'function') {
+					elOrCb({meta: meta, content: content});	
+				} else {
+					// assume it's a dom element
+					elOrCb.innerHTML = marked(content);	
+				}
+			}
+		});
+
+		return {
+			meta: meta,
+			content: content
+		}
+	};
+
+
+	new Post('{{post.file}}', function(p) {
+		document.getElementById('content').innerHTML = marked(p.content);
+	});
+
+</script>
+{% endblock %}

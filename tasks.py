@@ -6,11 +6,22 @@ import yaml
 import models
 import utils
 import dateutil.parser
+import re
 
 from google.appengine.api import urlfetch
 from datetime import datetime
+from slugify import slugify
 
-class Gist():
+class GistToPostConverter():
+
+	# dict keys for gist
+	_ID_ = 'id'
+	_FILES_ = 'files'
+	_CREATED_AT_ = 'created_at'
+	_UPDATED_AT_ = 'updated_at'
+	_TAGS_ = 'tags'
+	_TITLE_ = 'title'
+
 
 	def __init__(self, access_token):
 		self.access_token = access_token
@@ -31,46 +42,63 @@ class Gist():
 			logging.exception('Unable to fetch: {}'.format(url))
 
 
-	def all(self, user_id):
-		"""Fetches all public gists for user with given id.
+	def _make_slug(self, d, title):
+		return ''.join([d.strftime('%Y/%m/%d/'), slugify(title)])
+
+	
+	def _has_markdown(self, gist):
+		for fname in gist[self._FILES_]:
+			if fname.endswith('.md'):
+				return gist[self._FILES_][fname]
+		return False
+
+
+	def converts(self, user_id):
+		"""Fetches all public gists for user with given user_id, then parse
+		the gist to a corresponding post. Only public gist with markdown 
+		file containing valid yaml frontmatter will be parsed. The resulting 
+		post is really meta-data used by the front-end to build the actual 
+		full post.
 		"""
+		# fetch all gists for given user
 		gists = self._fetch(url=('https://api.github.com/users/'+ user_id +'/gists'))
 		for gist in gists:
-			if gist['public'] and '.bits' in gist['files']:
-				self.get(gist['id'])
+			# only convert gist that are public and have markdown
+			if gist['public'] and self._has_markdown(gist):
+				self._convert(gist[self._ID_])
 
 
-	def get(self, id):
-		"""Fetch the gist with given id. If the return gist is public and has a 
-		'.bits' file, then it represents a post, so parse it and save the meta
-		data.
-		"""
+	def _convert(self, gist_id):
+		gist = self._fetch(url=('https://api.github.com/gists/' + gist_id))
+		# TODO: for now we'll assume there's only 1 file
+		markdown = self._has_markdown(gist)
+		matches = re.search(r'^\s*---(.*)---\s*(.*)', markdown['content'], re.DOTALL)
+		if matches:
+			# our markdown should have a frontmatter block at beginning of file
+			meta = yaml.load(matches.groups()[0])
 
-		# json loaded representation of gist data from github
-		gist = self._fetch(url=('https://api.github.com/gists/' + id))
-		# meta data from .bits in yaml format
-		meta = yaml.load(gist['files']['.bits']['content']) 
+			# let's assign some fallback values if they're 
+			# missing in our frontmatter meta block
+			# 
+			# fallback to filename of markdown
+			title = (meta[self._TITLE_] if self._TITLE_ in meta else markdown['filename']) 
+			# fallback to gist created_at date
+			created_at = models.normalize_datetime(gist[self._CREATED_AT_]) 
+			if self._CREATED_AT_ in meta: 
+				# unless created_at was explicitly set in frontmatter
+				datetime.fromordinal(meta[self._CREATED_AT_].toordinal())
 
-		# yaml converts the date as datetime.date, we use
-		# datetime in our models
-		if meta['date']:
-			meta['date'] = datetime.fromordinal(meta['date'].toordinal()) 
+			print(meta)
 
-		# build up a list of meta-data about each file in the gist
-		files = {}
-		for file in gist['files']:
-			files[gist['files'][file]['filename']] = {
-				'name': gist['files'][file]['filename'],
-				'url': gist['files'][file]['raw_url'],
-				'size': gist['files'][file]['size']
-			}
+			# save our Post meta data
+			models.Post(id=gist[self._ID_],
+				title=title,
+				slug=self._make_slug(created_at, title),
+				created_at=created_at,
+				updated_at=models.normalize_datetime(gist[self._CREATED_AT_]),
+				tags=(meta[self._TAGS_] if self._TAGS_ in meta else []),
+				file=markdown['raw_url']
+			).put()
 
-		# save all the meta data and relevant to build a post
-		models.Post(id=gist['id'],
-			title=utils.defaultIfNone(meta['title'], gist['description']),
-			created_at=utils.defaultIfNone(meta['date'], 
-				models.normalize_datetime(gist['created_at'])),
-			updated_at=models.normalize_datetime(gist['updated_at']),
-			files=files
-		).put()
+
 

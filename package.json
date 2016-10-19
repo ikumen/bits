@@ -1,0 +1,19 @@
+{
+  "name": "bits",
+  "version": "0.0.1",
+  "description": "Micro blog engine powered by GitHub Gists",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ikumen/bits.git"
+  },
+  "author": "ikumen@gnoht.com",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ikumen/bits/issues"
+  },
+  "homepage": "https://github.com/ikumen/bits#readme"
+}
