@@ -1,6 +1,10 @@
 {% set active_page = 'posts' %}
 {% extends "layout-default.html" %}
 
+{% block head %}
+	<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.7.0/styles/github-gist.min.css">
+{% endblock %}
+
 {% block body %}
 <article>
 	<h1 id="title"></h1>
@@ -121,7 +125,7 @@
 			var tagsEl = el('tags'); 
 			tagsEl.append('<i class="icon-tag"></i>&nbsp;')
 			p.meta.tags.forEach(function(t) {
-				tagsEl.append('<a href="/tags/' + t + '">' + t + '</a>&nbsp;')
+				tagsEl.append('<a href="/tags#' + t + '">' + t + '</a>&nbsp;')
 			});
 		}
 	});
