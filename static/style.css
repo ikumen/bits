@@ -120,13 +120,8 @@ p {
 a {
   color: #4183C4;
   text-decoration: none;
-  cursor: pointer;
   font-weight: bolder;
 }
-a:hover, a:active {
-  color: #4183C4;
-}
-
 a:hover {
   text-decoration: underline;
 }

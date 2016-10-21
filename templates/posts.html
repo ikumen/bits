@@ -3,9 +3,14 @@
 
 {% block body %}
 <article>
-	<h1>{{post.title}}</h1>
+	<h1 id="title"></h1>
+	<div id="meta">
+		<span id="date"><i class="icon-calendar"></i> </span>
+		<span id="tags"></span>
+	</div>
 	<div id="content"></div>
 </article>
+<a href="/">< back home</a>
 
 {% endblock %}
 
@@ -76,7 +81,7 @@
 
 		new xhr(file, function() {
 			var matches = this.responseText.match(/^\s*---([\s\S]*?)---([\s\S]*)$/);
-			meta = new PostMeta(matches[1]);
+			meta = new PostMeta(matches[1]);			
 			content = matches[2];
 			if(elOrCb) {
 				if(typeof elOrCb === 'function') {
@@ -94,9 +99,31 @@
 		}
 	};
 
+	var el = (function() {
+		var _el = function(id) { this.el = document.getElementById(id); }
+		_el.prototype.text = function(t) { this.el.innerText = t; return this; }
+		_el.prototype.html = function(h) { this.el.innerHTML = h; return this; }
+		_el.prototype.append = function(pos, h) {
+			if(!h) {
+				h = pos;
+				pos = 'beforeend';
+			}
+			this.el.insertAdjacentHTML(pos, h); return this;
+		}
+		return function(id) { return new _el(id); }
+	})();
 
 	new Post('{{post.file}}', function(p) {
-		document.getElementById('content').innerHTML = marked(p.content);
+		el('title').text(p.meta.title);
+		el('content').html(marked(p.content));
+		el('date').append(new Date(p.meta.created_at).toDateString())
+		if(p.meta.tags) {
+			var tagsEl = el('tags'); 
+			tagsEl.append('<i class="icon-tag"></i>&nbsp;')
+			p.meta.tags.forEach(function(t) {
+				tagsEl.append('<a href="/tags/' + t + '">' + t + '</a>&nbsp;')
+			});
+		}
 	});
 
 </script>

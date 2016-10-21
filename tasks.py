@@ -72,11 +72,12 @@ class GistToPostConverter():
 		gist = self._fetch(url=('https://api.github.com/gists/' + gist_id))
 		# TODO: for now we'll assume there's only 1 file
 		markdown = self._has_markdown(gist)
-		matches = re.search(r'^\s*---(.*)---\s*(.*)', markdown['content'], re.DOTALL)
+		matches = re.search(r'^---(.*?)---\s*(.*)', markdown['content'], re.DOTALL)
 		if matches:
 			# our markdown should have a frontmatter block at beginning of file
 			meta = yaml.load(matches.groups()[0])
 
+			print(repr(meta))
 			# let's assign some fallback values if they're 
 			# missing in our frontmatter meta block
 			# 
@@ -86,9 +87,7 @@ class GistToPostConverter():
 			created_at = models.normalize_datetime(gist[self._CREATED_AT_]) 
 			if self._CREATED_AT_ in meta: 
 				# unless created_at was explicitly set in frontmatter
-				datetime.fromordinal(meta[self._CREATED_AT_].toordinal())
-
-			print(meta)
+				created_at = datetime.fromordinal(meta[self._CREATED_AT_].toordinal())
 
 			# save our Post meta data
 			models.Post(id=gist[self._ID_],

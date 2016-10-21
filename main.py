@@ -25,21 +25,20 @@ def admin_update():
 def index():
 	# TODO: move user_id to config
 	#deferred.defer(gist_handler.all, user_id='ikumen')
-	print(request.path)
 	posts = models.Post.query().order(-models.Post.created_at)
-	return render_template('index.html', posts=posts)
+	return render_template('index.html', posts=posts, now=date.today())
+
+
 
 
 @app.route('/posts/<path:slug>')
 def posts(slug):
 	post = models.Post.query(models.Post.slug == slug).get()
-	print(slug)
-	print(str(post))
-	return render_template('posts.html', post=post)
+	return render_template('posts.html', post=post, now=date.today())
 
 @app.route('/about')
 def about():
-	return render_template('about.html')
+	return render_template('about.html', now=date.today())
 
 '''
 

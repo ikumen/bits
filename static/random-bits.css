@@ -1,11 +1,11 @@
 @font-face {
   font-family: 'random-bits';
-  src: url('./font/random-bits.eot?85453168');
-  src: url('./font/random-bits.eot?85453168#iefix') format('embedded-opentype'),
-       url('./font/random-bits.woff2?85453168') format('woff2'),
-       url('./font/random-bits.woff?85453168') format('woff'),
-       url('./font/random-bits.ttf?85453168') format('truetype'),
-       url('./font/random-bits.svg?85453168#random-bits') format('svg');
+  src: url('./font/random-bits.eot?10949054');
+  src: url('./font/random-bits.eot?10949054#iefix') format('embedded-opentype'),
+       url('./font/random-bits.woff2?10949054') format('woff2'),
+       url('./font/random-bits.woff?10949054') format('woff'),
+       url('./font/random-bits.ttf?10949054') format('truetype'),
+       url('./font/random-bits.svg?10949054#random-bits') format('svg');
   font-weight: normal;
   font-style: normal;
 }
@@ -15,7 +15,7 @@
 @media screen and (-webkit-min-device-pixel-ratio:0) {
   @font-face {
     font-family: 'random-bits';
-    src: url('../font/random-bits.svg?85453168#random-bits') format('svg');
+    src: url('../font/random-bits.svg?10949054#random-bits') format('svg');
   }
 }
 */
@@ -60,6 +60,7 @@
 .icon-shuffle:before { content: '\e802'; } /* '' */
 .icon-tags:before { content: '\e803'; } /* '' */
 .icon-tag:before { content: '\e804'; } /* '' */
+.icon-calendar:before { content: '\e805'; } /* '' */
 .icon-bookmark-empty:before { content: '\f097'; } /* '' */
 .icon-github-circled:before { content: '\f09b'; } /* '' */
 .icon-stackoverflow:before { content: '\f16c'; } /* '' */

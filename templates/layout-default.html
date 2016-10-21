@@ -1,5 +1,5 @@
 {% macro set_active(target='posts') %}
-  {% if active_page == target %}icon-selected{% endif %}
+  {% if active_page == target %} selected{% endif %}
 {% endmacro %}
 
 <!DOCTYPE html>
@@ -10,44 +10,33 @@
 	<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.7.0/styles/github-gist.min.css">
 	<link href="https://fonts.googleapis.com/css?family=Roboto+Slab:300,400,700" rel="stylesheet">
 	<link rel="stylesheet" type="text/css" href="/static/random-bits.css">
-	<link rel="stylesheet" type="text/css" href="/static/style.css">
+	<link rel="stylesheet" type="text/css" href="/static/bits.css">
 </head>
 <body>
-<div class="wrapper-masthead">
-  <div class="container">
-    <header class="masthead clearfix">
-      <h1 class="site-logo">
-      	<small><i class="icon-shuffle icon-selected" title="Random"></i></small> Bits
-      </h1>
-      <div class="site-info">
-        <p class="site-description">
-          <span class="mobile-disabled">from a father, developer, and DIY enthusiast</span>
-        </p>
-      </div>
-
-      <nav>
-        <a href="/"><i class="icon-shuffle {{set_active()}}" title="random bits"></i></a>
-        <a href="https://masfotos.gnoht.com"><i class="icon-camera-alt" title="photos"></i></a>
-        <a href="https://tlrl.gnoht.com"><i class="icon-bookmark-empty" title="tlrl"></i></a>
-        <a href="http://stackoverflow.com/users/2264997/ikumen?tab=profile"><i class="icon-stackoverflow" title="stackoverflow"></i></a>
-        <a href="https://github.com/ikumen"><i class="icon-github-circled" title="projects"></i></a>
-        <a href="/about"><i class="icon-info-circled {{set_active(target='about')}}" title="about me"></i></a>
-      </nav>
-    </header>
-  </div>
+<div class="container" id="header">
+  <header>
+    <h1 id="logo"><small><i class="icon-shuffle selected" title="Random"></i></small> Bits</h1>
+    <div id="description">from a father, developer, and DIY enthusiast</div>
+    <div id="nav">
+      <a href="/"><i class="icon-shuffle {{set_active()}}" title="random bits"></i></a>
+      <a href="https://masfotos.gnoht.com"><i class="icon-camera-alt" title="photos"></i></a>
+      <a href="https://tlrl.gnoht.com"><i class="icon-bookmark-empty" title="tlrl"></i></a>
+      <a href="http://stackoverflow.com/users/2264997/ikumen?tab=profile"><i class="icon-stackoverflow" title="stackoverflow"></i></a>
+      <a href="https://github.com/ikumen"><i class="icon-github-circled" title="projects"></i></a>
+      <a href="/about"><i class="icon-info-circled {{set_active(target='about')}}" title="about me"></i></a>
+    </div>
+  </header>
 </div>
 
-<div id="main" role="main" class="container">
+<div class="container" id="main">
   {% block body %}
   {% endblock %}
 </div>
 
-<div class="wrapper-footer">
-  <div class="container">
-    <footer class="footer">
-      Copyright &copy; 2007-2016 	Thong Nguyen. All rights reserved.
-    </footer>
-  </div>
+<div class="container" id="footer">
+  <footer><small>
+    Copyright &copy; 2007-{{now.year}} 	Thong Nguyen. All rights reserved.
+  </small></footer>
 </div>
 
 {% block script %}
