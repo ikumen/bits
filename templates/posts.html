@@ -1,10 +1,6 @@
 {% set active_page = 'posts' %}
 {% extends "layout-default.html" %}
 
-{% block head %}
-	<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.7.0/styles/github-gist.min.css">
-{% endblock %}
-
 {% block body %}
 <article>
 	<h1 id="title"></h1>
@@ -15,12 +11,9 @@
 	<div id="content"></div>
 </article>
 <a href="/">< back home</a>
-
 {% endblock %}
 
 {% block script %}
-<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.7.0/highlight.min.js"></script>
-<script src="/static/lib/marked/marked.min.js"></script>
 <script>
 	hljs.initHighlightingOnLoad();
 	marked.setOptions({
@@ -36,99 +29,20 @@
 		}
 	});	
 
-
-	var PostMeta = function(data) {
-		var lines = data.trim().split(/\n/)
-		var meta = {}
-		var key = '';			// current key
-		var value = '';		// current value
-
-		function addKeyValue(m, k, v) {
-			if(k && v) {
-				if(k === 'tags') {
-					v = v.substring(1).split(/\-/);  
-				}
-				m[k] = v;
-			}
-		}
-
-		for(var i=0; i < lines.length; i++) {
-			var matches = lines[i].match(/^\s*(title|created_at|tags):([\s\S]*)$/);
-			if(matches && matches[1] !== key) {
-				addKeyValue(meta, key, value);
-				key = matches[1];
-				value = matches[2].trim();
-			} else {
-				matches = lines[i].match(/^\s*-([\s\S]*)$/)
-				if(matches && matches.length == 2) {
-					value = value + '-' + matches[1].trim()
-				}
-			}
-		}
-		addKeyValue(meta, key, value);
-		return meta;
-	}
-
-	var xhr = function(f, m, cb) {
-		if(!cb && typeof m === 'function') {
-			cb = m;
-			m = 'GET';
-		}
-		var _xhr = new XMLHttpRequest();
-		_xhr.addEventListener('load', cb);
-		_xhr.open(m, f);
-		_xhr.send();
-	}
-
-	var Post = function(file, elOrCb) {
-		var meta, content;
-
-		new xhr(file, function() {
-			var matches = this.responseText.match(/^\s*---([\s\S]*?)---([\s\S]*)$/);
-			meta = new PostMeta(matches[1]);			
-			content = matches[2];
-			if(elOrCb) {
-				if(typeof elOrCb === 'function') {
-					elOrCb({meta: meta, content: content});	
-				} else {
-					// assume it's a dom element
-					elOrCb.innerHTML = marked(content);	
-				}
-			}
-		});
-
-		return {
-			meta: meta,
-			content: content
-		}
-	};
-
-	var el = (function() {
-		var _el = function(id) { this.el = document.getElementById(id); }
-		_el.prototype.text = function(t) { this.el.innerText = t; return this; }
-		_el.prototype.html = function(h) { this.el.innerHTML = h; return this; }
-		_el.prototype.append = function(pos, h) {
-			if(!h) {
-				h = pos;
-				pos = 'beforeend';
-			}
-			this.el.insertAdjacentHTML(pos, h); return this;
-		}
-		return function(id) { return new _el(id); }
-	})();
-
-	new Post('{{post.file}}', function(p) {
-		el('title').text(p.meta.title);
-		el('content').html(marked(p.content));
-		el('date').append(new Date(p.meta.created_at).toDateString())
-		if(p.meta.tags) {
-			var tagsEl = el('tags'); 
-			tagsEl.append('<i class="icon-tag"></i>&nbsp;')
-			p.meta.tags.forEach(function(t) {
-				tagsEl.append('<a href="/tags#' + t + '">' + t + '</a>&nbsp;')
+	var setPost = function(post) {
+		bits.el('title').text(post.meta.title)
+			.el('content').html(marked(post.content))
+			.el('date').append(new Date(post.meta.created_at).toDateString());
+			
+		if(post.meta.tags) {
+			bits.el('tags').append('<i class="icon-tag"></i>&nbsp;');
+			post.meta.tags.forEach(function(t) {
+				bits.el('tags').append('<a href="/tags#' + t + '">' + t + '</a>&nbsp;')
 			});
 		}
-	});
+	}
+
+	bits.fetch('{{post.file}}', setPost);
 
 </script>
 {% endblock %}
