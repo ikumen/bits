@@ -5,6 +5,10 @@ threadsafe: true
 builtins:
 - deferred: on
 
+libraries:
+- name: ssl
+  version: 2.7
+
 handlers:
 - url: /static
   static_dir: static
