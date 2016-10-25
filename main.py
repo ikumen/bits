@@ -21,34 +21,18 @@ oauth = {
 	'client_secret': models.Config.get(key='OAUTH_CLIENT_SECRET')
 }
 
-#os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = oauth['insecure_transport']
-os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = oauth['insecure_transport']
 app.secret_key = models.Config.get(key='APP_SECRET_KEY')
 
 gist_post_converter = tasks.GistToPostConverter(
 	access_token=models.Config.get(key='GH_OAUTH_TOKEN'))
 
-@app.route('/admin/update')
-def admin_update():
+
+@app.route('/manage/sync')
+def manage_sync():
 	# TODO: move user_id to config
 	deferred.defer(gist_post_converter.converts, user_id='ikumen')
-	return redirect(url_for('index'))
-
-# def find_provider_config(provider, type):
-# 	for cfg in app.config.get(type)
-# 		if cfg['ID'] == provider
-# 			return cfg
-
-# def create_oauth2(oauth_config, session_key):
-# 	return OAuth2Session(oauth_config['client_key'],
-# 		scope=(None if not oauth_config['scope'] else oauth_config['scope']),
-# 		state=(sesion.get(session_key) if session_key in session else None),
-# 		redirect_uri=oauth_config['callback'])
-
-# def get_resource_oauth2(provider):
-# 	oauth_config = find_provider_config(provider)
-# 	oauth_session = create_oauth2(oauth_config, key)
-# 	return oauth_config, oauth_session
+	return redirect(url_for('manage'))
 
 @app.route('/signin')
 def signin():
@@ -79,8 +63,6 @@ def signin_complete():
 		state=(session.get('github_oauth') if 'github_oauth' in session else None),
 		redirect_uri='http://localhost:8080/oauth/complete')
 
-	print('======> calling fetch_token')
-
 	oauth_resp = oauth_session.fetch_token(
 		'https://github.com/login/oauth/access_token',
 		client_secret=oauth['client_secret'],
@@ -95,10 +77,14 @@ def signin_complete():
 		'access_token': oauth_resp['access_token']
 	}
 
-	print(resource_oauth)
-
-	return 'OK'
-
+	results = oauth_session.get('https://api.github.com/user').json()
+	user = models.User(id=results['login'],
+		oauths=resource_oauth
+	)
+	user.put()
+	print("-------------------> ")
+	session['user'] = user.as_dict()
+	return redirect(url_for('manage'))
 
 
 
@@ -106,6 +92,20 @@ def signin_complete():
 def index():
 	posts = models.Post.query().order(-models.Post.created_at)
 	return render_template('index.html', posts=posts, now=date.today())
+
+
+@app.route('/manage')
+def manage():
+	# dry, same snippet used in index()
+	posts = models.Post.query().order(-models.Post.created_at)
+	return render_template('manage.html', posts=posts, now=date.today())
+
+
+@app.route('/manage/edit')
+@app.route('/manage/edit/<id>')
+def manage_edit(id=None):
+	post = ndb.Key(models.Post, id).get() if id else None
+	return render_template('edit.html', post=post)
 
 
 @app.route('/tags')

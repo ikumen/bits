@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+  <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.7.0/styles/github-gist.min.css">
+	<link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Roboto+Slab:300,400,700">
+	<link rel="stylesheet" type="text/css" href="/static/bits.css">
+</head>
+<body>
+<div class="container" id="header">
+	<h5>
+	<span class="left">
+		<a href="/">{{session.user.id}}</a> 
+	</span>
+	<span class="right">
+		<a href="/manage/sync">sync</a>
+		<small class="muted">&#124;</small>
+		<a href="/signout">signout</a>
+	</span>
+	</h5>
+</div>
+<div class="container" id="main">
+	<a href="/manage/edit" class="right">+ add</a>
+	<table width="100%" cellspacing="0" cellpadding="4">
+	<thead class="muted">
+		<th>Created</th><th colspan="2">Title</th>
+	</thead>
+	{% for post in posts %}
+		<tr class="highlight">
+			<td width="5%" class="nowrap">
+				<small class="muted">
+				<time datetime="{{post.created_at}}">
+					{{post.created_at.strftime('%Y-%m-%d')}}
+				</time>
+				</small>
+			</td>
+			<td width="93%">
+				<a href="/posts/{{post.slug}}">{{ post.title }}</a>
+			</td>
+			<td width="2%" class="nowrap">
+				<small>
+					<a href="/manage/edit/{{post.key.id()}}">edit</a>
+					<small class="muted">&#124;</small>
+					<a href="/manage/edit/{{post.key.id()}}">hide</a>
+					<small class="muted">&#124;</small>
+					<a href="/manage/edit/{{post.key.id()}}">remove</a>
+				</small>
+			</td>
+		</tr>
+	{% endfor %}
+	</table>
+</div>	
+</body>
+</html>
+

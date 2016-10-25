@@ -30,9 +30,8 @@ var bits = (function() {
 
 
 	var _parse = function(s) {
-		s = s || __context.peek();
 		var matches = s.match(/^\s*---([\s\S]*?)---([\s\S]*)$/);
-		var post = {meta: _getmeta(matches[1]), content: matches[2]};
+		var post = {meta: _getmeta(matches[1]), content: matches[2], raw: s};
 		return post;
 	};
 
@@ -49,6 +48,7 @@ var bits = (function() {
 	var el = (function() {
 		var _el = function(id) { this.elmt = document.getElementById(id); }
 		_el.prototype.text = function(t) { this.elmt.innerText = t; return this; }
+		_el.prototype.val = function(t) { this.elmt.value = t; return this; }
 		_el.prototype.html = function(h) { this.elmt.innerHTML = h; return this; }
 		_el.prototype.append = function(pos, h) {
 			if(!h) {
@@ -66,7 +66,8 @@ var bits = (function() {
 
 	return {
 		el: el,
-		fetch: fetch
+		fetch: fetch,
+		yaml: _getmeta
 	}
 
 })();

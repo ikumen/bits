@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+  <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.7.0/styles/github-gist.min.css">
+	<link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Roboto+Slab:300,400,700">
+	<link rel="stylesheet" type="text/css" href="/static/bits.css">
+	<style type="text/css">
+		html, body {
+			height: 100%;
+			padding: 0;
+		}
+
+		#editor-wrapper {
+			width: 100%;
+			margin: 0;
+			height: 100vh;
+			padding: 0px 10px;
+      overflow-y: scroll;
+		}
+
+		#editor, #preview {
+			width: 50%;
+			max-width: 50% !important;
+			height: 100vh;
+			overflow-x: scroll;
+		}
+
+		#preview {
+			border-left: solid 1px #eee;
+			padding-left:10px;
+			float:right;
+		}
+		#editor {
+			border-right: solid 1px #eee;
+			padding-right:10px;
+			float: left;
+    }
+    #nav {
+    	padding: 0px 10px;
+    	height: 1.8rem;
+    	border-bottom: solid 1px #eee;
+    	font-size: 0.9rem;
+    }
+	</style>
+</head>
+<body>
+<div id="nav">
+	<span class="right">
+		<a href="/manage/save">save</a>
+		{% if post.key %}
+		 <small class="muted">&#124;</small> <a href="/manage/publish/{{post.key.id()}}">publish</a>
+		 <small class="muted">&#124;</small> <a href="/manage/remove/{{post.key.id()}}">remove</a>
+		{% endif %}
+	</span>
+	<span class="left"><a href="/manage">< back</a></span>
+</div>
+<div id="editor-wrapper">
+	<article id="preview">
+		<h1 id="title"></h1>
+		<div id="meta">
+			<span id="date"><i class="icon-calendar"></i> </span>
+			<span id="tags"></span>
+		</div>
+		<div id="content"></div>		
+	</article>
+	<div id="editor"></div>
+</div>
+<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.7.0/highlight.min.js"></script>
+<script type="text/javascript" src="/static/lib/marked/marked.min.js"></script>
+<script type="text/javascript" src="/static/bits.js"></script>
+<script type="text/javascript" src="/static/lib/ace-builds/src-noconflict/ace.js" charset="utf-8"></script>
+<script>
+  var editor = ace.edit("editor");
+	editor.setTheme("ace/theme/github");
+	editor.getSession().setMode("ace/mode/markdown");
+	editor.setOptions({
+		wrap: true,
+		showLineNumbers: false,
+		showGutter: false,
+		showPrintMargin: false
+	});
+	editor
+
+	hljs.initHighlightingOnLoad();
+	marked.setOptions({
+	  gfm: true,
+	  tables: true,
+	  breaks: false,
+	  pedantic: false,
+	  sanitize: false,
+	  smartLists: false,
+	  smartypants: true,
+	  highlight: function (code) {
+			return hljs.highlightAuto(code).value
+		}
+	});	
+
+	var preview = (function() {
+		var contentEl = bits.el('content'),
+				dateEl = bits.el('date'),
+				tagsEl = bits.el('tags'),
+				titleEl = bits.el('title');
+
+		var metaRaw = ''
+		var metaComputed = ''
+
+		return {
+			set: function(s) {
+				var matches = s.match(/^\s*---([\s\S]*?)---([\s\S]*)$/)
+				if(matches[1] && matches[1] !== metaRaw) {
+					metaRaw = matches[1]
+					meta = bits.yaml(matches[1])
+					titleEl.text(meta.title);
+					dateEl.html('<i class="icon-calendar"></i> ' + new Date(meta.created_at).toDateString());
+					if(meta.tags) {
+						tagsEl.html('<i class="icon-tag"></i>&nbsp;');
+						meta.tags.forEach(function(t) {
+							tagsEl.append('<a href="/tags#' + t + '">' + t + '</a>&nbsp;');
+						});
+					}
+				}
+				contentEl.html(marked(matches[2]));
+			}
+		}
+	})();
+
+	bits.fetch('{{post.file}}', function(post) {
+		editor.setValue(post.raw)
+		editor.navigateTo(0,0);
+		editor.focus();	
+		preview.set(editor.getValue());
+	});	
+
+	editor.getSession().on('change', function(e) {
+		preview.set(editor.getValue());
+	});
+	
+</script>
+</body>
+</html>

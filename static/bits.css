@@ -101,6 +101,12 @@ a i[class^="icon-"]:hover {
 .selected {
   color: #4183C4 !important;
 }
+.left {
+  float: left;
+}
+.right {
+  float: right;
+}
 
 /* container/wrappers */
 
@@ -149,6 +155,9 @@ header #nav a {
 }
 .nostyle {
   list-style: none;
+}
+.highlight:hover {
+  background-color: #eee;
 }
 
 /* ul */
