@@ -23,29 +23,16 @@
 <div class="container" id="main">
 	<a href="/manage/edit" class="right">+ add</a>
 	<table width="100%" cellspacing="0" cellpadding="4">
-	<thead class="muted">
-		<th>Created</th><th colspan="2">Title</th>
-	</thead>
 	{% for post in posts %}
 		<tr class="highlight">
 			<td width="5%" class="nowrap">
 				<small class="muted">
-				<time datetime="{{post.created_at}}">
-					{{post.created_at.strftime('%Y-%m-%d')}}
-				</time>
+					{% set pubdate = post.date.strftime('%Y-%m-%d')%}
+					<time datetime="{{ pubdate }}">{{ pubdate }}</time>
 				</small>
 			</td>
 			<td width="93%">
-				<a href="/posts/{{post.slug}}">{{ post.title }}</a>
-			</td>
-			<td width="2%" class="nowrap">
-				<small>
-					<a href="/manage/edit/{{post.key.id()}}">edit</a>
-					<small class="muted">&#124;</small>
-					<a href="/manage/edit/{{post.key.id()}}">hide</a>
-					<small class="muted">&#124;</small>
-					<a href="/manage/edit/{{post.key.id()}}">remove</a>
-				</small>
+				<a href="/manage/edit/{{ post.key.id() }}">{{ post.title }}</a>
 			</td>
 		</tr>
 	{% endfor %}

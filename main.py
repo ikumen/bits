@@ -1,15 +1,18 @@
 import logging
 import dateutil.parser
-import json
 import yaml
 import models
 import tasks
 import os
+import mistune
+import re
+import utils
 
-from flask import Flask, render_template, redirect, url_for, request, session
+from flask import Flask, render_template, redirect, url_for, request, session, jsonify, Response
 from google.appengine.ext import ndb, deferred
 from google.appengine.api import urlfetch
 from requests_oauthlib import OAuth2Session
+from slugify import slugify
 
 from datetime import datetime, date, time
 
@@ -90,22 +93,94 @@ def signin_complete():
 
 @app.route('/')
 def index():
-	posts = models.Post.query().order(-models.Post.created_at)
+	posts = models.Post.query().order(-models.Post.date)
 	return render_template('index.html', posts=posts, now=date.today())
 
 
 @app.route('/manage')
 def manage():
 	# dry, same snippet used in index()
-	posts = models.Post.query().order(-models.Post.created_at)
+	posts = models.Post.query().order(-models.Post.date)
 	return render_template('manage.html', posts=posts, now=date.today())
 
 
 @app.route('/manage/edit')
 @app.route('/manage/edit/<id>')
 def manage_edit(id=None):
-	post = ndb.Key(models.Post, id).get() if id else None
-	return render_template('edit.html', post=post)
+	post_source = models.PostSource.get_by_id(int(id)) if id else None
+	if post_source:
+		post_source = post_source.as_dict()
+	return render_template('edit.html', post_source=post_source)
+
+#
+# API methods
+#
+
+def api_response(data, mime='application/json', status=200):
+	resp = jsonify(data)
+	resp.mimetype = mime
+	resp.status_code = status
+	return resp
+
+
+@app.route('/api/posts/<id>', methods=['GET'])
+def api_post_get(id):
+	"""Gets the PostSource with given id, otherwise a 404 response.
+	"""
+	post_source = models.PostSource.get_by_id(int(id)) if id else None
+	if post_source:
+		return api_response(data=post_source.as_dict())
+	else:
+		return api_response(data={'Err':'Not found'}, status=404)
+
+
+@app.route('/api/posts', methods=['POST'])
+@app.route('/api/posts/<id>', methods=['PUT'])
+def api_post_save(id=None):
+	data = request.get_json()
+	if {'filename', 'content'} <= set(data):
+		post_source = (ndb.Key(models.PostSource, int(id)).get() if id 
+			else models.PostSource())
+		post_source.filename = data['filename']
+		post_source.content = data['content']
+		post_source.put()
+		deferred.defer(create_post, id=post_source.key.id())
+		return api_response(data={'id': post_source.key.id()})
+	else:
+		return api_response(data={'Err': 'filename and content are required fields!'}, status=400)
+
+
+@app.route('/api/publish/<id>', methods=['PUT'])
+def api_publish(id):
+	"""
+	"""
+	if id:
+		id = int(id)
+		data = request.get_json();
+		post_source = models.PostSource.get_by_id(int(id))
+		post_source.published = data['published']
+		post_source.put()
+		return api_response(data={'id': id, 'published': post_source.published})
+	else:
+		return api_response(data={'Err': 'Missing id of post to publish!'}, status=400)
+
+
+def create_post(id):
+	post_source = models.PostSource.get_by_id(id)
+	matches = re.search(r'^---(.*?)---\s*(.*)', post_source.content, re.DOTALL)
+	if matches:
+		meta = yaml.load(matches.groups()[0])
+		title = utils.default_if_not(meta['title'], post_source.filename)
+		date = utils.date_to_datetime(meta['date'])
+		models.Post(id=id,
+			title=title,
+			slug=''.join([date.strftime('%Y/%m/%d/'), slugify(title)]),
+			date=date,
+			tags=(meta['tags'] if 'tags' in meta else []),
+			content=mistune.markdown(matches.groups()[1], escape=False, hard_wrap=True)
+		).put()
+
+
 
 
 @app.route('/tags')

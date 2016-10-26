@@ -1,5 +1,6 @@
 {% set active_page = 'about' %}
 {% extends 'layout-default.html' %}
+{% import 'macros.html' as utils %}
 
 {% block body %}
 <article>
@@ -45,6 +46,6 @@
 
 	</article>
 	<br/>
-	<a href="/">< back home</a>
+	{{ utils.back_home_link() }}
 
 {% endblock %}

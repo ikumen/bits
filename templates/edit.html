@@ -36,6 +36,7 @@
 			border-right: solid 1px #eee;
 			padding-right:10px;
 			float: left;
+			height: 100vh;
     }
     #nav {
     	padding: 0px 10px;
@@ -48,11 +49,10 @@
 <body>
 <div id="nav">
 	<span class="right">
-		<a href="/manage/save">save</a>
-		{% if post.key %}
-		 <small class="muted">&#124;</small> <a href="/manage/publish/{{post.key.id()}}">publish</a>
-		 <small class="muted">&#124;</small> <a href="/manage/remove/{{post.key.id()}}">remove</a>
-		{% endif %}
+		<form action="/manage/save/{{ post_source.id }}">
+			<a id="save">save</a> | 
+			<a id="publish" data="no">publish</a>
+		</form>
 	</span>
 	<span class="left"><a href="/manage">< back</a></span>
 </div>
@@ -60,7 +60,7 @@
 	<article id="preview">
 		<h1 id="title"></h1>
 		<div id="meta">
-			<span id="date"><i class="icon-calendar"></i> </span>
+			<span id="date"></span>
 			<span id="tags"></span>
 		</div>
 		<div id="content"></div>		
@@ -81,7 +81,6 @@
 		showGutter: false,
 		showPrintMargin: false
 	});
-	editor
 
 	hljs.initHighlightingOnLoad();
 	marked.setOptions({
@@ -97,46 +96,103 @@
 		}
 	});	
 
-	var preview = (function() {
-		var contentEl = bits.el('content'),
-				dateEl = bits.el('date'),
-				tagsEl = bits.el('tags'),
-				titleEl = bits.el('title');
+	var postSourceId = '{{post_source.id}}';
 
-		var metaRaw = ''
-		var metaComputed = ''
-
-		return {
-			set: function(s) {
-				var matches = s.match(/^\s*---([\s\S]*?)---([\s\S]*)$/)
-				if(matches[1] && matches[1] !== metaRaw) {
-					metaRaw = matches[1]
-					meta = bits.yaml(matches[1])
-					titleEl.text(meta.title);
-					dateEl.html('<i class="icon-calendar"></i> ' + new Date(meta.created_at).toDateString());
-					if(meta.tags) {
-						tagsEl.html('<i class="icon-tag"></i>&nbsp;');
-						meta.tags.forEach(function(t) {
-							tagsEl.append('<a href="/tags#' + t + '">' + t + '</a>&nbsp;');
-						});
-					}
-				}
-				contentEl.html(marked(matches[2]));
-			}
+	/* set the preview pane */
+	var setPreview = function(src) {
+		post = bits.post.load(src);
+		// helper
+		function icon(n) { return '<i class="icon-'+ n +'"></i>&nbsp;'; }
+		// set meta data
+		if(post) {
+			var date = post.meta.date || post.meta.created_at ? 
+				new Date(post.meta.date || post.meta.created_at).toDateString() : '&nbsp;';
+			bits.el('title').text((post.meta.title || ''))
+				.el('date').html(icon('calendar')).append(date)
+				.el('content').html(marked(post.content))
+				.el('tags').html(icon('tag')).appendAll((post.meta.tags || []), function(t) {
+					return '<a href="/tags#'+ t +'">'+ t +'</a>&nbsp;';
+			});
 		}
-	})();
+	};
 
-	bits.fetch('{{post.file}}', function(post) {
-		editor.setValue(post.raw)
-		editor.navigateTo(0,0);
-		editor.focus();	
-		preview.set(editor.getValue());
-	});	
+	/* set the editor pane */
+	var setEditor = function(src) {
+		editor.setValue(src);
+		editor.navigateTo(0, 0);
+		editor.focus();
+		editor.getSession().on('change', function(e) {
+			setPreview(editor.getValue());
+		});
+	};
 
-	editor.getSession().on('change', function(e) {
-		preview.set(editor.getValue());
+	function setPublish(post) {
+		if(post.published !== undefined && post.published !== null) {
+			bits.el('publish').attr('data', (post.published ? 'yes' : 'no'))
+				.text(post.published ? 'unpublish' : 'publish');
+		}
+	}
+
+	function setSource(post) {
+		setEditor(post.content);
+		setPreview(post.content);
+		setPublish(post);
+	}
+
+	function loadPostSource() {
+		if(postSourceId) {
+			bits.xhr('/api/posts/'+postSourceId)
+				.ok(setSource)
+				.err(function(s) {
+						console.log('oh noes');
+						console.log(s);
+					})
+				.get();
+		} else {
+			console.log('New Post!');
+			setSource('');
+		}
+	}
+
+	bits
+	.el('save')
+		.on('click', function(e){
+			post = bits.post.load(editor.getValue());
+
+			if(post && post.filename) {
+				bits.xhr('/api/posts' + (postSourceId ? '/' + postSourceId : ''))
+					.ok(function(post) {
+						//TODO: alert saved
+					})
+					.err(function(resp) {
+						//TODO: alert err
+					})
+					.send({
+						'content': post.raw,
+						'filename': post.filename}, 
+						(postSourceId ? 'PUT' : null)
+					);
+			}
+			//TODO: nothing to save
+		})
+	.el('publish')
+		.on('click', function() {
+			var pubEl = bits.el('publish');
+			var isPub = pubEl.attr('data');
+			if(postSourceId) {
+				bits.xhr('/api/publish/'+postSourceId)
+					.ok(setPublish)
+					.send({published: (isPub === 'no')}, 'PUT');
+			}
 	});
-	
+
+
+	if (document.readyState != 'loading'){
+  	loadPostSource();
+	} else {
+  	document.addEventListener('DOMContentLoaded', loadPostSource);
+	}
+
 </script>
 </body>
 </html>

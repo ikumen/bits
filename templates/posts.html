@@ -1,48 +1,20 @@
 {% set active_page = 'posts' %}
 {% extends "layout-default.html" %}
+{% import 'macros.html' as utils %}
 
 {% block body %}
 <article>
-	<h1 id="title"></h1>
+	<h1 id="title">{{post.title}}</h1>
 	<div id="meta">
-		<span id="date"><i class="icon-calendar"></i> </span>
-		<span id="tags"></span>
+		<span id="date"><i class="icon-calendar"></i> 
+			{{post.date.strftime('%Y-%m-%d')}}
+		</span>
+		{{ utils.tags(post) }}
 	</div>
-	<div id="content"></div>
+	<div id="content">
+		{{post.content|safe}}
+	</div>
 </article>
-<a href="/">< back home</a>
+{{ utils.back_home_link() }}
 {% endblock %}
 
-{% block script %}
-<script>
-	hljs.initHighlightingOnLoad();
-	marked.setOptions({
-	  gfm: true,
-	  tables: true,
-	  breaks: false,
-	  pedantic: false,
-	  sanitize: false,
-	  smartLists: false,
-	  smartypants: true,
-	  highlight: function (code) {
-			return hljs.highlightAuto(code).value
-		}
-	});	
-
-	var setPost = function(post) {
-		bits.el('title').text(post.meta.title)
-			.el('content').html(marked(post.content))
-			.el('date').append(new Date(post.meta.created_at).toDateString());
-			
-		if(post.meta.tags) {
-			bits.el('tags').append('<i class="icon-tag"></i>&nbsp;');
-			post.meta.tags.forEach(function(t) {
-				bits.el('tags').append('<a href="/tags#' + t + '">' + t + '</a>&nbsp;')
-			});
-		}
-	}
-
-	bits.fetch('{{post.file}}', setPost);
-
-</script>
-{% endblock %}
