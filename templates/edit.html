@@ -49,6 +49,7 @@
 <body>
 <div id="nav">
 	<span class="right">
+		<span><i><small class="muted" id="status"></small></i></span>
 		<a id="save">save</a> | 
 		<a id="publish" data="no">publish</a>
 	</span>
@@ -95,6 +96,7 @@
 	});	
 
 	var postId = '{{post.id}}';
+	var originalPostSource = '';
 
 	/* set the preview pane */
 	var setPreview = function(src) {
@@ -120,7 +122,11 @@
 		editor.navigateTo(0, 0);
 		editor.focus();
 		editor.getSession().on('change', function(e) {
-			setPreview(editor.getValue());
+			var updatedSrc = editor.getValue();
+			setPreview(updatedSrc);
+			if(updatedSrc !== originalPostSource) {
+				bits.el('status').text('(modified)');
+			}
 		});
 	};
 
@@ -137,10 +143,13 @@
 		setPublish(post);
 	}
 
-	function loadPostSource() {
+	function loadPost() {
 		if(postId) {
 			bits.xhr('/api/posts/'+postId)
-				.ok(setSource)
+				.ok(function(post) {
+					originalPostSource = post.source;
+					setSource(post);
+				})
 				.err(function(s) {
 						console.log(s);
 					})
@@ -157,19 +166,18 @@
 	.el('save')
 		.on('click', function(e){
 			post = bits.post.load(editor.getValue());
+			//TODO: only save if changes
 			if(post && post.title) {
 				bits.xhr('/api/posts' + (postId ? '/' + postId : ''))
 					.ok(function(post) {
+						originalPostSource = editor.getValue();
+						bits.el('status').text('');
 						//TODO: alert saved
 					})
 					.err(function(resp) {
 						//TODO: alert err
 					})
-					.send({
-						'title': post.title,
-						'source': post.source}, 
-						(postId ? 'PUT' : null)
-					);
+					.send({'title': post.title, 'source': post.source}, (postId ? 'PUT' : null));
 			}
 			//TODO: nothing to save
 		})
@@ -186,9 +194,9 @@
 
 
 	if (document.readyState != 'loading'){
-  	loadPostSource();
+  	loadPost();
 	} else {
-  	document.addEventListener('DOMContentLoaded', loadPostSource);
+  	document.addEventListener('DOMContentLoaded', loadPost);
 	}
 
 </script>
