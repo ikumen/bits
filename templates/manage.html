@@ -27,8 +27,8 @@
 		<tr class="highlight">
 			<td width="5%" class="nowrap">
 				<small class="muted">
-					{% set pubdate = post.date.strftime('%Y-%m-%d')%}
-					<time datetime="{{ pubdate }}">{{ pubdate }}</time>
+					{% set created_at = post.created_at.strftime('%Y-%m-%d')%}
+					<time datetime="{{ created_at }}">{{ created_at }}</time>
 				</small>
 			</td>
 			<td width="93%">

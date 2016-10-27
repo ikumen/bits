@@ -47,27 +47,20 @@ class User(ndb.Model, AsDictionay):
 	oauths = ndb.JsonProperty()
 
 
-class PostSource(ndb.Model, AsDictionay):
+class Post(ndb.Model, AsDictionay):
 	"""Class representing raw blog post, where the content is a Jekyll 
 	format text containing both meta frontmatter (e.g. date, tags, title)
 	and the underlying content in markdown.
 	"""
-	filename = ndb.StringProperty()
-	# holds everything about post, frontmatter + markdown content
-	content = ndb.TextProperty() 
-	published = ndb.BooleanProperty(default=False)
-	created_at = ndb.DateTimeProperty(auto_now_add=True)
-	updated_at = ndb.DateTimeProperty(auto_now=True)
-
-
-class Post(ndb.Model, AsDictionay):
-	"""Class representing publish blog post after it's been parsed from 
-	a PostSource. Note: id of Post is PostSource.id as a Post cannot
-	exists without an underlying PostSource.
-	"""
-	# url of this post in form of /posts/yyyy/mm/dd/title
 	slug = ndb.StringProperty()
 	title = ndb.StringProperty()
 	date = ndb.DateTimeProperty()	# date posted
 	tags = ndb.StringProperty(repeated=True)
 	content = ndb.TextProperty()
+	published = ndb.BooleanProperty(default=False)
+	# holds everything about post, frontmatter + markdown content
+	source = ndb.TextProperty() 
+	created_at = ndb.DateTimeProperty(auto_now_add=True)
+	updated_at = ndb.DateTimeProperty(auto_now=True)
+
+

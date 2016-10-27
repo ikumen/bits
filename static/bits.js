@@ -40,19 +40,6 @@ var bits = (function() {
 			return meta;
 		}
 
-		var filename = function(meta) {
-			if(meta) {
-				var title = (meta.title || '').toLowerCase()
-					.replace(/[^\w ]+/g,'')
-        	.replace(/ +/g,'-');
-      	var dates = ((meta.date || meta.created_at) || new Date().toISOString())
-      		.match(/(\d{4}-\d{2}-\d{2})/);
-				return [(dates ? dates[0] : ''),'-', title, '.md'].join('');
-			} else {
-				return '';
-			}
-		}
-
 		/**
 		 * Parses a Jekyll style (ie, contains yaml front matter) into 
 		 * meta data and content. 
@@ -66,7 +53,7 @@ var bits = (function() {
 			var matches = s.match(/^\s*---([\s\S]*?)---([\s\S]*)$/);
 			if(matches && matches.length >= 2) {
 				var meta = loadYaml(matches[1])
-				post = {meta: meta, content: matches[2], raw: s, filename: filename(meta)};
+				post = {title: meta.title, meta: meta, markdown: matches[2], source: s};
 			}
 			return post;
 		};

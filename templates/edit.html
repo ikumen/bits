@@ -49,10 +49,8 @@
 <body>
 <div id="nav">
 	<span class="right">
-		<form action="/manage/save/{{ post_source.id }}">
-			<a id="save">save</a> | 
-			<a id="publish" data="no">publish</a>
-		</form>
+		<a id="save">save</a> | 
+		<a id="publish" data="no">publish</a>
 	</span>
 	<span class="left"><a href="/manage">< back</a></span>
 </div>
@@ -96,7 +94,7 @@
 		}
 	});	
 
-	var postSourceId = '{{post_source.id}}';
+	var postId = '{{post.id}}';
 
 	/* set the preview pane */
 	var setPreview = function(src) {
@@ -109,7 +107,7 @@
 				new Date(post.meta.date || post.meta.created_at).toDateString() : '&nbsp;';
 			bits.el('title').text((post.meta.title || ''))
 				.el('date').html(icon('calendar')).append(date)
-				.el('content').html(marked(post.content))
+				.el('content').html(marked(post.markdown))
 				.el('tags').html(icon('tag')).appendAll((post.meta.tags || []), function(t) {
 					return '<a href="/tags#'+ t +'">'+ t +'</a>&nbsp;';
 			});
@@ -134,23 +132,24 @@
 	}
 
 	function setSource(post) {
-		setEditor(post.content);
-		setPreview(post.content);
+		setEditor(post.source);
+		setPreview(post.source);
 		setPublish(post);
 	}
 
 	function loadPostSource() {
-		if(postSourceId) {
-			bits.xhr('/api/posts/'+postSourceId)
+		if(postId) {
+			bits.xhr('/api/posts/'+postId)
 				.ok(setSource)
 				.err(function(s) {
-						console.log('oh noes');
 						console.log(s);
 					})
 				.get();
 		} else {
 			console.log('New Post!');
-			setSource('');
+			setSource({
+				source: '---\ntitle: Untitled\n---'
+			});
 		}
 	}
 
@@ -158,9 +157,8 @@
 	.el('save')
 		.on('click', function(e){
 			post = bits.post.load(editor.getValue());
-
-			if(post && post.filename) {
-				bits.xhr('/api/posts' + (postSourceId ? '/' + postSourceId : ''))
+			if(post && post.title) {
+				bits.xhr('/api/posts' + (postId ? '/' + postId : ''))
 					.ok(function(post) {
 						//TODO: alert saved
 					})
@@ -168,9 +166,9 @@
 						//TODO: alert err
 					})
 					.send({
-						'content': post.raw,
-						'filename': post.filename}, 
-						(postSourceId ? 'PUT' : null)
+						'title': post.title,
+						'source': post.source}, 
+						(postId ? 'PUT' : null)
 					);
 			}
 			//TODO: nothing to save
@@ -179,8 +177,8 @@
 		.on('click', function() {
 			var pubEl = bits.el('publish');
 			var isPub = pubEl.attr('data');
-			if(postSourceId) {
-				bits.xhr('/api/publish/'+postSourceId)
+			if(postId) {
+				bits.xhr('/api/publish/'+postId)
 					.ok(setPublish)
 					.send({published: (isPub === 'no')}, 'PUT');
 			}
