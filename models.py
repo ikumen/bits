@@ -6,30 +6,6 @@ def normalize_datetime(d):
 	return dateutil.parser.parse(d, ignoretz=True)
 
 
-class Config(ndb.Model):
-	"""Class representing application config in the form 
-	of key/value pairs.
-	"""
-
-	# value of this config
-	value = ndb.StringProperty()
-
-	@classmethod	
-	def get(cls, key):
-		"""Returns the value for Config with given key. Creating 
-		placeholder entry in datastore if key/value does not exists."""
-		TODO = '_TODO_'
-		config = ndb.Key(Config, key).get()
-		if not config or config.value == TODO:
-			# add placeholder, then alert developer
-			config = Config(id=key, value=TODO)
-			config.put()
-			raise Exception('****  Config {} not found! Please use the ' +
-				'Developers Console to enter missing config! ****'.format(key))
-
-		return config.value
-
-
 class AsDictionay():
 	"""Helper for outputing model as serializable dictionary. ndb 
 	already has a to_dict() function, but it does not include id

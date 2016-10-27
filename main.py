@@ -7,6 +7,7 @@ import os
 import mistune
 import re
 import utils
+import config.gae as gae
 
 from flask import Flask, render_template, redirect, url_for, request, session, jsonify, Response
 from google.appengine.ext import ndb, deferred
@@ -14,18 +15,19 @@ from google.appengine.api import urlfetch
 from requests_oauthlib import OAuth2Session
 from slugify import slugify
 
+
 from datetime import datetime, date, time
 
 app = Flask(__name__)
 
 oauth = {
-	'insecure_transport': models.Config.get(key='OAUTH_INSECURE_TRANSPORT'),
-	'client_key': models.Config.get(key='OAUTH_CLIENT_KEY'),
-	'client_secret': models.Config.get(key='OAUTH_CLIENT_SECRET')
+	'insecure_transport': gae.Config.sget(key='OAUTH_INSECURE_TRANSPORT'),
+	'client_key': gae.Config.sget(key='OAUTH_CLIENT_KEY'),
+	'client_secret': gae.Config.sget(key='OAUTH_CLIENT_SECRET')
 }
 
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = oauth['insecure_transport']
-app.secret_key = models.Config.get(key='APP_SECRET_KEY')
+app.secret_key = gae.Config.sget(key='APP_SECRET_KEY')
 
 gist_post_converter = tasks.GistToPostConverter(access_token='')
 
