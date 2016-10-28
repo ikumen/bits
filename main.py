@@ -8,22 +8,59 @@ import mistune
 import re
 import utils
 import config
+import security
 
 from flask import Flask, render_template, redirect, url_for, request, session, jsonify, Response
 from google.appengine.ext import ndb, deferred
 from google.appengine.api import urlfetch
 from requests_oauthlib import OAuth2Session
 from slugify import slugify
-from security import secured
 
 
 from datetime import datetime, date, time
 
 app = Flask(__name__)
+
+# ...............................
+# Config
+# ...............................
 app.config.from_object(config.load())
 
-os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = app.config.get('OAUTHLIB_INSECURE_TRANSPORT')
-gist_post_converter = tasks.GistToPostConverter(access_token='')
+
+
+
+@app.route('/signin/<provider>')
+@security.normalize_oauth_request
+def signin(provider):
+	oauth = security.create_oauth(provider)
+	authorization_url, state = oauth.authorize()
+	security.set_session_oauth_token(oauth.config, state)
+	return redirect(authorization_url)
+
+
+@app.route('/signin/<provider>/complete')
+@security.normalize_oauth_request
+@security.oauth_authorized
+def signin_complete(provider):
+	oauth = security.create_oauth(provider)
+	oauth_resp = oauth.fetch_token(request.url)
+	
+	print("-----------> ")
+	print(oauth_resp)
+
+	# resource_oauth = {
+	# 	'token_type': oauth_resp['token_type'],
+	# 	'refresh_token': (oauth_resp['refresh_token'] if 'refresh_token' in oauth_resp else None),
+	# 	'access_token': oauth_resp['access_token']
+	# }
+
+	# results = oauth_session.get('https://api.github.com/user').json()
+	# user = models.User(id=results['login'],
+	# 	oauths=resource_oauth
+	# )
+	# user.put()
+	# session['user'] = user.as_dict()
+	return redirect(url_for('manage'))
 
 
 # ...............................
@@ -189,91 +226,13 @@ def api_publish(id):
 		return api_response(data={'Err': 'Missing id of post to publish!'}, status=400)
 
 
-# -------------------------
-def load_oauth_config(provider):
-	# TODO cache this or initialize at startup
-	for config in app.config.get('OAUTH_PROVIDERS'): # need to diff sign/resource/...
-		if config.get('ID') == provider:
-			return config
-	return None
-
-
-def create_oauth_session(config):
-	if config.get('VERSION') == 1:
-		oauth_token = session.get('some_key', {}) # TODO
-		return OAuth1Session(config.get('CLIENT_KEY'),
-			client_secret=config.get('CLIENT_SECRET'),
-			callback_uri=config.get('CALLBACK_URL'),
-			resource_owner_secret=oauth_token.get('secret'),
-			resource_owner_key=oauth_token.get('key'))
-	else:
-		return OAuth2Session(config.get('CLIENT_KEY'),
-			scope=config.get('SCOPE'),
-			state=session.get('oauth1_key'),	# TODO: dynamically build session key
-			redirect_uri=config.get('CALLBACK'))
-
-
-#def create_oauth(provider):
-
-
-@app.route('/signin/<provider>')
-def signin():
-	oauth_session = OAuth2Session(oauth['client_key'],
-		scope=['gist'],
-		state=(session.get('github_oauth') if 'github_oauth' in session else None),
-		redirect_uri='http://localhost:8080/oauth/complete')
-
-	authorization_url, state = oauth_session.authorization_url(
-		'https://github.com/login/oauth/authorize',
-		approval_prompt='force',
-		include_granted_scopes='true')
-
-	session['github_oauth'] = state
-	return redirect(authorization_url)
-
-
-@app.route('/oauth/complete')
-def signin_complete():
-	os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
-	if not 'github_oauth' in session or \
-			not all(k in request.args for k in ('code', 'state')) or \
-			request.args['state'] != session.get('github_oauth'):
-		return abort(401)
-	
-	oauth_session = OAuth2Session(oauth['client_key'],
-		scope=['gist'],
-		state=(session.get('github_oauth') if 'github_oauth' in session else None),
-		redirect_uri='http://localhost:8080/oauth/complete')
-
-	oauth_resp = oauth_session.fetch_token(
-		'https://github.com/login/oauth/access_token',
-		client_secret=oauth['client_secret'],
-		authorization_response=request.url)
-
-	if 'access_token' not in oauth_resp:
-		return abort(401)
-
-	resource_oauth = {
-		'token_type': oauth_resp['token_type'],
-		'refresh_token': (oauth_resp['refresh_token'] if 'refresh_token' in oauth_resp else None),
-		'access_token': oauth_resp['access_token']
-	}
-
-	results = oauth_session.get('https://api.github.com/user').json()
-	user = models.User(id=results['login'],
-		oauths=resource_oauth
-	)
-	user.put()
-	session['user'] = user.as_dict()
-	return redirect(url_for('manage'))
-
 @app.route('/oops/unauthorized')
 def oops_unauthorized():
 	return render_template('401.html', now=date.today())
 
 
 @app.route('/manage')
-@secured
+@security.secured
 def manage():
 	# dry, same snippet used in index()
 	posts = models.Post.query().order(-models.Post.date)
@@ -282,7 +241,7 @@ def manage():
 
 @app.route('/manage/edit')
 @app.route('/manage/edit/<int:id>')
-@secured
+@security.secured
 def manage_edit(id=None):
 	post = models.Post.get_by_id(id) if id else None
 	if post:

@@ -115,7 +115,7 @@ def _resolve_missing_vals(keys, target):
 		for k,v in target.items():
 			keys.append(''.join(['_', k]))
 			if not v:
-				k = Config.sget((''.join(keys))[1:])
+				target[k] = Config.sget((''.join(keys))[1:])
 			elif hasattr(v, '__iter__'):
 				_resolve_missing_vals(keys, v)
 			keys.pop()

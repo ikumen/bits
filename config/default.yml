@@ -2,16 +2,22 @@ SECRET_KEY: # for Flask sessions
 
 # !!!WARNING!!! Keep 0 as it enforces ssl, just override
 # in development.yml to 1 to allow non-ssl
-OAUTHLIB_INSECURE_TRANSPORT: '0'
+OAUTHLIB_INSECURE_TRANSPORT: 
 
+# OAuth provider keys are looked up from application by url parsed 
+# token which happens to be lowercase. Keeping each provider key here
+# after 'OAUTHS' minimizes the chance of mismatches due to case. 
+# Keeping root level attributes uppercase ensures Flask will pick up
+# the config, otherwise it'll get ignored.
 OAUTHS:
-  GITHUB:
+  GITHUB: 
     NAME: GitHub
     VERSION: '2.0'
     BASE_URL: https://api.github.com
     AUTHORIZATION_URL: https://github.com/login/oauth/authorize
     TOKEN_URL: https://github.com/login/oauth/access_token
     REFRESH_URL: https://github.com/login/oauth/access_token
+    SESSION_KEY: GITHUB_OAUTH
     SCOPE: 
       - "user:email"
       - "gist"
