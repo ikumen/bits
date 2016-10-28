@@ -46,7 +46,44 @@ Example 3: default, plus environment specific (but using OS environment var)
 import os
 import yaml
 
-class Config:
+from collections import namedtuple
+from google.appengine.ext import ndb
+
+
+class Config(ndb.Model):
+	"""Class representing application config in the form of key/value pairs,
+	for use with Google App Engine Datastore. Model's id will serve as the 
+	configuration key name.
+	"""
+	# value of this config
+	value = ndb.StringProperty()
+
+	@classmethod	
+	def get(cls, key):
+		"""Returns the value for Config with given key. Creating 
+		placeholder entry in datastore if key/value does not exists."""
+		PLACEHOLDER = '__REPLACE_ME__'
+		config = ndb.Key(Config, key).get()
+		if not config or config.value == PLACEHOLDER:
+			# add placeholder, then alert developer
+			config = Config(id=key, value=PLACEHOLDER)
+			config.put()
+			raise Exception('Config {} not found! Please use the Developers Console to enter missing config!'.format(key))
+		return config.value
+
+
+	@classmethod
+	def sget(cls, key):
+		"""Wrapper for get() that fails silently."""
+		try:
+			return cls.get(key)
+		except Exception as e:
+			print(e)
+			pass
+		return None 
+
+
+class Struct:
 	"""Wraps our dict of configuration attributes into an object 
 	for Flask's config.from_object function.
 	"""
@@ -69,22 +106,40 @@ def _merge_configs(target, source):
 	return target
 
 
+def _resolve_missing_vals(keys, target):
+	"""Iterate the target's attributes and resolve any missing values.
+	Values not found by Config.sget() are set up with placeholders in
+	datastore for client to fill in.
+	"""
+	if isinstance(target, dict):
+		for k,v in target.items():
+			keys.append(''.join(['_', k]))
+			if not v:
+				k = Config.sget((''.join(keys))[1:])
+			elif hasattr(v, '__iter__'):
+				_resolve_missing_vals(keys, v)
+			keys.pop()
+	elif isinstance(target, list):
+		for item in target:
+			_resolve_missing_vals(keys, item)
+
+
 def _load_config(path):
 	"""Loads the yaml config at the given path, otherwise nothing 
 	(i.e, fails silently) if there was an error.
 	"""
-	try:
-		with open(path) as f:
-			return yaml.load(f)
-	except(IOError, yaml.YAMLError) as e:
-		#print(e)
-		pass
+	if path:
+		try:
+			with open(path) as f:
+				return yaml.load(f)
+		except(IOError, yaml.YAMLError) as e:
+			print(e)
+			pass
 	return None
 
 
 def load(default_config='config/default.yml', 
-	env_config=None,
-	local_config='instance/local.yml'):
+	env_config=None):
 	"""Attempts to load 3 levels of configuration, with latter configurations
 	overriding formerly set values, then returns it as an object to be 
 	consumed by Flask's config.from_object function.
@@ -95,9 +150,11 @@ def load(default_config='config/default.yml',
 		env_config = os.getenv(env_config)
 
 	# see module comments above on what's happening here
-	cfg = _merge_configs(__merge_configs(_merge_configs({},
+	configs = _merge_configs(_merge_configs({},
 			_load_config(default_config)),
-			_load_config(env_config)),
-			_load_config(local_config))
+			_load_config(env_config))
 
-	return Config(**cfg)
+	_resolve_missing_vals([], configs)
+
+	return Struct(**configs)
+

@@ -7,28 +7,22 @@ import os
 import mistune
 import re
 import utils
-import config.gae as gae
+import config
 
 from flask import Flask, render_template, redirect, url_for, request, session, jsonify, Response
 from google.appengine.ext import ndb, deferred
 from google.appengine.api import urlfetch
 from requests_oauthlib import OAuth2Session
 from slugify import slugify
+from security import secured
 
 
 from datetime import datetime, date, time
 
 app = Flask(__name__)
+app.config.from_object(config.load())
 
-oauth = {
-	'insecure_transport': gae.Config.sget(key='OAUTH_INSECURE_TRANSPORT'),
-	'client_key': gae.Config.sget(key='OAUTH_CLIENT_KEY'),
-	'client_secret': gae.Config.sget(key='OAUTH_CLIENT_SECRET')
-}
-
-os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = oauth['insecure_transport']
-app.secret_key = gae.Config.sget(key='APP_SECRET_KEY')
-
+os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = app.config.get('OAUTHLIB_INSECURE_TRANSPORT')
 gist_post_converter = tasks.GistToPostConverter(access_token='')
 
 
@@ -45,8 +39,7 @@ def index():
 
 @app.route('/tags')
 def tags():
-	"""Returns the tags view with list of tags.
-	"""
+	"""Returns the tags view with list of tags."""
 	posts = (models.Post.query()
 		.order(models.Post.tags)
 		.fetch(projection=['title', 'slug', 'tags']))
@@ -88,6 +81,7 @@ def api_response(data, mime='application/json', status=200):
 	resp.mimetype = mime
 	resp.status_code = status
 	return resp
+
 
 def parse_front_matter(source, is_fm_only=True):
 	"""Parses the given yaml front matter into a meta dictionary
@@ -195,7 +189,34 @@ def api_publish(id):
 		return api_response(data={'Err': 'Missing id of post to publish!'}, status=400)
 
 
-@app.route('/signin/oauth')
+# -------------------------
+def load_oauth_config(provider):
+	# TODO cache this or initialize at startup
+	for config in app.config.get('OAUTH_PROVIDERS'): # need to diff sign/resource/...
+		if config.get('ID') == provider:
+			return config
+	return None
+
+
+def create_oauth_session(config):
+	if config.get('VERSION') == 1:
+		oauth_token = session.get('some_key', {}) # TODO
+		return OAuth1Session(config.get('CLIENT_KEY'),
+			client_secret=config.get('CLIENT_SECRET'),
+			callback_uri=config.get('CALLBACK_URL'),
+			resource_owner_secret=oauth_token.get('secret'),
+			resource_owner_key=oauth_token.get('key'))
+	else:
+		return OAuth2Session(config.get('CLIENT_KEY'),
+			scope=config.get('SCOPE'),
+			state=session.get('oauth1_key'),	# TODO: dynamically build session key
+			redirect_uri=config.get('CALLBACK'))
+
+
+#def create_oauth(provider):
+
+
+@app.route('/signin/<provider>')
 def signin():
 	oauth_session = OAuth2Session(oauth['client_key'],
 		scope=['gist'],
@@ -246,10 +267,13 @@ def signin_complete():
 	session['user'] = user.as_dict()
 	return redirect(url_for('manage'))
 
-
+@app.route('/oops/unauthorized')
+def oops_unauthorized():
+	return render_template('401.html', now=date.today())
 
 
 @app.route('/manage')
+@secured
 def manage():
 	# dry, same snippet used in index()
 	posts = models.Post.query().order(-models.Post.date)
@@ -258,10 +282,10 @@ def manage():
 
 @app.route('/manage/edit')
 @app.route('/manage/edit/<int:id>')
+@secured
 def manage_edit(id=None):
 	post = models.Post.get_by_id(id) if id else None
 	if post:
 		post = post.as_dict()
 	return render_template('edit.html', post=post)
-
 

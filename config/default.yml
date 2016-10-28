@@ -1,0 +1,24 @@
+SECRET_KEY: # for Flask sessions
+
+# !!!WARNING!!! Keep 0 as it enforces ssl, just override
+# in development.yml to 1 to allow non-ssl
+OAUTHLIB_INSECURE_TRANSPORT: '0'
+
+OAUTHS:
+  GITHUB:
+    NAME: GitHub
+    VERSION: '2.0'
+    BASE_URL: https://api.github.com
+    AUTHORIZATION_URL: https://github.com/login/oauth/authorize
+    TOKEN_URL: https://github.com/login/oauth/access_token
+    REFRESH_URL: https://github.com/login/oauth/access_token
+    SCOPE: 
+      - "user:email"
+      - "gist"
+    # when config is empty, we'll assume it's meant to be sensitive
+    # and try to load it from local GAE datastore
+    CLIENT_KEY: 
+    CLIENT_SECRET:
+    CALLBACK_URL: 
+
+
