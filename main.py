@@ -10,7 +10,7 @@ import utils
 import config
 import security
 
-from flask import Flask, render_template, redirect, url_for, request, session, jsonify, Response
+from flask import Flask, render_template, redirect, abort, url_for, request, session, jsonify, Response, current_app
 from google.appengine.ext import ndb, deferred
 from google.appengine.api import urlfetch
 from requests_oauthlib import OAuth2Session
@@ -28,13 +28,21 @@ app.config.from_object(config.load())
 
 
 
+# ...............................
+# Route helpers 
+# ...............................
+@app.route('/signout')
+def signout(code=200):
+	session.clear()
+	return redirect(url_for('index'))
 
 @app.route('/signin/<provider>')
 @security.normalize_oauth_request
 def signin(provider):
-	oauth = security.create_oauth(provider)
-	authorization_url, state = oauth.authorize()
-	security.set_session_oauth_token(oauth.config, state)
+	oauth_config, oauth_session = security.create_oauth(provider=provider)
+	# start oauth dance
+	authorization_url, state = security.oauth_authorize(oauth_config, oauth_session)
+	session[oauth_config.get('STATE_SESSION_KEY')] = state
 	return redirect(authorization_url)
 
 
@@ -42,25 +50,51 @@ def signin(provider):
 @security.normalize_oauth_request
 @security.oauth_authorized
 def signin_complete(provider):
-	oauth = security.create_oauth(provider)
-	oauth_resp = oauth.fetch_token(request.url)
-	
-	print("-----------> ")
-	print(oauth_resp)
+	oauth_config = security.load_oauth_config(provider)
+	oauth_session = security.create_oauth_session(config=oauth_config,
+		state=session.get(oauth_config.get('STATE_SESSION_KEY')))
 
-	# resource_oauth = {
-	# 	'token_type': oauth_resp['token_type'],
-	# 	'refresh_token': (oauth_resp['refresh_token'] if 'refresh_token' in oauth_resp else None),
-	# 	'access_token': oauth_resp['access_token']
-	# }
+	oauth_resp = oauth_session.fetch_token(oauth_config.get('TOKEN_URL'),
+		client_secret=oauth_config.get('CLIENT_SECRET'),
+		authorization_response=request.url)
 
-	# results = oauth_session.get('https://api.github.com/user').json()
-	# user = models.User(id=results['login'],
-	# 	oauths=resource_oauth
-	# )
-	# user.put()
-	# session['user'] = user.as_dict()
+	if not 'access_token' in oauth_resp:
+		# raise error
+		pass
+
+	session[oauth_config.get('TOKEN_SESSION_KEY')] = {
+		'token_type': oauth_resp.get('token_type'), 
+		'access_token': oauth_resp.get('access_token'),
+		'scope': oauth_resp.get('scope')
+	}
+
+	return redirect(url_for('signin_profile', provider=provider.lower()))
+
+
+@app.route('/signin/<provider>/profile')
+@security.normalize_oauth_request
+def signin_profile(provider=None):
+	oauth_config = security.load_oauth_config(provider)
+	oauth_session = security.create_oauth_session(config=oauth_config,
+			token=session.get(oauth_config.get('TOKEN_SESSION_KEY')))
+
+	oauth_resp = oauth_session.get(oauth_config.get('BASE_URL')+'/user')
+
+	profile = oauth_resp.json()
+	user_id = profile.get('id')
+	user = models.User.get_by_id(user_id)
+	if not user:
+		user = models.User(id=user_id)
+	if user.key.id() != int(oauth_config.get('USERID')):
+		return abort(401)
+
+	user.populate(name=profile.get('name') 
+		if profile.get('name') else profile.get('login'))	
+	user.put()
+
+	session['user'] = user.as_dict()
 	return redirect(url_for('manage'))
+
 
 
 # ...............................
@@ -166,6 +200,7 @@ def post_from_source(source):
 
 
 @app.route('/api/posts/<int:id>', methods=['GET'])
+@security.secured
 def api_post_get(id):
 	"""Gets the PostSource with given id, otherwise a 404 response.
 	Called from /manage/edit/<id> page.
@@ -179,6 +214,7 @@ def api_post_get(id):
 
 @app.route('/api/posts', methods=['POST'])
 @app.route('/api/posts/<int:id>', methods=['PUT'])
+@security.secured
 def api_post_save(id=None):
 	"""Creates or updates the incoming data to a models.PostSource.
 	"""
@@ -195,6 +231,7 @@ def api_post_save(id=None):
 
 
 @app.route('/api/publish/<int:id>', methods=['PUT'])
+@security.secured
 def api_publish(id):
 	"""
 	"""

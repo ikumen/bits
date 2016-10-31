@@ -1,86 +1,29 @@
 import os
 
 from functools import wraps
-from flask import url_for, redirect, session, request, current_app
+from flask import url_for, redirect, session, request, current_app, abort
 from requests_oauthlib import OAuth2Session, OAuth2Session
 
 
-class OAuth():
-	def __init__(self, config, oauth_token=None):
-		self.config = config
-		self.oauth_token = oauth_token
-		self.session = self.create_oauth_session(config, oauth_token)
-
-	@classmethod
-	def create_oauth_session(cls, config, oauth_token): 
-		return (cls.create_oauth1_session(config, oauth_token) 
-			if config.get('VERSION') == '1.0' 
-			else cls.create_oauth2_session(config, oauth_token))
-
-	@classmethod
-	def create_oauth1_session(cls, config, oauth_token):
-		return OAuth1Session(config.get('CLIENT_KEY'),
-			client_secret=config.get('CLIENT_SECRET'),
-			callback_uri=config.get('CALLBACK_URL'),
-			resource_owner_secret=oauth_token.get('SECRET'),
-			resource_owner_key=oauth_token.get('KEY'))
-
-	@classmethod
-	def create_oauth2_session(cls, config, oauth_token):
-		return OAuth2Session(config.get('CLIENT_KEY'),
-			scope=config.get('SCOPE'),
-			state=oauth_token,	
-			redirect_uri=config.get('CALLBACK_URL'))
-
-	def _fetch_oauth1_token(self, auth_response):
-		verifier_token = self.session.parse_authorization_response(auth_response)
-		return self.session.fetch_access_token(
-			self.config.get('TOKEN_URL'),
-			verifier=verifier_token.get('oauth_verifier'))
-
-	def _fetch_oauth2_token(self, auth_response):
-		return self.session.fetch_token(
-			self.config.get('TOKEN_URL'),
-			client_secret=self.config.get('CLIENT_SECRET'),
-			authorization_response=auth_response)
-
-	def authorize(self):
-		# returns tuple of (auth_url, state)
-		return self.session.authorization_url(
-			self.config.get('AUTHORIZATION_URL'),
-			approval_prompt='force',	# move to config
-			include_granted_scopes='true')
-
-	def fetch_token(self, auth_response):
-		# TODO: raise exception if no access token
-		oauth_resp = (self._fetch_oauth1_token(auth_response) if self.config.get('VERSION') == '1.0'
-				else self._fetch_oauth2_token(auth_response))
-
-		if not('oauth_token' in oauth_resp or 'access_token' in oauth_resp):
-			# raise exception
-			pass		
-		return oauth_resp	
-
-		
-
-
-# ...............................
-# Route helpers 
-# ...............................
-def get_session_oauth_token(oauth_config):
-	return session.get(oauth_config.get('SESSION_KEY', oauth_config.get('NAME')))
-
-def set_session_oauth_token(oauth_config, value):
-	session[oauth_config.get('SESSION_KEY', oauth_config.get('NAME'))] = value
-
-def load_oauth_config(provider):
-	# TODO cache this or initialize at startup
+def load_oauth_config(provider=None):
 	return current_app.config.get('OAUTHS', {}).get(provider)
 
-def create_oauth(provider):
+def create_oauth(provider, state=None, token=None):
 	oauth_config = load_oauth_config(provider)
-	oauth_token = get_session_oauth_token(oauth_config)
-	return OAuth(oauth_config, oauth_token)
+	return oauth_config, create_oauth_session(
+		config=oauth_config, token=token, state=state)
+
+def create_oauth_session(config, token=None, state=None):
+	return OAuth2Session(config.get('CLIENT_KEY'),
+			scope=config.get('SCOPE'), 
+			state=state,
+			token=token,
+			redirect_uri=config.get('CALLBACK_URL'))
+
+def oauth_authorize(config, oauth_session):
+	return oauth_session.authorization_url(config.get('AUTHORIZATION_URL'),
+			approval_prompt='force', 
+			include_granted_scopes='true')
 
 
 # ...............................
@@ -126,12 +69,13 @@ def oauth_authorized(fn):
 		if oauth_config.get('VERSION') == '1.0':
 			pass
 		else:
-			oauth_token = get_session_oauth_token(oauth_config)
-			if not (get_session_oauth_token(oauth_config) or \
-					all(k in request.args for k in ('code', 'state')) or \
-					request.args.get('state') == oauth_token):
+			if not any(k in session for k in (
+					oauth_config.get('STATE_SESSION_KEY'),
+					oauth_config.get('TOKEN_SESSION_KEY'))):
+				print('print aborting')
 				return abort(401)
 		return fn(*args, **kwargs)
 	return decorated_function
+
 
 

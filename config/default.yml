@@ -10,17 +10,17 @@ OAUTHLIB_INSECURE_TRANSPORT:
 # Keeping root level attributes uppercase ensures Flask will pick up
 # the config, otherwise it'll get ignored.
 OAUTHS:
-  GITHUB: 
-    NAME: GitHub
-    VERSION: '2.0'
+  GITHUB:
     BASE_URL: https://api.github.com
     AUTHORIZATION_URL: https://github.com/login/oauth/authorize
     TOKEN_URL: https://github.com/login/oauth/access_token
     REFRESH_URL: https://github.com/login/oauth/access_token
-    SESSION_KEY: GITHUB_OAUTH
+    TOKEN_SESSION_KEY: GITHUB_OAUTH_TOKEN
+    STATE_SESSION_KEY: GITHUB_STATE
     SCOPE: 
       - "user:email"
       - "gist"
+    USERID: "6216467"
     # when config is empty, we'll assume it's meant to be sensitive
     # and try to load it from local GAE datastore
     CLIENT_KEY: 

@@ -21,6 +21,8 @@ class AsDictionay():
 class User(ndb.Model, AsDictionay):
 	name = ndb.StringProperty()
 	oauths = ndb.JsonProperty()
+	created_at = ndb.DateTimeProperty(auto_now_add=True)
+	signin_at = ndb.DateTimeProperty(auto_now=True)
 
 
 class Post(ndb.Model, AsDictionay):
