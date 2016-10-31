@@ -96,7 +96,7 @@
 		}
 	});	
 
-	var postId = '{{post.id}}';
+	var postId;
 	var originalPostSource = '';
 
 	/* set the preview pane */
@@ -159,6 +159,11 @@
 	}
 
 	function loadPost() {
+		var tokens = window.location.pathname.split(/\//);
+		if(tokens.length == 4) {
+			postId = tokens[3];
+		}
+
 		if(postId) {
 			bits.xhr('/api/posts/'+postId)
 				.ok(function(post) {

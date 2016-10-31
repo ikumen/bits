@@ -107,7 +107,10 @@ def index():
 	"""
 	posts = (models.Post
 		.query(models.Post.published == True, models.Post.category == 'posts')
-		.order(-models.Post.date))
+		.order(-models.Post.date)
+		# TODO: 
+		#.fetch(projection=['date', 'slug', 'title', 'tags'])
+		)
 	return render_template('index.html', posts=posts, now=date.today())
 
 
@@ -289,7 +292,9 @@ def oops_unauthorized():
 @security.secured
 def manage():
 	# dry, same snippet used in index()
-	posts = models.Post.query().order(-models.Post.date)
+	posts = (Post.query()
+		.order(-models.Post.date)
+		.fetch(projection=['title', 'created_at', 'published']))
 	return render_template('manage.html', posts=posts, now=date.today())
 
 
@@ -297,8 +302,5 @@ def manage():
 @app.route('/manage/edit/<int:id>')
 @security.secured
 def manage_edit(id=None):
-	post = models.Post.get_by_id(id) if id else None
-	if post:
-		post = post.as_dict()
-	return render_template('edit.html', post=post)
+	return render_template('edit.html')
 
