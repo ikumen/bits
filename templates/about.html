@@ -4,48 +4,12 @@
 
 {% block body %}
 <article>
-	<h1>About Me</h1>	
-	<section>
-	  <p>
-	  I'm Thong Nguyen, a father, developer, <a href="/tags#diy">DIY enthusiast</a> and lately somewhat of a <a href="https://en.wikipedia.org/wiki/Massive_open_online_course">MOOC</a> fanatic. 
-	  </p>
-
-		<p>
-			I can be found online under the handle of <a href="http://schott.blogs.nytimes.com/2010/07/08/iku-men/">ikumen</a>.
-		</p>		
-		<ul>
-			<li><a href="http://stackoverflow.com/users/2264997/ikumen?tab=profile">Stackoverflow</a></li>
-			<li><a href="https://github.com/ikumen">GitHub</a> / <a href="https://bitbucket.org/ikumen">Bitbucket</a></li>
-			<li><a href="http://rosalind.info/users/ikumen/">Rosalind</a></li>
-		</ul>
-	</section>
-
-	<h2>Projects</h2>
-	<section>
-		<p>
-			Here are some projects I've been working on:
-		</p>
-		<ul>
-			<li><a href="http://tlrl.gnoht.com">tlrl</a> - a <a href="https://pinboard.in/">Pinboard</a> clone that I&#39;m using to experiment with Spring related projects</li>
-		<li><a href="https://masfotos.gnoht.com">masfotos</a> - photo and video aggregator, developed while learning Python, Flask, and MongoDB</li>
-		<li><a href="https://lasnotas.org">lasnotas</a> - simple Markdown driven blogging application, built while learning <a href="https://en.wikipedia.org/wiki/MEAN_(software_bundle)">MEAN</a> stack</li>
-		<li><a href="http://grdnly.com">grdnly</a> - gardening journal application for my wife, developed while learning Grails</li>
-		</ul>
-	
-	</section>
-	<div class="entry">
-
-
-
-
-
-	
-	<h2>About this site</h2>
-
-	<p>This website is generated with <a href="https://jekyllrb.com/">Jekyll</a> using the <a href="/posts/2015/06/11/my-jekyll-workflow.html">following workflow</a>. </p>
-
-	</article>
-	<br/>
-	{{ utils.back_home_link() }}
-
+	<h1 id="title">{{post.title}}</h1>
+	<div id="content">
+		{{post.content|safe}}
+	</div>
+</article>
+{{ utils.back_home_link() }}
 {% endblock %}
+
+

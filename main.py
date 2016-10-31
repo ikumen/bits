@@ -15,6 +15,7 @@ from google.appengine.ext import ndb, deferred
 from google.appengine.api import urlfetch
 from requests_oauthlib import OAuth2Session
 from slugify import slugify
+from models import Post
 
 
 from datetime import datetime, date, time
@@ -104,14 +105,17 @@ def signin_profile(provider=None):
 def index():
 	"""Returns the home view with list of published posts.
 	"""
-	posts = models.Post.query(models.Post.published == True).order(-models.Post.date)
+	posts = (models.Post
+		.query(models.Post.published == True, models.Post.category == 'posts')
+		.order(-models.Post.date))
 	return render_template('index.html', posts=posts, now=date.today())
 
 
 @app.route('/tags')
 def tags():
 	"""Returns the tags view with list of tags."""
-	posts = (models.Post.query()
+	posts = (models.Post
+		.query(models.Post.published == True, models.Post.category == 'posts')
 		.order(models.Post.tags)
 		.fetch(projection=['title', 'slug', 'tags']))
 	# TODO: OrderedDict?
@@ -131,7 +135,12 @@ def tags():
 def posts(slug):
 	"""Returns individual post view with published post with given slug.
 	"""
-	post = models.Post.query(models.Post.slug == slug).get()
+	post = (Post
+		.query(
+			Post.published == True, 
+			Post.category == 'posts', 
+			Post.slug == slug)
+		.get())
 	return render_template('posts.html', post=post, now=date.today())
 
 
@@ -139,7 +148,8 @@ def posts(slug):
 def about():
 	"""Returns about view.
 	"""
-	return render_template('about.html', now=date.today())
+	post = models.Post.query(models.Post.category == 'about').get()
+	return render_template('about.html', post=post, now=date.today())
 
 
 # ...............................
@@ -222,6 +232,7 @@ def api_post_save(id=None):
 	if {'title', 'source'} <= set(data):
 		post = models.Post.get_by_id(id) if id else models.Post()
 		post.title = data['title']
+		post.category = data['category'] if 'category' in data else 'posts'
 		post.source = data['source']
 		post.put()
 		return api_response(data={'id': post.key.id()})
@@ -250,11 +261,17 @@ def api_publish(id):
 		elif not pubdate:
 			pubdate = datetime.today()
 
+		# normalize tags if missed by front matter or not in supported list format
+		tags = []
+		if 'tags' in meta:
+			tags = (meta['tags'] if not isinstance(meta['tags'], basestring) \
+				else [t.strip() for t in meta['tags'].split(',')])
+
 		post.populate(
 			date=pubdate,		
 			published=data['published'],
 			slug=''.join([pubdate.strftime('%Y/%m/%d/'), slugify(post.title)]),
-			tags=(meta['tags'] if 'tags' in meta else []),
+			tags=tags,
 			content=content)
 		post.put()
 

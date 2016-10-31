@@ -34,6 +34,7 @@ class Post(ndb.Model, AsDictionay):
 	title = ndb.StringProperty()
 	date = ndb.DateTimeProperty()	# date posted
 	tags = ndb.StringProperty(repeated=True)
+	category = ndb.StringProperty(default='posts')
 	content = ndb.TextProperty()
 	published = ndb.BooleanProperty(default=False)
 	# holds everything about post, frontmatter + markdown content

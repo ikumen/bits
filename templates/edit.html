@@ -49,11 +49,12 @@
 <body>
 <div id="nav">
 	<span class="right">
-		<span><i><small class="muted" id="status"></small></i></span>
+		<span><i><small class="muted" id="savestatus"></small></i></span>
 		<a id="save">save</a> | 
+		<span><i><small class="muted" id="pubstatus"></small></i></span>
 		<a id="publish" data="no">publish</a>
 	</span>
-	<span class="left"><a href="/manage">< back</a></span>
+	<span class="left"><a href="/manage">< back</a> | <a id="newpost">new post</a></span>
 </div>
 <div id="editor-wrapper">
 	<article id="preview">
@@ -121,6 +122,15 @@
 		}
 	};
 
+	var ifSourceModified = function(updatedSrc, fn) {
+		var modified = (updatedSrc !== originalPostSource);
+		if(fn && typeof fn === 'function' && modified) {
+			fn(updatedSrc, originalPostSource);
+		} else {
+			return modified;
+		}
+	}
+
 	/* set the editor pane */
 	var setEditor = function(src) {
 		editor.setValue(src);
@@ -129,9 +139,9 @@
 		editor.getSession().on('change', function(e) {
 			var updatedSrc = editor.getValue();
 			setPreview(updatedSrc);
-			if(updatedSrc !== originalPostSource) {
-				bits.el('status').text('(modified)');
-			}
+			ifSourceModified(updatedSrc, function() {
+				bits.el('savestatus').text('(modified)');
+			});
 		});
 	};
 
@@ -161,12 +171,25 @@
 				.get();
 		} else {
 			setSource({
-				source: '---\ntitle: Untitled\ndate: '+new Date().toISOString().substring(0,10)+'\ntags: []\n---'
-			});
+				source: (
+					'---\n' + 
+					'title: Untitled\n' + 
+					'date: '+new Date().toISOString().substring(0,10)+'\n' +
+					'tags: []\n' + 
+					'category: posts\n' +
+					'---')});
 		}
 	}
 
 	bits
+	.el('newpost')
+		.on('click', function() {
+			if(ifSourceModified(editor.getValue()) && 
+					!window.confirm('Leave unsaved post?')) {
+				return;
+			}
+			window.location = '/manage/edit';
+		})
 	.el('save')
 		.on('click', function(e){
 			post = bits.post.load(editor.getValue());
@@ -175,13 +198,18 @@
 				bits.xhr('/api/posts' + (postId ? '/' + postId : ''))
 					.ok(function(post) {
 						originalPostSource = editor.getValue();
-						bits.el('status').text('');
+						bits.el('savestatus').text('');
+						// update history if new posts being saved for first time
+						if(!postId) {
+							postId = post.id;
+							window.history.replaceState({}, '', '/manage/edit/' + post.id);
+						}
 						//TODO: alert saved
 					})
 					.err(function(resp) {
 						//TODO: alert err
 					})
-					.send({'title': post.title, 'source': post.source}, (postId ? 'PUT' : null));
+					.send({title: post.title, source: post.source, category:post.meta.category}, (postId ? 'PUT' : null));
 			}
 			//TODO: nothing to save
 		})
@@ -193,6 +221,8 @@
 				bits.xhr('/api/publish/'+postId)
 					.ok(setPublish)
 					.send({published: (isPub === 'no')}, 'PUT');
+			} else {
+				console.log('save before publishing');
 			}
 	});
 
