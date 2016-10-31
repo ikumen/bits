@@ -22,21 +22,27 @@ var bits = (function() {
 				if(k && v) {
 					added = true;
 					if(k === 'tags') {
-						v = v.match(/\[([\s\S]*)\]/)[1].split(/,/)
+						m[k] = m[k] || [];
+						matches = v.match(/\[([\s\S]*)\]/);
+						if(matches && matches.length >= 2 && matches[1].trim()) {
+							matches[1].split(/,/).forEach(function(tag) {
+								m[k].push(tag);
+							});
+						}
+					} else {
+						m[k] = v;
 					}
-					m[k] = v;
 				}
 			}
 
 			for(var i=0; i < lines.length; i++) {
 				var matches = lines[i].match(/^\s*(title|date|created_at|tags|category|layout|published):([\s\S]*)$/);
-				if(matches && matches[1] !== key) {
-					addKeyValue(meta, key, value);
+				if(matches && matches.length >= 2 && matches[1] !== key) {					
 					key = matches[1];
-					value = matches[2].trim();
+					value = (matches[2] || '').trim();
+					addKeyValue(meta, key, value);
 				}
 			}
-			addKeyValue(meta, key, value);
 			return meta;
 		}
 
@@ -155,9 +161,10 @@ var bits = (function() {
 			}
 		}
 		_el.prototype.appendAll = function(arr, format, pos) {
-			if(arr && arr.length > 0) {
+			if(arr && arr instanceof Array && arr.length > 0) {
 				pos = pos || 'beforeend';
 				var elem = this.elem;
+
 				arr.forEach(function(a) { 
 					elem.insertAdjacentHTML(pos, format(a)); 
 				});

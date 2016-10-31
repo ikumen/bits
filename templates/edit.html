@@ -103,10 +103,15 @@
 		post = bits.post.load(src);
 		// helper
 		function icon(n) { return '<i class="icon-'+ n +'"></i>&nbsp;'; }
+		function formatDate(d) {
+			// very naive date handling
+			// todo: use momentsjs
+			return new Date(d).toGMTString().substring(0, 16);
+		}
 		// set meta data
 		if(post) {
-			var date = post.meta.date || post.meta.created_at ? 
-				new Date(post.meta.date || post.meta.created_at).toDateString() : '&nbsp;';
+			var date = (post.meta.date || post.meta.created_at) ? 
+				formatDate(post.meta.date || post.meta.created_at) : '&nbsp;';
 			bits.el('title').text((post.meta.title || ''))
 				.el('date').html(icon('calendar')).append(date)
 				.el('content').html(marked(post.markdown))
@@ -155,9 +160,8 @@
 					})
 				.get();
 		} else {
-			console.log('New Post!');
 			setSource({
-				source: '---\ntitle: Untitled\n---'
+				source: '---\ntitle: Untitled\ndate: '+new Date().toISOString().substring(0,10)+'\ntags: []\n---'
 			});
 		}
 	}
