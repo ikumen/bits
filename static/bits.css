@@ -70,6 +70,10 @@ pre > code, pre {
 pre > code {
   padding: 0;
 }
+.hljs {
+  /* TODO: ??? */
+  background-color: #f7f7f7 !important;
+}
 
 blockquote {
   margin: 0 1rem;
