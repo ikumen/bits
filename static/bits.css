@@ -207,6 +207,24 @@ article #meta #tags {
   margin-bottom: 2rem;
 }
 
+@media screen and (max-width: 768px){
+  .hidden-sm { 
+    display: none;
+  }
+  h1 { font-size: 1.5rem }
+  h2 { font-size: 1.25rem }
+  h3 { font-size: 1rem }
+  h4 { font-size: .9rem }
+  h5 { font-size: .875rem }
+  h6 { font-size: .75rem }
+}
+@media screen and (min-width: 768px){
+  .hidden-lg { 
+    display: none;
+  }
+}
+
+
 /* fontawesome */
 
 @font-face {
