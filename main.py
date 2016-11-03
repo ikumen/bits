@@ -8,7 +8,7 @@ import mistune
 import re
 import utils
 import config
-import security
+import auth
 
 from flask import Flask, render_template, redirect, abort, url_for, request, session, jsonify, Response, current_app
 from google.appengine.ext import ndb, deferred
@@ -30,40 +30,36 @@ app.config.from_object(config.load())
 
 
 # ...............................
-# Route helpers 
+# Auth related routes
 # ...............................
 @app.route('/signout')
 def signout(code=200):
 	session.clear()
 	return redirect(url_for('index'))
 
+
 @app.route('/signin/<provider>')
-@security.normalize_oauth_request
+@auth.normalize_oauth_request
 def signin(provider):
-	oauth_config, oauth_session = security.create_oauth(provider=provider)
+	oauth_client = auth.create_oauth_client(provider)
 	# start oauth dance
-	authorization_url, state = security.oauth_authorize(oauth_config, oauth_session)
-	session[oauth_config.get('STATE_SESSION_KEY')] = state
+	authorization_url, state = oauth_client.authorize()
+	session[oauth_client.config('STATE_SESSION_KEY')] = state
 	return redirect(authorization_url)
 
 
 @app.route('/signin/<provider>/complete')
-@security.normalize_oauth_request
-@security.oauth_authorized
+@auth.normalize_oauth_request
+@auth.oauth_authorized
 def signin_complete(provider):
-	oauth_config = security.load_oauth_config(provider)
-	oauth_session = security.create_oauth_session(config=oauth_config,
-		state=session.get(oauth_config.get('STATE_SESSION_KEY')))
-
-	oauth_resp = oauth_session.fetch_token(oauth_config.get('TOKEN_URL'),
-		client_secret=oauth_config.get('CLIENT_SECRET'),
-		authorization_response=request.url)
+	oauth_client = auth.create_oauth_client(provider)
+	oauth_resp = oauth_client.fetch_token(auth_resp=request.url)
 
 	if not 'access_token' in oauth_resp:
 		# raise error
 		pass
 
-	session[oauth_config.get('TOKEN_SESSION_KEY')] = {
+	session[oauth_client.config('TOKEN_SESSION_KEY')] = {
 		'token_type': oauth_resp.get('token_type'), 
 		'access_token': oauth_resp.get('access_token'),
 		'scope': oauth_resp.get('scope')
@@ -73,20 +69,18 @@ def signin_complete(provider):
 
 
 @app.route('/signin/<provider>/profile')
-@security.normalize_oauth_request
+@auth.normalize_oauth_request
 def signin_profile(provider=None):
-	oauth_config = security.load_oauth_config(provider)
-	oauth_session = security.create_oauth_session(config=oauth_config,
-			token=session.get(oauth_config.get('TOKEN_SESSION_KEY')))
-
-	oauth_resp = oauth_session.get(oauth_config.get('BASE_URL')+'/user')
+	oauth_client = auth.create_oauth_client(provider)
+	oauth_resp = oauth_client.get('/user')
 
 	profile = oauth_resp.json()
 	user_id = profile.get('id')
 	user = models.User.get_by_id(user_id)
+
 	if not user:
 		user = models.User(id=user_id)
-	if user.key.id() != int(oauth_config.get('USERID')):
+	if user.key.id() != int(oauth_client.config('USERID')):
 		return abort(401)
 
 	user.populate(name=profile.get('name') 
@@ -213,7 +207,7 @@ def post_from_source(source):
 
 
 @app.route('/api/posts/<int:id>', methods=['GET'])
-@security.secured
+@auth.secured
 def api_post_get(id):
 	"""Gets the PostSource with given id, otherwise a 404 response.
 	Called from /manage/edit/<id> page.
@@ -227,7 +221,7 @@ def api_post_get(id):
 
 @app.route('/api/posts', methods=['POST'])
 @app.route('/api/posts/<int:id>', methods=['PUT'])
-@security.secured
+@auth.secured
 def api_post_save(id=None):
 	"""Creates or updates the incoming data to a models.PostSource.
 	"""
@@ -245,7 +239,7 @@ def api_post_save(id=None):
 
 
 @app.route('/api/publish/<int:id>', methods=['PUT'])
-@security.secured
+@auth.secured
 def api_publish(id):
 	"""
 	"""
@@ -282,14 +276,8 @@ def api_publish(id):
 	else:
 		return api_response(data={'Err': 'Missing id of post to publish!'}, status=400)
 
-
-@app.route('/oops/unauthorized')
-def oops_unauthorized():
-	return render_template('401.html', now=date.today())
-
-
 @app.route('/manage')
-@security.secured
+@auth.secured
 def manage():
 	# dry, same snippet used in index()
 	posts = (Post.query()
@@ -300,7 +288,16 @@ def manage():
 
 @app.route('/manage/edit')
 @app.route('/manage/edit/<int:id>')
-@security.secured
+@auth.secured
 def manage_edit(id=None):
 	return render_template('edit.html')
+
+
+# ...............................
+# Errors 
+# ...............................
+@app.route('/oops/unauthorized')
+def oops_unauthorized():
+	return render_template('401.html', now=date.today())
+
 

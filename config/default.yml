@@ -11,6 +11,7 @@ OAUTHLIB_INSECURE_TRANSPORT:
 # the config, otherwise it'll get ignored.
 OAUTHS:
   GITHUB:
+    VERSION: '2.0'
     BASE_URL: https://api.github.com
     AUTHORIZATION_URL: https://github.com/login/oauth/authorize
     TOKEN_URL: https://github.com/login/oauth/access_token

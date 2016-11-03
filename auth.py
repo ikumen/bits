@@ -2,28 +2,53 @@ import os
 
 from functools import wraps
 from flask import url_for, redirect, session, request, current_app, abort
-from requests_oauthlib import OAuth2Session, OAuth2Session
+from requests_oauthlib import OAuth1Session, OAuth2Session
+
+V1 = '1.0'
+V2 = '2.0'
+VERSION_KEY = 'VERSION'
+STATE_SESS_KEY = 'STATE_SESSION_KEY'
+TOKEN_SESS_KEY = 'TOKEN_SESSION_KEY'
+
+class OAuth2Client():
+	def __init__(self, config, state=None, token=None):
+		self.oauth_config = config
+		self.oauth_session = OAuth2Session(config.get('CLIENT_KEY'),
+			scope=config.get('SCOPE'),
+			state=state,
+			token=token,
+			redirect_uri=config.get('CALLBACK_URL'))
+
+	def authorize(self):
+		return self.oauth_session.authorization_url(
+			self.oauth_config.get('AUTHORIZATION_URL'),
+			approval_prompt='force',
+			include_granted_scopes='true')
+
+	def fetch_token(self, auth_resp): 
+		return self.oauth_session.fetch_token(self.oauth_config.get('TOKEN_URL'),
+			client_secret=self.oauth_config.get('CLIENT_SECRET'),
+			authorization_response=auth_resp)
+
+	def config(self, key, value=None):
+		if value:
+			self.oauth_config[key] = value
+		return self.oauth_config.get(key)
+
+	def get(self, path):
+		return self.oauth_session.get(self.oauth_config.get('BASE_URL') + path)
 
 
 def load_oauth_config(provider=None):
 	return current_app.config.get('OAUTHS', {}).get(provider)
 
-def create_oauth(provider, state=None, token=None):
+def create_oauth_client(provider):
 	oauth_config = load_oauth_config(provider)
-	return oauth_config, create_oauth_session(
-		config=oauth_config, token=token, state=state)
+	if oauth_config.get(VERSION_KEY) == V2:
+		return OAuth2Client(config=oauth_config,
+			state=session.get(oauth_config.get(STATE_SESS_KEY)),
+			token=session.get(oauth_config.get(TOKEN_SESS_KEY)))
 
-def create_oauth_session(config, token=None, state=None):
-	return OAuth2Session(config.get('CLIENT_KEY'),
-			scope=config.get('SCOPE'), 
-			state=state,
-			token=token,
-			redirect_uri=config.get('CALLBACK_URL'))
-
-def oauth_authorize(config, oauth_session):
-	return oauth_session.authorization_url(config.get('AUTHORIZATION_URL'),
-			approval_prompt='force', 
-			include_granted_scopes='true')
 
 
 # ...............................
@@ -65,15 +90,14 @@ def oauth_authorized(fn):
 	"""
 	@wraps(fn)
 	def decorated_function(*args, **kwargs):
-		oauth_config = load_oauth_config(kwargs.get('provider'))
-		if oauth_config.get('VERSION') == '1.0':
-			pass
-		else:
+		oauth_config = load_oauth_config(kwargs.get('provider', '').upper())
+		if oauth_config.get(VERSION_KEY) == V2:
 			if not any(k in session for k in (
-					oauth_config.get('STATE_SESSION_KEY'),
-					oauth_config.get('TOKEN_SESSION_KEY'))):
-				print('print aborting')
+					oauth_config.get(STATE_SESS_KEY),
+					oauth_config.get(TOKEN_SESS_KEY))):
 				return abort(401)
+		else:
+			pass
 		return fn(*args, **kwargs)
 	return decorated_function
 

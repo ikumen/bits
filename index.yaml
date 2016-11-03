@@ -14,16 +14,16 @@ indexes:
   properties:
   - name: category
   - name: published
-  - name: tags
-  - name: slug
-  - name: title
+  - name: date
+    direction: desc
 
 - kind: Post
   properties:
   - name: category
   - name: published
-  - name: date
-    direction: desc
+  - name: tags
+  - name: slug
+  - name: title
 
 - kind: Post
   properties:
