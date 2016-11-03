@@ -1,0 +1,24 @@
+{% set active_page = 'about' %}
+{% extends 'layout-default.html' %}
+{% import 'macros.html' as utils %}
+
+
+{% block body %}
+<h2 id="title">'{{terms}}' <small class="muted">({{results.number_found}} found)</small></h2>
+<div id="results">
+	{% for result in results %}
+	<div>
+			<h4>
+				<a href="/posts/{{result.fields[1].value}}">{{ result.fields[0].value }}</a>
+			</h4>
+			<p>
+			{{result.expressions[0].value|safe}}
+			</p>
+	</div>
+	{% endfor %}
+</div>
+<br/>
+<br/>
+{{ utils.back_home_link() }}
+{% endblock %}
+

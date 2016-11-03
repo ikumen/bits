@@ -12,3 +12,25 @@
 {% macro back_home_link() %}
 	<a href="/">< back home</a>
 {% endmacro %}
+
+{% macro search() %}
+<style>
+	input:focus {
+    outline:none;
+	}
+	form {
+		width: 100%;
+		text-align: left;
+	}
+	input {
+		width: 200px;
+		line-height: 1.5;
+		border-radius: 3px;
+		border: solid 1px #eee;
+	}
+</style>
+<form action="/search">
+	Search this site: 
+	<input type="text" name="terms">
+</form>
+{% endmacro %}

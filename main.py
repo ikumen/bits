@@ -13,11 +13,11 @@ import auth
 from flask import Flask, render_template, redirect, abort, url_for, request, session, jsonify, Response, current_app
 from google.appengine.ext import ndb, deferred
 from google.appengine.api import urlfetch
+from google.appengine.api import search
 from requests_oauthlib import OAuth2Session
 from slugify import slugify
 from models import Post
-
-
+from HTMLParser import HTMLParser
 from datetime import datetime, date, time
 
 app = Flask(__name__)
@@ -26,8 +26,6 @@ app = Flask(__name__)
 # Config
 # ...............................
 app.config.from_object(config.load())
-
-
 
 # ...............................
 # Auth related routes
@@ -238,6 +236,22 @@ def api_post_save(id=None):
 		return api_response(data={'Err': 'filename and content are required fields!'}, status=400)
 
 
+# taken from here: http://stackoverflow.com/a/925630
+class MLStripper(HTMLParser):
+    def __init__(self):
+        self.reset()
+        self.fed = []
+    def handle_data(self, d):
+        self.fed.append(d)
+    def get_data(self):
+        return ''.join(self.fed)
+
+def strip_tags(html):
+    s = MLStripper()
+    s.feed(html)
+    return s.get_data()
+
+
 @app.route('/api/publish/<int:id>', methods=['PUT'])
 @auth.secured
 def api_publish(id):
@@ -272,6 +286,22 @@ def api_publish(id):
 			content=content)
 		post.put()
 
+		if post.category == 'posts':
+			# TODO: move to tasks
+			doc = search.Document(
+				doc_id=str(post.key.id()),
+				fields=[search.TextField(name='title', value=post.title),
+								search.TextField(name='slug', value=post.slug),
+								search.TextField(name='published', value=str(post.published)),
+								search.TextField(name='content', value=strip_tags(post.content))],
+				language='en')
+
+			try:
+				results = search.Index(name='posts').put(doc)
+			except search.Error as err:
+				print(err)
+				pass
+
 		return api_response(data={'id': id, 'published': post.published})
 	else:
 		return api_response(data={'Err': 'Missing id of post to publish!'}, status=400)
@@ -291,6 +321,28 @@ def manage():
 @auth.secured
 def manage_edit(id=None):
 	return render_template('edit.html')
+
+
+@app.route('/search')
+@app.route('/search/<terms>')
+def search_posts(terms=None):
+	if not terms:
+		terms = request.args.get('terms', '')
+
+	results = None
+	try:
+		index = search.Index(name='posts')
+		query = search.Query(
+			# very naive rough impl
+			query_string='published: True AND (' + terms + ')',
+			options=search.QueryOptions(
+				returned_fields=['title', 'slug'],
+				snippeted_fields=['content'],
+		))
+		results = index.search(query)
+	except search.Error as err:
+		print(err)
+	return render_template('search.html', terms=terms, results=results, now=date.today())
 
 
 # ...............................
