@@ -251,7 +251,6 @@ def strip_tags(html):
     s.feed(html)
     return s.get_data()
 
-kindle-27f8bb8af	192.168.19.125
 
 @app.route('/api/publish/<int:id>', methods=['PUT'])
 @auth.secured
@@ -349,6 +348,6 @@ def search_posts(terms=None):
 # ...............................
 # Errors
 # ...............................
-hn
+
 
 
