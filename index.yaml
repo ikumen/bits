@@ -32,3 +32,12 @@ indexes:
   - name: created_at
   - name: published
   - name: title
+
+- kind: Post
+  properties:
+  - name: date
+    direction: desc
+  - name: created_at
+  - name: published
+  - name: title
+  - name: updated_at

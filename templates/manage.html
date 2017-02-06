@@ -31,6 +31,7 @@
 			</td>
 			<td width="93%">
 				<a href="/manage/edit/{{ post.key.id() }}">{{ post.title }}</a>
+				<small class="muted">{{ '(' + post.date.strftime('%Y-%m-%d') + ')' if post.date else '' }}</small>
 			</td>
 		</tr>
 	{% endfor %}

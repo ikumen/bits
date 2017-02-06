@@ -58,7 +58,7 @@ def signin_complete(provider):
 		pass
 
 	session[oauth_client.config('TOKEN_SESSION_KEY')] = {
-		'token_type': oauth_resp.get('token_type'), 
+		'token_type': oauth_resp.get('token_type'),
 		'access_token': oauth_resp.get('access_token'),
 		'scope': oauth_resp.get('scope')
 	}
@@ -81,8 +81,8 @@ def signin_profile(provider=None):
 	if user.key.id() != int(oauth_client.config('USERID')):
 		return abort(401)
 
-	user.populate(name=profile.get('name') 
-		if profile.get('name') else profile.get('login'))	
+	user.populate(name=profile.get('name')
+		if profile.get('name') else profile.get('login'))
 	user.put()
 
 	session['user'] = user.as_dict()
@@ -100,7 +100,7 @@ def index():
 	posts = (models.Post
 		.query(models.Post.published == True, models.Post.category == 'posts')
 		.order(-models.Post.date)
-		# TODO: 
+		# TODO:
 		#.fetch(projection=['date', 'slug', 'title', 'tags'])
 		)
 	return render_template('index.html', posts=posts, now=date.today())
@@ -132,8 +132,8 @@ def posts(slug):
 	"""
 	post = (Post
 		.query(
-			Post.published == True, 
-			Post.category == 'posts', 
+			Post.published == True,
+			Post.category == 'posts',
 			Post.slug == slug)
 		.get())
 	return render_template('posts.html', post=post, now=date.today())
@@ -184,20 +184,20 @@ def parse_markdown(source, is_mk_only=True):
 
 def parsables_from_source(source):
 	"""Splits the yaml front matter and markdown into parsable parts
-	from the given source. The source is expected to be in Jekyll 
+	from the given source. The source is expected to be in Jekyll
 	document format.
-	
+
 	Returns tuple of (frontmatter, markdown)
 	"""
 	matches = re.search(r'^---(.*?)---\s*(.*)', source, re.DOTALL)
 	if matches:
-		return (matches.groups()[0], 
+		return (matches.groups()[0],
 			(matches.groups()[1] if len(matches.groups()) >= 2 else None))
 	return (None, None)
 
 
 def post_from_source(source):
-	"""Parses given source into a Post with meta dictionary parsed 
+	"""Parses given source into a Post with meta dictionary parsed
 	from yaml front matter and rendered html from markdown.
 	"""
 	fmatter, markdown = parsables_from_source(source)
@@ -251,6 +251,7 @@ def strip_tags(html):
     s.feed(html)
     return s.get_data()
 
+kindle-27f8bb8af	192.168.19.125
 
 @app.route('/api/publish/<int:id>', methods=['PUT'])
 @auth.secured
@@ -262,7 +263,7 @@ def api_publish(id):
 		post = models.Post.get_by_id(id)
 		meta, content = post_from_source(post.source)
 
-		# rules for publish date: 
+		# rules for publish date:
 		#		- if 'date' set by user in front matter then use it
 		#		- else if pubdate is already set, use it
 		#		- else must be first time saving, use todays date
@@ -279,7 +280,7 @@ def api_publish(id):
 				else [t.strip() for t in meta['tags'].split(',')])
 
 		post.populate(
-			date=pubdate,		
+			date=pubdate,
 			published=data['published'],
 			slug=''.join([pubdate.strftime('%Y/%m/%d/'), slugify(post.title)]),
 			tags=tags,
@@ -312,7 +313,7 @@ def manage():
 	# dry, same snippet used in index()
 	posts = (Post.query()
 		.order(-models.Post.date)
-		.fetch(projection=['title', 'created_at', 'published']))
+		.fetch(projection=['title', 'published', 'date', 'created_at', 'updated_at']))
 	return render_template('manage.html', posts=posts, now=date.today())
 
 
@@ -346,10 +347,8 @@ def search_posts(terms=None):
 
 
 # ...............................
-# Errors 
+# Errors
 # ...............................
-@app.route('/oops/unauthorized')
-def oops_unauthorized():
-	return render_template('401.html', now=date.today())
+hn
 
 
