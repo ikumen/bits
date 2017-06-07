@@ -316,7 +316,7 @@ def manage():
 	return render_template('manage.html', posts=posts, now=date.today())
 
 
-@app.route('/manage/edit')
+@app.route('/manage/new')
 @app.route('/manage/edit/<int:id>')
 @auth.secured
 def manage_edit(id=None):

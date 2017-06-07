@@ -72,23 +72,22 @@
 <script type="text/javascript" src="/static/bits.js"></script>
 <script type="text/javascript" src="/static/lib/ace-builds/src-noconflict/ace.js" charset="utf-8"></script>
 <script>
-	var editor = (function() {
+	// shim move to utils
+	if (!String.prototype.startsWith) {
+  	String.prototype.startsWith = function(searchString, position) {
+    	position = position || 0;
+      return this.indexOf(searchString, position) === position;
+    };
+	}
 
-		var _ace = ace.edit('editor');
-		_ace.setTheme('ace/theme/github');
-		_ace.getSession().setMode('ace/mode/markdown');
-		_ace.setOptions({
-			wrap: true,
-			showLineNumbers: false,
-			showGutter: false,
-			showPrintMargin: false
-		});
-
-	})();
-
+	/**
+	 * Object representing the right-hand preview pane.
+	 */
 	var previewer = (function() {
 
+		/* initialize underlying highlighter ... */
 		hljs.initHighlightingOnLoad();
+		/* .. and markdown parser */
 		marked.setOptions({
 		  gfm: true,
 		  tables: true,
@@ -101,202 +100,264 @@
 				return hljs.highlightAuto(code).value
 			}
 		});
-	})();
 
+		/* Helper for creating icons */
+		function createIcon(type) {
+			return '<i class="icon-' + type + '"></i>&nbsp;';
+		}
 
-	var ctrl = (function() {
+		/* Very naive date helper */
+		function formatDate(dt) {
+			return new Date(dt).toGMTString().substring(0, 16);
+		}
 
-		function loadPost() {
-			
+		/**
+		 * Given a modified post source, parse it to markdown
+		 * and render it for display.
+		 */
+		function update(modifiedSource) {
+			var parsedSource = bits.post.load(modifiedSource);
+			if(parsedSource) {
+				var date = parsedSource.meta.date || parsedSource.meta.created_at;
+				var dateHtml = date ? formatDate(date) : '&nbsp;';
+
+				bits.el('title').text(parsedSource.meta.title||'')
+					.el('date').html(createIcon('calendar')).append(dateHtml)
+					.el('content').html(marked(parsedSource.markdown))
+					.el('tags').html(createIcon('tag'))
+						.appendAll((parsedSource.meta.tags || []),
+							function(tag) {
+								return '<a href="/tags#' + tag + '">' + tag + '</a>&nbsp;';
+							}
+					);
+				}
+			}
+
+		return {
+			update: update
 		}
 
 	})();
 
 
-	// ----
-
-  var editor = ace.edit("editor");
-	editor.setTheme("ace/theme/github");
-	editor.getSession().setMode("ace/mode/markdown");
-	editor.setOptions({
-		wrap: true,
-		showLineNumbers: false,
-		showGutter: false,
-		showPrintMargin: false
-	});
-
-	hljs.initHighlightingOnLoad();
-	marked.setOptions({
-	  gfm: true,
-	  tables: true,
-	  breaks: false,
-	  pedantic: false,
-	  sanitize: false,
-	  smartLists: false,
-	  smartypants: true,
-	  highlight: function (code) {
-			return hljs.highlightAuto(code).value
-		}
-	});	
-
-	var postId;
-	var originalPostSource = '';
-
-	/* set the preview pane */
-	var setPreview = function(src) {
-		post = bits.post.load(src);
-		// helper
-		function icon(n) { return '<i class="icon-'+ n +'"></i>&nbsp;'; }
-		function formatDate(d) {
-			// very naive date handling
-			// todo: use momentsjs
-			return new Date(d).toGMTString().substring(0, 16);
-		}
-		// set meta data
-		if(post) {
-			var date = (post.meta.date || post.meta.created_at) ? 
-				formatDate(post.meta.date || post.meta.created_at) : '&nbsp;';
-			bits.el('title').text((post.meta.title || ''))
-				.el('date').html(icon('calendar')).append(date)
-				.el('content').html(marked(post.markdown))
-				.el('tags').html(icon('tag')).appendAll((post.meta.tags || []), function(t) {
-					return '<a href="/tags#'+ t +'">'+ t +'</a>&nbsp;';
-			});
-		}
-	};
-
-	var ifSourceModified = function(updatedSrc, fn) {
-		var modified = (updatedSrc !== originalPostSource);
-		if(fn && typeof fn === 'function' && modified) {
-			fn(updatedSrc, originalPostSource);
-		} else {
-			return modified;
-		}
-	}
-
-	//var hasEdits = false;
-	/* auto-save algorithm
-
-			1. enable auto-save after editing starts (hasEdits = true)
-			2. after each edit, start inactive timer
-			3. every x, check if hasEdits and
-				- if last save was beyond threshold, then save
-				- else if inactive > ?? save
-			3. each inactive timer every 3-5secs, 
-				- if inactive and elapsed time greater 3-5, save
-				- if inactive and elapsed time < 3-5 secs, ignore
-				- if inactive and elapsed time
-	
+	/**
+	 * Object representing the left-hand editor pane. 
 	 */
+	var editor = (function() {
 
+		function _editor() {}
 
-	/* set the editor pane */
-	var setEditor = function(src) {
-		editor.setValue(src);
-		editor.navigateTo(0, 0);
-		editor.focus();
-		editor.getSession().on('change', function(e) {
-			var updatedSrc = editor.getValue();
-			setPreview(updatedSrc);
-			ifSourceModified(updatedSrc, function() {
-				console.log('--- another change listener')
-				bits.el('savestatus').text('(modified)');
-			});
+		var _listeners = [];
+		var _ace = ace.edit('editor');
+		_ace.setTheme('ace/theme/github');
+		_ace.getSession().setMode('ace/mode/markdown');
+		_ace.setOptions({
+			wrap: true,
+			showLineNumbers: false,
+			showGutter: false,
+			showPrintMargin: false
 		});
-	};
+    // set to Infinity to disable auto scrolling warning
+    _ace.$blockScrolling = Infinity;
+		_ace.getSession().on('change', 
+			function(e) {
+				for(var i=0; i < _listeners.length; i++) {
+					var listener = _listeners[i];
+					listener.target[listener.fn](_ace.getValue());
+				}
+		});		
 
-	function setPublish(post) {
-		if(post.published !== undefined && post.published !== null) {
-			bits.el('publish').attr('data', (post.published ? 'yes' : 'no'))
-				.text(post.published ? 'unpublish' : 'publish');
+		_editor.prototype.setSource = function (source) {
+			_ace.setValue(source);
+			_ace.navigateTo(0, 0);
+			_ace.focus();
+		};
+		_editor.prototype.getSource = function() {
+			return _ace.getValue();
+		};
+		_editor.prototype.addListener = function(listener, fnName) {
+			fnName = fnName || 'notify';
+			if('function' === typeof listener[fnName]) {
+				_listeners.push({
+					fn: fnName,
+					target: listener
+				});
+			}
 		}
-	}
 
-	function setSource(post) {
-		setEditor(post.source);
-		setPreview(post.source);
-		setPublish(post);
-	}
+		return new _editor();
 
-	function loadPost() {
-		var tokens = window.location.pathname.split(/\//);
-		if(tokens.length == 4) {
-			postId = tokens[3];
+	})();
+
+	/**
+	 * Main controller.
+	 */
+	var controller = function(editor, previewer) {
+
+		/*
+		 * Helper for parsing the url to obtain post id. The return value
+		 * can be either a numeric id or 'new' if request is for a new post.
+		 * Otherwise an exception is raised.
+		 */
+		function getPostIdFromUrl() {
+			var pathname = window.location.pathname;
+			var pid = pathname.substring(pathname.lastIndexOf('/'));
+			pid = pid.length > 1 ? pid.substring(1) : null;
+			if(parseInt(pid)) {
+				return pid;
+			} else if(pathname.startsWith('/manage/new')) {
+				return 'new';
+			} else {
+				throw new Error('Missing post id!');
+			}
 		}
 
-		if(postId) {
-			bits.xhr('/api/posts/'+postId)
-				.ok(function(post) {
-					originalPostSource = post.source;
-					setSource(post);
-				})
-				.err(function(s) {
-						console.log(s);
-					})
-				.get();
-		} else {
-			setSource({
-				source: (
-					'---\n' + 
+		/*
+		 * Generate an empty post object.
+		 */
+		function createEmptyPost() {
+			return {
+				id: 'new',
+				source: ('---\n' + 
 					'title: Untitled\n' + 
 					'date: '+new Date().toISOString().substring(0,10)+'\n' +
 					'tags: []\n' + 
 					'category: posts\n' +
-					'---')});
+					'---'), 
+				published: false
+			};
 		}
-	}
 
-	bits
-	.el('newpost')
-		.on('click', function() {
-			if(ifSourceModified(editor.getValue()) && 
-					!window.confirm('Leave unsaved post?')) {
+		function isPostModified(source) {
+			return (!_fetchedPost || !source || _fetchedPost.source !== source);
+		}
+
+		function onFetchPostSuccess(post) {
+			_fetchedPost = post;
+			_editor.setSource(post.source);
+		}
+
+		function onError(err) {
+			console.log(err);
+		}
+
+		function updateSaveStatus(s) {
+			bits.el('savestatus').text(s);
+		}
+
+		if(!editor || !previewer)
+			throw new Error('Editor and Previewer must be defined!');
+
+		var _postId,    // post to load for this context
+			_fetchedPost, // fetched post using above post id
+			_editor = editor,
+			_previewer = previewer;
+
+		var ctrl = function() {};
+
+		ctrl.prototype.fetchPost = function() {
+			try {
+				// getPostId should always return a number or 'new'
+				var pid = this.getPostId();
+				if(pid === 'new') {
+					onFetchPostSuccess(createEmptyPost());
+				} else {
+					bits.xhr('/api/posts/' + pid)
+							.ok(onFetchPostSuccess)
+							.err(onError)
+						.get();
+				}
+			} catch(e) {
+				onError({msg: 'Unable to fetchPost', ex: e})
+			}
+		}
+
+		ctrl.prototype.getPostId = function() {
+			if(!_postId) 
+				_postId = getPostIdFromUrl();
+			return _postId;
+		};
+
+		ctrl.prototype.onSourceChange = function(source) {
+			_previewer.update(source);
+			updateSaveStatus(isPostModified(source) ? '(modified)' : '');
+		};
+
+		ctrl.prototype.createPost = function() {
+			if(isPostModified(_editor.getSource()) &&
+					!window.confirm('Leave unsaved post?'))
 				return;
-			}
-			window.location = '/manage/edit';
-		})
-	.el('save')
-		.on('click', function(e){
-			post = bits.post.load(editor.getValue());
-			//TODO: only save if changes
-			if(post && post.title) {
-				bits.xhr('/api/posts' + (postId ? '/' + postId : ''))
+			window.location.href = '/manage/new';
+		};
+
+		ctrl.prototype.savePost = function() {
+			var postObj = bits.post.load(_editor.getSource());
+			// TODO: only save if changes
+			if(postObj && postObj.title) {
+				bits.xhr('/api/posts' + (_postId ? '/' + _postId : ''))
 					.ok(function(post) {
-						originalPostSource = editor.getValue();
-						bits.el('savestatus').text('');
-						// update history if new posts being saved for first time
-						if(!postId) {
-							postId = post.id;
-							window.history.replaceState({}, '', '/manage/edit/' + post.id);
+						_fetchedPost = post;
+						// TODO: update saved status
+						if(!_postId) {
+							_postId = post.id;
+							// update url with new post id without reloading page
+							window.history.replaceState({}, '', '/manage/edit/' + postId);
 						}
-						//TODO: alert saved
 					})
-					.err(function(resp) {
-						//TODO: alert err
-					})
-					.send({title: post.title, source: post.source, category:post.meta.category}, (postId ? 'PUT' : null));
+					.err(onError)
+					.send({
+							title: postObj.title,
+							category: postObj.meta.category,
+							source: postObj.source}, 
+						(_postId ? 'PUT' : null)
+					);
 			}
-			//TODO: nothing to save
-		})
-	.el('publish')
-		.on('click', function() {
-			var pubEl = bits.el('publish');
-			var isPub = pubEl.attr('data');
-			if(postId) {
-				bits.xhr('/api/publish/'+postId)
-					.ok(setPublish)
+		};
+
+		ctrl.prototype.publish = function() {
+			var isPub = bits.el('publish').attr('data');
+			if(_postId) {
+				bits.xhr('/api/publish/' + _postId)
+					.ok(function(post) {
+						if(post.published !== undefined && post.published !== null) {
+							bits.el('publish').attr('data', (post.published ? 'yes' : 'no'))
+								.text(post.published ? 'unpublish' : 'publish');
+						}
+					})
+					.err(onError)
 					.send({published: (isPub === 'no')}, 'PUT');
 			} else {
 				console.log('save before publishing');
-			}
-	});
+			}			
+		};
+
+		ctrl.prototype.init = function() {
+			/* register us as a listener to editor changes */
+			_editor.addListener(this, 'onSourceChange');
+
+			/* register handlers for the navigation actions */
+			bits.el('newpost').on('click', this.createPost)
+				.el('save').on('click', this.savePost)
+				.el('publish').on('click', this.publish);
+
+			/* lets fetch the post */
+			this.fetchPost();
+		};
+
+		ctrl.prototype.isPostModified = function(source) {
+			return _fetchedPost && _fetchedPost.source !== source;
+		}
+
+		return new ctrl();
+
+	};
+
+	document.addEventListener('DOMContentLoaded', function() {
+		new controller(editor, previewer)
+			.init();
+	})
 
 
-	if (document.readyState != 'loading'){
-  	loadPost();
-	} else {
-  	document.addEventListener('DOMContentLoaded', loadPost);
-	}
 
 </script>
 </body>
