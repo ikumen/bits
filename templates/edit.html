@@ -72,6 +72,49 @@
 <script type="text/javascript" src="/static/bits.js"></script>
 <script type="text/javascript" src="/static/lib/ace-builds/src-noconflict/ace.js" charset="utf-8"></script>
 <script>
+	var editor = (function() {
+
+		var _ace = ace.edit('editor');
+		_ace.setTheme('ace/theme/github');
+		_ace.getSession().setMode('ace/mode/markdown');
+		_ace.setOptions({
+			wrap: true,
+			showLineNumbers: false,
+			showGutter: false,
+			showPrintMargin: false
+		});
+
+	})();
+
+	var previewer = (function() {
+
+		hljs.initHighlightingOnLoad();
+		marked.setOptions({
+		  gfm: true,
+		  tables: true,
+		  breaks: false,
+		  pedantic: false,
+		  sanitize: false,
+		  smartLists: false,
+		  smartypants: true,
+		  highlight: function (code) {
+				return hljs.highlightAuto(code).value
+			}
+		});
+	})();
+
+
+	var ctrl = (function() {
+
+		function loadPost() {
+			
+		}
+
+	})();
+
+
+	// ----
+
   var editor = ace.edit("editor");
 	editor.setTheme("ace/theme/github");
 	editor.getSession().setMode("ace/mode/markdown");
@@ -131,6 +174,22 @@
 		}
 	}
 
+	//var hasEdits = false;
+	/* auto-save algorithm
+
+			1. enable auto-save after editing starts (hasEdits = true)
+			2. after each edit, start inactive timer
+			3. every x, check if hasEdits and
+				- if last save was beyond threshold, then save
+				- else if inactive > ?? save
+			3. each inactive timer every 3-5secs, 
+				- if inactive and elapsed time greater 3-5, save
+				- if inactive and elapsed time < 3-5 secs, ignore
+				- if inactive and elapsed time
+	
+	 */
+
+
 	/* set the editor pane */
 	var setEditor = function(src) {
 		editor.setValue(src);
@@ -140,6 +199,7 @@
 			var updatedSrc = editor.getValue();
 			setPreview(updatedSrc);
 			ifSourceModified(updatedSrc, function() {
+				console.log('--- another change listener')
 				bits.el('savestatus').text('(modified)');
 			});
 		});
