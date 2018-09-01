@@ -8,6 +8,7 @@ __pycache__/
 # Distribution / packaging
 .Python
 env/
+.venv
 instance/
 build/
 develop-eggs/
@@ -63,3 +64,4 @@ docs/_build/
 
 # PyBuilder
 target/
+.vscode/
