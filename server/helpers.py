@@ -1,10 +1,16 @@
-from flask import json, request
+from functools import wraps
+from flask import request, json, jsonify, session, redirect
 
 MIME_TYPE_APPLICATION_JSON = 'application/json'
 MIME_TYPE_TEXT_HTML = 'text/html'
 
 __accepted_mimetypes = [MIME_TYPE_APPLICATION_JSON, MIME_TYPE_TEXT_HTML]
 
+
+def handle_error(message, status=400):
+    response = jsonify({'message': message, 'status_code': status})
+    response.status_code = status
+    return response
 
 def use_json_mimetype():
     """Determine if 'application/json' is the preferred mimetype.

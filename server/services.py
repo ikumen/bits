@@ -46,7 +46,7 @@ class Service(object):
         return self.dao.get(id)
 
     def save(self, model):
-        self.dao.save(model)
+        return self.dao.save(model)
 
     def list(self, skip=0, limit=100, **filters):
         return self.dao.list(skip=skip, limit=limit, **filters)
@@ -57,17 +57,30 @@ class BitService(Service):
         super(BitService, self).__init__(dao, **kwargs)
         self.cache = cache
 
-    def _commit_to_github(self, bit):
+    def _fetch_all_from_github(self, user_id):
+        gists = github.get('/gists')
+        for gist in gists:
+            if self._is_bit(gist):
+                bit = self._to_bit_from_gist(self._fetch_one_from_github(gist['id']))
+                self.dao.save(bit)
+
+    def _fetch_one_from_github(self, gist_id):
+        return github.get('/gists/' + gist_id)
+
+    def _is_bit(self, gist):
+        return '_bits_' in gist['files'].keys()
+
+    def _push_to_github(self, bit):
+        """Pushes the given bit information to github as a gist."""
         url = '/gists' # post url
-        data = self._create_gist_data(bit)
+        data = self._to_gist_from_bit(bit)
         if '_id' in bit:
             url = url + '/' + bit['_id'] # gist id is required for patches
             return github.patch(url, data=data)
         else:
             return github.post(url, data=data)
 
-
-    def _create_bit_from_gist_data(self, gist):
+    def _to_bit_from_gist(self, gist):
         files = gist['files']
         return {
             '_id': gist['id'],
@@ -81,7 +94,7 @@ class BitService(Service):
             }
         }
 
-    def _create_gist_data(self, bit):
+    def _to_gist_from_bit(self, bit):
         return {
             'description': bit['description'],
             'files': {
@@ -91,10 +104,12 @@ class BitService(Service):
         }
 
     def save(self, bit):
-        gist = self._commit_to_github(bit)
-        bit = self._create_bit_from_gist_data(gist)
-        super(BitService, self).save(bit)
-        return bit
+        # take modified bit, convert to gist and push to github
+        gist = self._push_to_github(bit)
+        # take returned gist, convert back to bit and save locally
+        bit = self._to_bit_from_gist(gist)
+        return self.dao.save(bit)
+        
 
 
 class UserService(Service):
