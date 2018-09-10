@@ -1,34 +1,57 @@
-const webpack = require('webpack');
 const HtmlWebPackPlugin = require("html-webpack-plugin");
 
-const config = {
-    entry: __dirname + '/js/index.jsx',
-    output: {
-			path: __dirname + '/dist',
-			filename: 'js/bundle.js',
+const htmlPlugin = new HtmlWebPackPlugin({
+  template: "./client/index.html",
+  filename: "./index.html"
+});
+
+module.exports = {
+  entry: __dirname + '/client/app.js',
+  output: {
+    filename: 'static/main.js'
+  },
+  module: {
+    rules: [
+      // loaders are loaded bottom up
+      {
+        test: /\.js$/,
+        exclude: /node_modules/,
+        use: {
+          loader: "babel-loader"
+        },
+      },
+      {
+        test: /\.css$/,
+        use: [
+          {
+            loader: "style-loader"
+          },
+          {
+            loader: "css-loader",
+            options: {
+              modules: true,
+              importLoaders: 1,
+              localIdentName: "[name]_[local]_[hash:base64]",
+              sourceMap: true,
+              minimize: true
+            }
+          }          
+        ]
+      }
+    ]
+  },
+  plugins: [htmlPlugin],
+  devServer: {
+    contentBase: __dirname + '/client',
+    historyApiFallback: {
+        rewrites: [
+          { from: /^\/$/, to: '/index.html' },
+          { from: /^\/@\w+/, to: '/index.html' }
+        ]
     },
-    resolve: {
-			extensions: ['.js', '.jsx', '.css']
-    },
-    module: {
-		rules: [
-			{
-				test: /\.jsx?/,
-				exclude: '/node_modules/',
-				use: {
-					loader: 'babel-loader'
-				}
-			}
-		]
-	},
-	plugins: [new HtmlWebPackPlugin({
-		template: "./index.html",
-		filename: 'index.html'
-	})],
-	devServer: {
-		proxy: {
-			'/api': 'http://localhost:5000'
-		}		
-	}
+    proxy: {
+      '/api': 'http://localhost:5000',
+      '/signin': 'http://localhost:5000'
+    }
+  }
 };
-module.exports = config;
