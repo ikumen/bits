@@ -5,20 +5,17 @@ from .. import security
 from ..services import github
 
 
-bp = Blueprint('/', __name__)
+bp = Blueprint('/', __name__, 
+    static_folder="/Volumes/Data/Projects/python-apps/bits/dist/static",
+    static_url_path="/static")
 log = logging.getLogger(__name__)
 
 
-@bp.route('/')
-def home():
-    return 'home'    
-
-@bp.route('/@<user_id>')
-@security.authorized
-def user(user, user_id):
-    print(user)
-    print(user_id)
-    return 'hello'
+@bp.route('/', methods=['get'])
+@bp.route('/u:<user_id>', methods=['get'])
+@bp.route('/u:<user_id>/bits/<bit_id>', methods=['get'])
+def home(user_id=None, bit_id=None):
+    return render_template('index.html')    
 
 
 @bp.route('/signin')
@@ -26,7 +23,7 @@ def user(user, user_id):
 def signin():
     log.debug('Found authenticated user, redirect to home!')
     user = security.current_user()
-    return redirect('/@' + user['_id'])
+    return redirect('/u:' + user['_id'])
 
 
 @bp.route('/signout', methods=['get'])

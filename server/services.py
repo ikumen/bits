@@ -22,7 +22,9 @@ class Dao(object):
         self._collection = db[collection_name]
 
     def list(self, skip=0, limit=100, **filters):
-        return self._collection.find(filter=filters, skip=0, limit=100)
+        print('---------')
+        print(filters)
+        return self._collection.find(filters, skip=0, limit=100)
 
     def get_by(self, k, v):
         return self._collection.find_one({k: v})
@@ -48,7 +50,7 @@ class Service(object):
     def save(self, model):
         return self.dao.save(model)
 
-    def list(self, skip=0, limit=100, **filters):
+    def list(self, skip=0, limit=100, filters=None):
         return self.dao.list(skip=skip, limit=limit, **filters)
 
 
