@@ -24,7 +24,7 @@ def _register_blueprints(app, pkg_name, pkg_path):
 
 def create_app(pkg_name, pkg_path, override_settings=None):
     """Return a Flask application instance configured with defaults."""
-    app = Flask(pkg_name)
+    app = Flask(pkg_name, template_folder='../../dist', static_folder='../../dist/static', static_url_path='/static')
     app.config.from_pyfile(__path__[0] + '/local.settings')
     github.init_app(app)
     app.json_encoder = JSONSerializableEncoder

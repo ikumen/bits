@@ -8,7 +8,8 @@ const htmlPlugin = new HtmlWebPackPlugin({
 module.exports = {
   entry: __dirname + '/client/app.js',
   output: {
-    filename: 'static/main.js'
+    filename: 'static/main.js',
+    publicPath: '/'
   },
   module: {
     rules: [
@@ -46,7 +47,7 @@ module.exports = {
     historyApiFallback: {
         rewrites: [
           { from: /^\/$/, to: '/index.html' },
-          { from: /^\/@\w+/, to: '/index.html' }
+          { from: /^\/u:\S+/, to: '/index.html' },
         ]
     },
     proxy: {

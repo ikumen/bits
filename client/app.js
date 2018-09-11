@@ -4,15 +4,16 @@
  */
 import React from 'react';
 import ReactDOM from 'react-dom';
-import {BrowserRouter, Route, Link} from 'react-router-dom';
+import {BrowserRouter, Route} from 'react-router-dom';
 import AboutPage from './containers/about';
-import UserPage from './containers/user';
+import {BitIndexPage, BitPage} from './containers/bits';
 
 const App = () => (
     <BrowserRouter>
         <div>
-            <Route exact path="/" component={AboutPage} />
-            <Route path={`/u::slug`} component={UserPage} />
+            <Route exact={true} path="/" component={AboutPage} />
+            <Route path={`/u::userId/bits/:bitId`} component={BitPage} />
+            <Route exact path={`/u::userId`} component={BitIndexPage} />
         </div>
     </BrowserRouter>
 );
