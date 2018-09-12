@@ -1,5 +1,5 @@
 import logging
-import pprint
+import re
 
 from flask import current_app, app
 from flask_github import GitHub
@@ -22,9 +22,8 @@ class Dao(object):
         self._collection = db[collection_name]
 
     def list(self, skip=0, limit=100, **filters):
-        print('---------')
-        print(filters)
-        return self._collection.find(filters, skip=0, limit=100)
+        bits = self._collection.find(filters, skip=0, limit=100)
+        return bits
 
     def get_by(self, k, v):
         return self._collection.find_one({k: v})
@@ -70,7 +69,7 @@ class BitService(Service):
         return github.get('/gists/' + gist_id)
 
     def _is_bit(self, gist):
-        return '_bits_' in gist['files'].keys()
+        return 'bit.md' in gist['files'].keys()
 
     def _push_to_github(self, bit):
         """Pushes the given bit information to github as a gist."""
@@ -84,26 +83,54 @@ class BitService(Service):
 
     def _to_bit_from_gist(self, gist):
         files = gist['files']
+        meta = self._parse_meta(files['_meta_'])
         return {
             '_id': gist['id'],
             'description': gist['description'],
             'created_at': gist['created_at'],
             'updated_at': gist['updated_at'],
             'user_id': gist['owner']['login'],
-            'files': {
-                '_bits_': {'content': files['_bits_']['content']},
-                'README.md': {'content': files['README.md']['content']}
-            }
+            'published': meta['published'],
+            'published_at': meta['published_at'],
+            'tags': meta['tags'],
+            'content': files['bit.md']['content']
         }
+
+    def _parse_meta(self, meta):
+        tokens = re.split('\n', meta['content'])
+        tags = None
+        published = False
+        date = None
+
+        for t in tokens:
+            t = t.strip()
+            if not t:
+                continue
+            if t.startswith('tags:'):
+                tags = re.split(',\s+', t[5:].strip())
+            elif t.startswith('published:'):
+                t = t[10:].strip()
+                published = t and t is 'True'        
+            elif t.startswith('published_at:'):
+                t = t[13:].strip()
+                date = t or None
+        return {'tags': tags, 'published': published, 'published_at': date}
+
 
     def _to_gist_from_bit(self, bit):
         return {
             'description': bit['description'],
             'files': {
-                '_bits_': {'content': '---'},
-                'README.md': {'content': bit['content']}
+                '_meta_': {'content': self._denormalize_meta(bit)},
+                'bit.md': {'content': bit['content']}
             }
         }
+
+    def _denormalize_meta(self, bit):
+        return 'tags:' + ','.join(bit['tags']) + '\n' \
+                + 'published:' + str(bit['published']) + '\n' \
+                + 'published_at:' + bit['published_at'] 
+
 
     def save(self, bit):
         # take modified bit, convert to gist and push to github
@@ -112,6 +139,8 @@ class BitService(Service):
         bit = self._to_bit_from_gist(gist)
         return self.dao.save(bit)
         
+    def sync(self, user_id):
+        self._fetch_all_from_github(user_id)
 
 
 class UserService(Service):
