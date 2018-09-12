@@ -12,8 +12,8 @@ const App = () => (
     <BrowserRouter>
         <div>
             <Route exact={true} path="/" component={AboutPage} />
-            <Route path={`/u::userId/bits/:bitId`} component={BitPage} />
-            <Route exact path={`/u::userId`} component={BitIndexPage} />
+            <Route path={`/@:userId/bits/:bitId`} component={BitPage} />
+            <Route exact path={`/@:userId`} component={BitIndexPage} />
         </div>
     </BrowserRouter>
 );
