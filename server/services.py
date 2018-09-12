@@ -127,9 +127,9 @@ class BitService(Service):
         }
 
     def _denormalize_meta(self, bit):
-        return 'tags:' + ','.join(bit['tags']) + '\n' \
-                + 'published:' + str(bit['published']) + '\n' \
-                + 'published_at:' + bit['published_at'] 
+        return 'tags:' + (','.join(bit['tags']) if bit['tags'] else '') + '\n' \
+                + 'published:' + str(bit['published'] or '') + '\n' \
+                + 'published_at:' + (bit['published_at'] or '')
 
 
     def save(self, bit):

@@ -16,7 +16,7 @@ def api_list_bits(user_id):
     return json_util.dumps(bits)
 
 
-@bp.route('/@<user_id>/bits', methods=['put'])
+@bp.route('/@<user_id>/bits', methods=['put', 'post'])
 @authorized
 def api_create_bit(user, user_id):
     data = request.get_json()

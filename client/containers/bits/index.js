@@ -17,6 +17,7 @@ class BitPage extends React.Component {
         this.toggleEditMode = this.toggleEditMode.bind(this);
         this.setEditFocus = this.setEditFocus.bind(this);
         this.handleUnload = this.handleUnload.bind(this);
+        this.save = this.save.bind(this);
         this.cancelEditMode = this.cancelEditMode.bind(this);
 
         this.state = {
@@ -27,20 +28,17 @@ class BitPage extends React.Component {
     }
 
     cancelEditMode(evt) {
-        console.log(evt.keyCode)
         if (evt.keyCode == 27) {
             this.setState({isEditMode: false});
-            console.log('in cancel edit')
         }
     }
 
-    saveDraft() {
-        BitService.saveDraft(bit, {
-            userId: this.state.userId,
-            bitId: this.state.bitId,
-            title: ReactDOM.findDOMNode(this.refs.description).textContent,
+    save() {
+        BitService.save(this.state.userId, Object.assign(this.state.bit, {
+            description: ReactDOM.findDOMNode(this.refs.description).textContent,
             content: ReactDOM.findDOMNode(this.refs.content).textContent
-        })
+        })).then(() => console.log('----> saved'))
+        .catch(err => console.log(err))
     }
 
     handleUnload() {
@@ -84,11 +82,12 @@ class BitPage extends React.Component {
             {this.state.bit && 
             <div>
                 <button onClick={this.toggleEditMode}>{this.state.isEditMode ? 'Preview' : 'Edit'}</button>
+                <button onClick={this.save}>Save</button>
                 <h1 suppressContentEditableWarning={true} ref="description"
                         contentEditable={this.state.isEditMode}>
                     {bit.description}
                 </h1>             
-                <div suppressContentEditableWarning={true} 
+                <div suppressContentEditableWarning={true} ref="content"
                         contentEditable={this.state.isEditMode}>
                     {bit.content}
                 </div>
