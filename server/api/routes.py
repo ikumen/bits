@@ -2,7 +2,8 @@ import logging
 
 from bson import json_util
 from flask import Blueprint, request, jsonify
-from ..security import authorized
+from ..helpers import handle_error
+from ..security import authorized, current_user
 from ..services import bit_service
 
 
@@ -20,11 +21,13 @@ def api_list_bits(user_id):
 @authorized
 def api_create_bit(user, user_id):
     data = request.get_json()
+    print(data)
     bit = bit_service.save(data)
     return json_util.dumps(bit)
 
 @bp.route('/@<user_id>/sync', methods=['get'])
-def api_sync(user_id):
+@authorized
+def api_sync(user, user_id):
     bit_service.sync(user_id)
     return 'OK'
 
@@ -34,3 +37,13 @@ def api_get_bit(user_id, bit_id):
     return json_util.dumps(bit)
 
 
+@bp.route('/user', methods=['get'])
+def api_current_user():
+    user = current_user()
+    if user:
+        return jsonify({
+            'user_id': user['_id'],
+            'authenticated': True
+        })
+    else:
+        return handle_error('User is not authenticated', status=401)
