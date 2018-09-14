@@ -7,6 +7,7 @@ import UserService from '../../services/user';
 
 
 const BitList = styled.ul`
+    padding: 0 10px;
 `;
 
 const Bit = styled.li`

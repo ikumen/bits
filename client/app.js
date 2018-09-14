@@ -10,7 +10,7 @@ import {BitIndexPage, BitPage} from './containers/bits';
 
 const App = () => (
     <BrowserRouter>
-        <div>
+        <div className="container">
             <Route exact={true} path="/" component={AboutPage} />
             <Route path={`/@:userId/bits/:bitId`} component={BitPage} />
             <Route exact path={`/@:userId`} component={BitIndexPage} />

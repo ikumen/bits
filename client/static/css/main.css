@@ -1,0 +1,219 @@
+html {
+    box-sizing: border-box;
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: 400;
+    line-height: 1.6;
+    font-size: 18px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+body {
+    overflow-x: hidden;
+    position: relative;
+    margin: 0 auto;
+    padding: 0;
+    max-width: 980px;
+
+    /* background-color: #E5ECE9; -- olive-grayish */
+    /* background-color: #dadce2; really like */
+    background-color: #F5F5F5;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+a {
+    text-decoration: none;
+}
+a, a:hover {
+    color: #3772FF;
+}
+a:hover {
+    text-decoration: underline;
+}
+
+.container {
+    width: 100%;
+    padding: 0;
+    margin: 0 auto;
+}
+.editor, .preview {
+    margin-bottom: 40px;
+}
+
+.editor .content, .editor .description {
+    outline: none;
+    background-color: #F8F4E3;
+    border: 1px solid #ddd;
+    margin-bottom: 10px;
+}
+.content, .description {
+    padding: 10px;
+}
+.description {
+    margin-top: 10px;
+}
+
+.about {
+    margin: 0 auto;
+    font-size: 1.1rem;
+    padding: 40px 10px;
+}
+
+ul {
+    padding: 0;
+    list-style: none;
+    text-decoration: none;
+    margin: 0;
+}
+header {
+    width: 100%;
+    position: fixed;
+    z-index: 1;
+    top: 0;
+    left: 0;
+    background-color: #20232a;
+    color: #ffffff;
+    padding: 10px 0;
+}
+.hdr {
+    max-width: 980px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: row;
+}
+
+.hdr-spacer, .footer-spacer {
+    margin-left: auto;
+    margin-right: auto;
+}
+.hdr-logo {
+    width: 100px;
+    font-size: 1.3rem;
+}
+.hdr-signin {
+}
+.hdr a {
+    text-decoration: none;
+    color: #fff;
+}
+
+#app {
+    display: flex;
+    margin-top: 80px;
+    padding: 0 0px;
+    flex: 1;
+}
+
+code, pre {
+    font-family: monospace;
+}
+code, pre, .badge {
+    padding: 2px 5px;
+    background-color: #D7E0E9;
+    line-height: 1.5;
+    font-size: .8rem;
+    border-radius: 3px;
+    font-weight: 300;
+}
+pre {
+    padding: 0.8rem;
+    overflow: auto;
+}
+
+pre > code, pre {
+    background-color: #D7E0E9;
+}
+pre > code {
+    padding: 0;
+}
+
+button {
+    padding: 4px 20px;
+    margin: 0 4px;
+    font-size: .8rem;
+    border-radius: 4px;
+    outline: none;
+}
+
+.toolbar {
+    text-align: right;
+}
+
+.footer {
+    display: flex;
+    border-top: 1px solid #ddd;
+    padding: 6px 10px 12px 10px;
+    font-size: .9rem;
+}
+.footer .contact {
+    opacity: .6;
+}
+.footer .social {
+    font-size: 1.1rem;
+}
+
+
+
+@font-face {
+    font-family: 'bits';
+    src: url('../font/bits.eot?18127635');
+    src: url('../font/bits.eot?18127635#iefix') format('embedded-opentype'),
+         url('../font/bits.woff2?18127635') format('woff2'),
+         url('../font/bits.woff?18127635') format('woff'),
+         url('../font/bits.ttf?18127635') format('truetype'),
+         url('../font/bits.svg?18127635#bits') format('svg');
+    font-weight: normal;
+    font-style: normal;
+  }
+  /* Chrome hack: SVG is rendered more smooth in Windozze. 100% magic, uncomment if you need it. */
+  /* Note, that will break hinting! In other OS-es font will be not as sharp as it could be */
+  /*
+  @media screen and (-webkit-min-device-pixel-ratio:0) {
+    @font-face {
+      font-family: 'bits';
+      src: url('../font/bits.svg?18127635#bits') format('svg');
+    }
+  }
+  */
+   
+   [class^="icon-"]:before, [class*=" icon-"]:before {
+    font-family: "bits";
+    font-style: normal;
+    font-weight: normal;
+    speak: none;
+   
+    display: inline-block;
+    text-decoration: inherit;
+    width: 1em;
+    margin-right: .2em;
+    text-align: center;
+    /* opacity: .8; */
+   
+    /* For safety - reset parent styles, that can break glyph codes*/
+    font-variant: normal;
+    text-transform: none;
+   
+    /* fix buttons height, for twitter bootstrap */
+    line-height: 1em;
+   
+    /* Animation center compensation - margins should be symmetric */
+    /* remove if not needed */
+    margin-left: .2em;
+   
+    /* you can be more comfortable with increased icons size */
+    /* font-size: 120%; */
+   
+    /* Font smoothing. That was taken from TWBS */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+   
+    /* Uncomment for 3D effect */
+    /* text-shadow: 1px 1px 1px rgba(127, 127, 127, 0.3); */
+  }
+   
+  .icon-camera-alt:before { content: '\e800'; } /* '' */
+  .icon-mail:before { content: '\e801'; } /* '' */
+  .icon-bookmark-empty:before { content: '\f097'; } /* '' */
+  .icon-github-circled:before { content: '\f09b'; } /* '' */
+  .icon-doc-text:before { content: '\f0f6'; } /* '' */
+  .icon-stackoverflow:before { content: '\f16c'; } /* '' */

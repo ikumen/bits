@@ -93,14 +93,19 @@ class Editor extends React.Component {
         }
     }
 
+    toolbar() {
+        return <div className="toolbar">
+            <button onClick={this.toggleMode}>{this.state.editMode ? 'Done' : 'Edit'}</button> 
+            <button onClick={this.save} hidden={!this.state.editMode}>Save</button>
+        </div>
+    }
+
     render() {
-        return <div>
-            {!this.state.viewOnly && <div>
-                <button onClick={this.toggleMode}>{this.state.editMode ? 'Preview' : 'Edit'}</button>
-                <button onClick={this.save}>Save</button>
-            </div>}
-            <h1 ref={this.descriptionRef}></h1>
-            <div ref={this.contentRef}></div>
+        return <div className={this.state.editMode ? 'editor' : 'preview'}>
+            {!this.state.viewOnly && this.toolbar()}
+            <h1 className="description" ref={this.descriptionRef}></h1>
+            <div className="content" ref={this.contentRef}></div>
+            {!this.state.viewOnly && this.toolbar()}
         </div>
     }
 }
