@@ -12,6 +12,7 @@ log = logging.getLogger(__name__)
 
 
 @bp.route('/', methods=['get'])
+@bp.route('/about', methods=['get'])
 @bp.route('/@<user_id>', methods=['get'])
 @bp.route('/@<user_id>/bits/<bit_id>', methods=['get'])
 def home(user_id=None, bit_id=None):

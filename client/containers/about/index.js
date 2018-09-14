@@ -24,11 +24,11 @@ class AboutPage extends React.Component {
     render() {
         return <div className="about">
             <h2>Welcome to Bits!</h2>
-            <p>Bits is a simple microblog for keeping notes without all the social baggage.
-            There are no complicated editors to distract or get in your way, just <a href="https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet">simple plain text Markdown</a>.
-            </p>
-        
-            <p><a href="/signin">Signin to get started</a>, all you need is a <a href="https://github.com">GitHub</a> account and a little knowledge of Markdown.</p>
+            <p>Bits is a simple microblog, powered by your <a href="https://gist.github.com/">GitHub Gist</a>.</p>
+            <p>There are no complicated editors to distract or get in your way, 
+            just simple plain text <a href="https://en.wikipedia.org/wiki/Markdown">Markdown</a>. 
+            All you need to get started, is a <a href="https://github.com">GitHub</a> account and 
+            a little <a href="https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet">knowledge of Markdown</a>.</p>
         </div>
     }
 }

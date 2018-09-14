@@ -7,7 +7,7 @@
         "test": "echo \"Error: no test specified\" && exit 1",
         "start": "webpack-dev-server --mode development --open",
         "_pre-build": "rm -rf dist/*",
-        "_post-build": "mkdir -p dist && cp -R client/css dist/static",
+        "_post-build": "mkdir -p dist/static && cp -R client/static/* dist/static",
         "build": "npm run _pre-build && webpack --mode production && npm run _post-build"
     },
     "keywords": [],

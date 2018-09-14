@@ -55,8 +55,9 @@ a:hover {
 
 .about {
     margin: 0 auto;
-    font-size: 1.1rem;
-    padding: 40px 10px;
+    font-size: 1.2rem;
+    margin-left: 0;
+    margin-right: auto;
 }
 
 ul {
@@ -64,37 +65,6 @@ ul {
     list-style: none;
     text-decoration: none;
     margin: 0;
-}
-header {
-    width: 100%;
-    position: fixed;
-    z-index: 1;
-    top: 0;
-    left: 0;
-    background-color: #20232a;
-    color: #ffffff;
-    padding: 10px 0;
-}
-.hdr {
-    max-width: 980px;
-    margin: 0 auto;
-    display: flex;
-    flex-direction: row;
-}
-
-.hdr-spacer, .footer-spacer {
-    margin-left: auto;
-    margin-right: auto;
-}
-.hdr-logo {
-    width: 100px;
-    font-size: 1.3rem;
-}
-.hdr-signin {
-}
-.hdr a {
-    text-decoration: none;
-    color: #fff;
 }
 
 #app {
@@ -134,22 +104,57 @@ button {
     border-radius: 4px;
     outline: none;
 }
-
 .toolbar {
     text-align: right;
 }
 
-.footer {
+footer {
     display: flex;
     border-top: 1px solid #ddd;
-    padding: 6px 10px 12px 10px;
+    padding: 6px 0px 12px 0px;
     font-size: .9rem;
+    flex-direction: row;
 }
-.footer .contact {
-    opacity: .6;
+footer .copyright, footer .contact {
+    flex: 1;
 }
-.footer .social {
-    font-size: 1.1rem;
+footer .contact {
+    text-align: right;
+}
+footer .contact a {
+    margin-left: 20px;
+}
+#header { /* wrapper */
+    z-index: 1;
+    padding: 10px 0; 
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background-color: #20232a;
+}
+header {
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 980px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+header a, header a:hover {
+    color: #ffffff;
+    text-decoration: none;
+}
+header .logo, header .signin {
+    flex: 1;
+    font-size: .9rem;
+    font-weight: 600;
+}
+header .signin {
+    text-align: right;
+}
+header i {
+    font-size: 1.2rem;
 }
 
 
