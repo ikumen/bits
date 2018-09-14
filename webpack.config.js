@@ -8,7 +8,7 @@ const htmlPlugin = new HtmlWebPackPlugin({
 module.exports = {
   entry: __dirname + '/client/app.js',
   output: {
-    filename: 'static/main.js',
+    filename: 'static/js/main.js',
     publicPath: '/'
   },
   module: {
