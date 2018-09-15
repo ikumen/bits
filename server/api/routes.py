@@ -21,7 +21,6 @@ def api_list_bits(user_id):
 @authorized
 def api_create_bit(user, user_id):
     data = request.get_json()
-    print(data)
     bit = bit_service.save(data)
     return json_util.dumps(bit)
 
