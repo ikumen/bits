@@ -10,12 +10,17 @@ bp = Blueprint('/', __name__,
     static_url_path="/static")
 log = logging.getLogger(__name__)
 
-
 @bp.route('/', methods=['get'])
+def home():
+    if 'user' in session:
+        return redirect('/@' + session['user']['_id'])
+    return render_template('index.html')
+
+
 @bp.route('/about', methods=['get'])
 @bp.route('/@<user_id>', methods=['get'])
 @bp.route('/@<user_id>/bits/<bit_id>', methods=['get'])
-def home(user_id=None, bit_id=None):
+def index(user_id=None, bit_id=None):
     return render_template('index.html')    
 
 
