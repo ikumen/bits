@@ -46,3 +46,11 @@ def api_current_user():
         })
     else:
         return handle_error('User is not authenticated', status=401)
+
+
+@bp.route('/@<user_id>/bits/<bit_id>', methods=['delete'])
+@authorized
+def api_delete_bit(user, user_id, bit_id):
+    # TODO: check auth user vs user_id
+    deleted_id = bit_service.delete(bit_id)
+    return jsonify({'deleted': deleted_id})

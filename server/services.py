@@ -13,6 +13,7 @@ db = MongoClient()['bits_db']
 github = GitHub()
 # shared cache instance
 cache = SimpleCache()
+log = logging.getLogger(__name__)
 
 
 class Dao(object):
@@ -48,6 +49,9 @@ class Service(object):
 
     def save(self, model):
         return self.dao.save(model)
+
+    def delete(self, id):
+        return self.dao.delete(id)
 
     def list(self, skip=0, limit=100, filters=None):
         return self.dao.list(skip=skip, limit=limit, **filters)
@@ -141,6 +145,16 @@ class BitService(Service):
         
     def sync(self, user_id):
         self._fetch_all_from_github(user_id)
+
+    def delete(self, id):
+        resp = github.delete('/gists/' + id)
+        if resp.status_code is 204:
+            self.dao.delete(id)
+            return id
+        else:
+            log.warn('Nothing to delete for %s, reason=%s' % (id, resp.status_code))
+            raise RuntimeError('Unable to delete %s, reason=%s', (resp.status_code))
+        
 
 
 class UserService(Service):
