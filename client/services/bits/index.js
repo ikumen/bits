@@ -24,8 +24,8 @@ class BitService {
         let resp = await fetch('/api/@' + userId + '/bits', {
             method: 'POST',
             body: JSON.stringify({
-                description: '_', 
-                content: '_',
+                description: 'Enter a title here', 
+                content: 'Enter your markdown here',
                 tags: [],
                 published: false,
                 published_at: ''
@@ -40,6 +40,15 @@ class BitService {
         let resp = await fetch('/api/@' + userId + '/bits', {
             method: 'PUT',
             body: JSON.stringify(bit),
+            headers: HEADERS
+        });
+        return await resp.json();
+    }
+
+    async delete(userId, bitId) {
+        Log.info('Deleting bit', bitId);
+        let resp = await fetch('/api/@' + userId + '/bits/' + bitId, {
+            method: 'DELETE',
             headers: HEADERS
         });
         return await resp.json();

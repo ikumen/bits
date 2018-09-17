@@ -16,7 +16,6 @@ def token_getter():
     oauth_token = session.get(OAUTH_ATTR_NAME)
     if oauth_token is None:
         oauth_token = session.get(USER_SESS_ATTR, {}).get(OAUTH_ATTR_NAME)
-    print(oauth_token)
     return oauth_token
 
 
@@ -68,7 +67,6 @@ def post_authorization(f):
 
         session[USER_SESS_ATTR] = user
         return f(user, **kwargs)
-
     return decorated
 
 

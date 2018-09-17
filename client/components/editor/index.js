@@ -9,6 +9,7 @@ class Editor extends React.Component {
 
         this.toggleMode = this.toggleMode.bind(this);
         this.save = this.save.bind(this);
+        this.delete = this.delete.bind(this);
         this.onBitLoaded = this.onBitLoaded.bind(this);
 
         this.state = {
@@ -27,7 +28,7 @@ class Editor extends React.Component {
             bit: bit,
             draft: {
                 description: bit.description,
-                content: bit.content
+                content: bit.content.trim() === '_' ? '' : bit.content
             }
         });
 
@@ -57,6 +58,13 @@ class Editor extends React.Component {
         const updatedBit = Object.assign(this.state.bit, draft);
         BitService.save(this.state.userId, updatedBit)
             .then(this.onBitLoaded)
+            .catch(err => console.log(err))
+    }
+
+    delete() {
+        //console.log(this.state.bit)
+        BitService.delete(this.state.userId, this.state.bit._id)
+            .then(resp => console.log('deleted', resp))
             .catch(err => console.log(err))
     }
 
@@ -95,7 +103,8 @@ class Editor extends React.Component {
 
     toolbar() {
         return <div className="toolbar">
-            <button onClick={this.toggleMode}>{this.state.editMode ? 'Done' : 'Edit'}</button> 
+            <button onClick={this.toggleMode}>{this.state.editMode ? 'Done' : 'Edit'}</button>
+            <button onClick={this.delete} hidden={this.state.editMode}>Delete</button> 
             <button onClick={this.save} hidden={!this.state.editMode}>Save</button>
         </div>
     }
@@ -105,7 +114,7 @@ class Editor extends React.Component {
             {!this.state.viewOnly && this.toolbar()}
             <h1 className="description" ref={this.descriptionRef}></h1>
             <div className="content" ref={this.contentRef}></div>
-            {!this.state.viewOnly && this.toolbar()}
+            {/* {!this.state.viewOnly && this.toolbar()} */}
         </div>
     }
 }

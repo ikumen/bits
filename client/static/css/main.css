@@ -158,6 +158,11 @@ header .signin {
 header i {
     font-size: 1.2rem;
 }
+[contenteditable=true]:empty:before{
+    content: attr(placeholder);
+    display: block; /* For Firefox */
+    color: #ddd;
+  }
 
 
 
