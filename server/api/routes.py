@@ -19,13 +19,24 @@ def api_list_bits(user_id):
     return json_util.dumps(bits)
 
 
-@bp.route('/bits', methods=['put', 'post'])
+@bp.route('/bits/<bit_id>', methods=['patch'])
+@authorized
+def api_update_bit(user, bit_id):
+    data = request.get_json()
+    try:
+        bit = bit_service.update(bit_id, **data)
+        return json_util.dumps(bit)
+    except KeyError as err:
+        return handle_error(err.message, status=404)
+
+
+@bp.route('/bits', methods=['post'])
 @authorized
 def api_create_bit(user):
     """Create and return a new blank bit for currently logged in user.
     """
     data = request.get_json()
-    bit = bit_service.create(user, data=data)
+    bit = bit_service.create(user, **data)
     return json_util.dumps(bit)
 
 
@@ -42,20 +53,24 @@ def api_sync(user):
 def api_get_bit(bit_id):
     """Return the bit with given id.
     """
-    bit = bit_service.get(bit_id)
-    return json_util.dumps(bit)
+    try:
+        bit = bit_service.get(bit_id)
+        return json_util.dumps(bit)
+    except KeyError as err:
+        return handle_error(err.message, status=404)
 
 
 @bp.route('/@<user_id>', methods=['get'])
 def api_get_atuser(user_id):
     """Returns the profile of user currently being viewed (e.g. /@<some user>.
     """
+    auth_user = current_user() # get user making this request
     user = user_service.get(user_id)
     return jsonify({
         '_id': user['_id'],
         'avatar_url': user['avatar_url'],
         'name': user['name'],
-        'authenticated': False
+        'authenticated': auth_user and auth_user['_id'] == user['_id']
     })
 
 
@@ -76,9 +91,9 @@ def api_current_user():
         return handle_error('User is not authenticated', status=401)
 
 
-@bp.route('/@<user_id>/bits/<bit_id>', methods=['delete'])
+@bp.route('/bits/<bit_id>', methods=['delete'])
 @authorized
-def api_delete_bit(user, user_id, bit_id):
+def api_delete_bit(user, bit_id):
     # TODO: check auth user vs user_id
     deleted_id = bit_service.delete(bit_id)
     return jsonify({'deleted': deleted_id})

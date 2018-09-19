@@ -30,10 +30,14 @@ class Dao(object):
         return self._collection.find_one({k: v})
 
     def get(self, id):
-        return self.get_by(k='_id', v=id)
+        model = self.get_by(k='_id', v=id)
+        if model is None:
+            raise KeyError('Unable to find model: %s' % id)
+        return model
 
     def save(self, model):
-        self._collection.update_one({'_id': model['_id']}, {'$set': model}, True)
+        rv = self._collection.update_one({'_id': model['_id']}, {'$set': model}, True)
+        model['_id'] = model['_id'] if model['_id'] else rv['upserted_id']
         return model
 
     def delete(self, id):
@@ -46,6 +50,12 @@ class Service(object):
 
     def get(self, id):
         return self.dao.get(id)
+
+    def update(self, id, **data):
+        model = self.get(id)
+        for k,v in data.items():
+            model[k] = v
+        return self.save(model)
 
     def save(self, model):
         return self.dao.save(model)
@@ -112,10 +122,10 @@ class BitService(Service):
             if not t:
                 continue
             if t.startswith('tags:'):
-                tags = re.split(',\s+', t[5:].strip())
+                tags = filter(None, re.split(',\s+', t[5:].strip()))
             elif t.startswith('published:'):
                 t = t[10:].strip()
-                published = t and t is 'True'        
+                published = t or False        
             elif t.startswith('published_at:'):
                 t = t[13:].strip()
                 date = t or None
@@ -144,7 +154,7 @@ class BitService(Service):
         bit = self._to_bit_from_gist(gist)
         return self.dao.save(bit)
 
-    def create(self, user, data=None):
+    def create(self, user, **data):
         """Create and new bit for given user.
         """
         if not data:
