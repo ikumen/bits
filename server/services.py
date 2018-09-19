@@ -63,6 +63,7 @@ class BitService(Service):
         self.cache = cache
 
     def _fetch_all_from_github(self, user_id):
+        """TODO: only able to fetch currently authenticated user's bits."""
         gists = github.get('/gists')
         for gist in gists:
             if self._is_bit(gist):
@@ -142,6 +143,19 @@ class BitService(Service):
         # take returned gist, convert back to bit and save locally
         bit = self._to_bit_from_gist(gist)
         return self.dao.save(bit)
+
+    def create(self, user, data=None):
+        """Create and new bit for given user.
+        """
+        if not data:
+            data = {
+                'description': 'Enter description here',
+                'content': 'Enter markdown here',
+                'tags': [],
+                'published': None,
+                'published_at': None
+            }
+        return self.save(data)
         
     def sync(self, user_id):
         self._fetch_all_from_github(user_id)

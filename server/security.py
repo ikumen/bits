@@ -62,7 +62,12 @@ def post_authorization(f):
         # remove temporary token
         session.pop(OAUTH_ATTR_NAME)
         # persists/update user associated with this token
-        user = {'_id': user_info['login'], 'oauth': oauth_token}
+        user = {
+            '_id': user_info['login'], 
+            'name': user_info['name'],
+            'avatar_url': user_info['avatar_url'],
+            'oauth': oauth_token
+        }
         user_service.save(user)
 
         session[USER_SESS_ATTR] = user

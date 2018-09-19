@@ -1,5 +1,5 @@
 """
-backend.spa
+server.backend
 """
 from .. import create_app as _create_app
 
