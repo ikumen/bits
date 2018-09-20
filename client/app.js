@@ -6,20 +6,28 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import {BrowserRouter, Route} from 'react-router-dom';
 import AboutPage from './containers/about';
-import {BitIndexPage, BitPage} from './containers/bits';
+import UserPage from './containers/user';
+import {BitPage, CreateBitPage} from './containers/bit';
 import {Footer, Header} from './components/layouts';
+import styled from 'styled-components';
 
+const AppWrapper = styled.div`
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+`;
 const App = () => (
     <BrowserRouter>
-        <div className="container">
+        <AppWrapper>
+            <Route path="*" component={Header} />
             <Route exact={true} path="/" component={AboutPage} />
             <Route exact={true} path="/about" component={AboutPage} />
+            <Route exact={true} path="/bits/new" component={CreateBitPage} />
+            <Route exact path={`/@:userId`} component={UserPage} />
             <Route path={`/@:userId/bits/:bitId`} component={BitPage} />
-            <Route exact path={`/@:userId`} component={BitIndexPage} />
-        </div>
+            <Route path="*" component={Footer} />
+        </AppWrapper>  
     </BrowserRouter>
 );
 
-ReactDOM.render(<Header />, document.getElementById('header'));
 ReactDOM.render(<App />, document.getElementById('app'));
-ReactDOM.render(<Footer />, document.getElementById('footer'));
