@@ -4,23 +4,19 @@ html {
     font-weight: 400;
     line-height: 1.6;
     font-size: 18px;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
 }
 body {
-    overflow-x: hidden;
-    position: relative;
-    margin: 0 auto;
+    width: 100%;
     padding: 0;
-    max-width: 980px;
-    width: 90%;
-
-    /* background-color: #E5ECE9; -- olive-grayish */
-    /* background-color: #dadce2; really like */
+    margin: 0;
+    position: relative;
     background-color: #F5F5F5;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
+}
+#app {
+    margin: 0 auto;
+    overflow-x: hidden;
+    max-width: 980px;
+    width: 90%;    
 }
 a {
     text-decoration: none;
@@ -31,50 +27,6 @@ a, a:hover {
 a:hover {
     text-decoration: underline;
 }
-
-.container {
-    width: 100%;
-    padding: 0;
-    margin: 0 auto;
-}
-.editor, .preview {
-    margin-bottom: 40px;
-}
-
-.editor .content, .editor .description {
-    outline: none;
-    background-color: #F8F4E3;
-    border: 1px solid #ddd;
-    margin-bottom: 10px;
-}
-.content, .description {
-    padding: 10px;
-}
-.description {
-    margin-top: 10px;
-}
-
-.about {
-    margin: 0 auto;
-    font-size: 1.2rem;
-    margin-left: 0;
-    margin-right: auto;
-}
-
-ul {
-    padding: 0;
-    list-style: none;
-    text-decoration: none;
-    margin: 0;
-}
-
-#app {
-    display: flex;
-    margin: 80px 0;
-    padding: 0 0px;
-    flex: 1;
-}
-
 code, pre {
     font-family: monospace;
 }
@@ -97,7 +49,12 @@ pre > code, pre {
 pre > code {
     padding: 0;
 }
-
+ul {
+    padding: 0;
+    list-style: none;
+    text-decoration: none;
+    margin: 0;
+}
 button {
     padding: 4px 20px;
     margin: 0 4px;
@@ -105,75 +62,18 @@ button {
     border-radius: 4px;
     outline: none;
 }
-.toolbar {
-    text-align: right;
-}
 
-footer {
-    display: flex;
-    border-top: 1px solid #ddd;
-    padding: 6px 0px 12px 0px;
-    font-size: .9rem;
-    flex-direction: row;
-}
-footer .copyright, footer .contact {
-    flex: 1;
-}
-footer .contact {
-    text-align: right;
-}
-footer .contact a {
-    margin-left: 20px;
-}
-#header { /* wrapper */
-    z-index: 1;
-    padding: 10px 0; 
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    background-color: #20232a;
-}
-header {
-    margin-left: auto;
-    margin-right: auto;
-    max-width: 980px;
-    width: 90%;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-}
-header a, header a:hover {
-    color: #ffffff;
-    text-decoration: none;
-}
-header .logo, header .signin {
-    flex: 1;
-    font-size: .9rem;
-    font-weight: 600;
-}
-header .signin {
-    text-align: right;
-}
-header i {
-    font-size: 1.2rem;
-}
-[contenteditable=true]:empty:before{
-    content: attr(placeholder);
-    display: block; /* For Firefox */
-    color: #ddd;
-  }
 
 
 
 @font-face {
     font-family: 'bits';
-    src: url('../font/bits.eot?18127635');
-    src: url('../font/bits.eot?18127635#iefix') format('embedded-opentype'),
-         url('../font/bits.woff2?18127635') format('woff2'),
-         url('../font/bits.woff?18127635') format('woff'),
-         url('../font/bits.ttf?18127635') format('truetype'),
-         url('../font/bits.svg?18127635#bits') format('svg');
+    src: url('../font/bits.eot?25928024');
+    src: url('../font/bits.eot?25928024#iefix') format('embedded-opentype'),
+         url('../font/bits.woff2?25928024') format('woff2'),
+         url('../font/bits.woff?25928024') format('woff'),
+         url('../font/bits.ttf?25928024') format('truetype'),
+         url('../font/bits.svg?25928024#bits') format('svg');
     font-weight: normal;
     font-style: normal;
   }
@@ -183,7 +83,7 @@ header i {
   @media screen and (-webkit-min-device-pixel-ratio:0) {
     @font-face {
       font-family: 'bits';
-      src: url('../font/bits.svg?18127635#bits') format('svg');
+      src: url('../font/bits.svg?25928024#bits') format('svg');
     }
   }
   */
@@ -224,8 +124,11 @@ header i {
   }
    
   .icon-camera-alt:before { content: '\e800'; } /* '' */
-  .icon-mail:before { content: '\e801'; } /* '' */
+  .icon-logout:before { content: '\e801'; } /* '' */
+  .icon-plus:before { content: '\e802'; } /* '' */
   .icon-bookmark-empty:before { content: '\f097'; } /* '' */
   .icon-github-circled:before { content: '\f09b'; } /* '' */
   .icon-doc-text:before { content: '\f0f6'; } /* '' */
+  .icon-spinner:before { content: '\f110'; } /* '' */
+  .icon-ellipsis-vert:before { content: '\f142'; } /* '' */
   .icon-stackoverflow:before { content: '\f16c'; } /* '' */

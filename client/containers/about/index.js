@@ -1,5 +1,6 @@
 import React from 'react';
 import UserService from '../../services/user';
+import {Page} from '../../components/layouts';
 
 class AboutPage extends React.Component {
     constructor(props) {
@@ -22,13 +23,13 @@ class AboutPage extends React.Component {
     }
 
     render() {
-        return <div className="about">
+        return <Page>
             <h2>Welcome to Bits!</h2>
             <p>Bits is a <a href="https://gist.github.com/">Gist</a> powered microblog.
          
             All you need to get started is a <a href="https://github.com">GitHub</a> account and 
             a little <a href="https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet">knowledge of Markdown</a>.</p>
-        </div>
+        </Page>
     }
 }
 

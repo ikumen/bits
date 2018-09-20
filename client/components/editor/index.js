@@ -1,6 +1,40 @@
 import React from 'react';
 import BitService from '../../services/bits';
 import marked from 'marked';
+import Log from '../../services/logger';
+import { SubHeader } from '../layouts';
+import UserProfile from '../../components/userprofile';
+import styled from 'styled-components';
+
+const ActionBar = styled.div`
+    flex: 1;
+    display: flex;
+    align-items: center;
+    flex-direction: row-reverse;
+`;
+
+const Action = styled.button`
+    font-size: .8rem;
+    padding: 3px 12px;
+    cursor: pointer;
+
+    &.danger {
+        background-color: red;
+        color: #fff;
+        opacity: .6;
+    }
+`;
+        // margin-bottom: 10px;
+
+const StyledEditor = styled.div`
+    margin-bottom: 40px;
+    padding: 0;
+    margin: 0;
+    &.editor .content, &.editor .description {
+        outline: none;
+        background: #F8F4E3;
+    }
+`;
 
 
 class Editor extends React.Component {
@@ -13,8 +47,6 @@ class Editor extends React.Component {
         this.onBitLoaded = this.onBitLoaded.bind(this);
 
         this.state = {
-            userId: props.userId,
-            bitId: props.bitId,
             viewOnly: props.viewOnly,
             editMode: false,
         };
@@ -43,9 +75,9 @@ class Editor extends React.Component {
     }
 
     componentDidMount() {
-        BitService.get(this.state.userId, this.state.bitId)
+        BitService.get(this.props.bitId)
             .then(this.onBitLoaded)
-            .catch(err => console.log(err)); 
+            .catch(err => Log.error(err)); 
     }
 
     save() {
@@ -56,16 +88,16 @@ class Editor extends React.Component {
 
         // Create updated bit from original bit, and changes in draft
         const updatedBit = Object.assign(this.state.bit, draft);
-        BitService.save(this.state.userId, updatedBit)
-            .then(this.onBitLoaded)
-            .catch(err => console.log(err))
+        BitService.update(updatedBit)
+            .then(bit => Log.info('Updated: ', bit))
+            .catch(err => Log.error(err))
     }
 
     delete() {
-        //console.log(this.state.bit)
-        BitService.delete(this.state.userId, this.state.bit._id)
-            .then(resp => console.log('deleted', resp))
-            .catch(err => console.log(err))
+        BitService.delete(this.state.bit._id)
+            //TODO: redirect to /@user
+            .then(resp => Log.info('deleted', resp))
+            .catch(err => Log.error(err))
     }
 
     getLatestEditsAsDraft() {
@@ -76,7 +108,7 @@ class Editor extends React.Component {
     }
 
     toggleMode() {
-        // Switch to new mode (e.g. edit or preview)
+        // Switch between edit and view
         const isEditMode = !this.state.editMode;
         this.setState({editMode: isEditMode});
 
@@ -93,7 +125,6 @@ class Editor extends React.Component {
         } else {
             const content = contentEl.innerText;
             const description = descriptionEl.innerText;
-
             this.setState({
                 draft: {description: description, content: content}
             });
@@ -101,21 +132,21 @@ class Editor extends React.Component {
         }
     }
 
-    toolbar() {
-        return <div className="toolbar">
-            <button onClick={this.toggleMode}>{this.state.editMode ? 'Done' : 'Edit'}</button>
-            <button onClick={this.delete} hidden={this.state.editMode}>Delete</button> 
-            <button onClick={this.save} hidden={!this.state.editMode}>Save</button>
-        </div>
-    }
 
     render() {
-        return <div className={this.state.editMode ? 'editor' : 'preview'}>
-            {!this.state.viewOnly && this.toolbar()}
+        return <StyledEditor className={this.state.editMode ? 'editor' : 'preview'}>
+            <SubHeader>
+                <UserProfile user={this.props.user} />
+                {!this.state.viewOnly && <ActionBar>
+                    <Action onClick={this.delete} className="danger">Delete</Action>
+                    &nbsp; &nbsp;
+                    <Action onClick={this.save} hidden={!this.state.editMode}>Save</Action>
+                    <Action onClick={this.toggleMode}>{this.state.editMode ? 'Done' : 'Edit'}</Action>
+                </ActionBar>}
+            </SubHeader>
             <h1 className="description" ref={this.descriptionRef}></h1>
             <div className="content" ref={this.contentRef}></div>
-            {/* {!this.state.viewOnly && this.toolbar()} */}
-        </div>
+        </StyledEditor>
     }
 }
 
