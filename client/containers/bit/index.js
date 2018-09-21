@@ -11,8 +11,23 @@ import {Page} from '../../components/layouts';
 class CreateBitPage extends React.Component {
     constructor(props) {
         super(props);
-        console.log(props)
     }
+    createNewBit(evt) {
+        if (this.state.user) {
+            BitService.create()
+                .then(this.onCreateNewBit)
+                .catch(err => Log.error(err));
+        } else {
+            //TODO: signout
+        }
+    }
+
+    onCreateNewBit(bit) {
+        Log.debug('Created bit:', bit);
+        const url = '/@' + this.state.user._id + '/bits/' + bit._id;
+        this.props.history.push(url);
+    }
+
 
     render() {
         return <Page>
@@ -28,6 +43,7 @@ class BitPage extends React.Component {
         super(props);
         
         this.onAtUserLoaded = this.onAtUserLoaded.bind(this);
+        this.onDeleteComplete = this.onDeleteComplete.bind(this);
 
         this.state = {
             atUserId: props.match.params.userId,
@@ -35,10 +51,14 @@ class BitPage extends React.Component {
         }
     }
 
+    componentDidUpdate(prevProps) {
+        console.log('did update in bitpage', this.props)
+    }
+
     componentDidMount() {
         UserService.getAtUser(this.state.atUserId)
             .then(this.onAtUserLoaded)
-            .catch(err => Log.error(err));
+            .catch(err => Log.error(err));        
     }
 
     onAtUserLoaded(user) {
@@ -47,9 +67,14 @@ class BitPage extends React.Component {
             editor: <Editor 
                 bitId={this.state.bitId} 
                 user={user} 
+                onDeleteComplete={this.onDeleteComplete}
                 viewOnly={!user.authenticated}
             /> 
         });
+    }
+
+    onDeleteComplete() {
+        this.props.history.replace('/@' + this.state.atUserId)
     }
 
     render() {

@@ -11,6 +11,7 @@ import {BitPage, CreateBitPage} from './containers/bit';
 import {Footer, Header} from './components/layouts';
 import styled from 'styled-components';
 
+
 const AppWrapper = styled.div`
     min-height: 100vh;
     display: flex;
