@@ -47,7 +47,7 @@ module.exports = {
     historyApiFallback: {
         rewrites: [
           { from: /^\/$/, to: '/index.html' },
-          { from: /^\/u:\S+/, to: '/index.html' }
+          { from: /^\/@\S+/, to: '/index.html' }
         ]
     },
     proxy: {

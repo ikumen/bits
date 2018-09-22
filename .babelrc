@@ -2,8 +2,9 @@
     "presets": ["env", "react"],
     "plugins": [
       [ "transform-runtime", 
-        {"regenerator": true},
-        "transform-es2015-destructuring"
-      ]
-    ]
+        {"regenerator": true}
+      ],
+      "transform-es2015-destructuring",
+      "transform-object-rest-spread"
+  ]
   }
