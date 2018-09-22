@@ -14,7 +14,7 @@ const ActionBar = styled.div`
 `;
 
 const Action = styled.button`
-    font-size: .8rem;
+    font-size: .7rem;
     padding: 3px 12px;
     cursor: pointer;
 
@@ -40,74 +40,62 @@ class Editor extends React.Component {
     constructor(props) {
         super(props);
 
-        this.toggleMode = this.toggleMode.bind(this);
-        this.save = this.save.bind(this);
-        this.delete = this.delete.bind(this);
-        this.onBitLoaded = this.onBitLoaded.bind(this);
+        this.switchMode = this.switchMode.bind(this);
+        this.onSave = this.onSave.bind(this);
+        this.onPropsLoaded = this.onPropsLoaded.bind(this);
 
-        this.state = {
-            viewOnly: props.viewOnly,
-            editMode: false,
-        };
-
+        this.state = {editMode: false}
         this.contentRef = React.createRef();
         this.descriptionRef = React.createRef();
     }
 
-    onBitLoaded(bit) {
+    onPropsLoaded({atUser, bit}) {
         this.setState({
-            bit: bit,
-            draft: {
-                description: bit.description,
-                content: bit.content.trim() === '_' ? '' : bit.content
-            }
+            draft: { description: bit.description, content: bit.content }
         });
-
         this.descriptionRef.current.innerText = bit.description;
         this.contentRef.current.innerHTML = marked(bit.content);
     }
 
     componentDidUpdate(prevProps) {
-        console.log('component did update', this.props)
-        if (this.props.viewOnly !== prevProps.viewOnly) {
-            this.setState({viewOnly: this.props.viewOnly})
+        if (prevProps.bit._id != this.props.bit._id) {
+            this.onPropsLoaded(this.props);
         }
     }
 
     componentDidMount() {
-        BitService.get(this.props.bitId)
-            .then(this.onBitLoaded)
-            .catch(err => Log.error(err));
+        this.onPropsLoaded(this.props);
     }
 
-    save() {
-        /* If in middle of edit, get latest updates, as only toggle 
-        to preview will explicitly updated draft with latest updates */
-        const draft = this.state.editMode ? 
-            this.getLatestEditsAsDraft() : this.state.draft;
-
-        // Create updated bit from original bit, and changes in draft
-        const updatedBit = Object.assign(this.state.bit, draft);
-        BitService.update(updatedBit)
+    /** 
+     * Saves the current draft of description and content. 
+     */
+    onSave() {
+        // Create an dict with original bit data, then update that with
+        // latest changes in draft (e.g. description, content).
+        const {bit, atUser} = this.props;
+        const updatedBit = Object.assign(bit, this.getLatestDraft());
+        BitService.update(atUser._id, updatedBit)
             .then(bit => Log.info('Updated: ', bit))
             .catch(err => Log.error(err))
     }
 
-    delete() {
-        BitService.delete(this.state.bit._id)
-            //TODO: redirect to /@user
-            .then(this.props.onDeleteComplete)
-            .catch(err => Log.error(err))
+    /**
+     * Returns the most up to date draft. 
+     */
+    getLatestDraft() {
+        // If currently editing we need to grab contents of innerText, as 
+        // state.draft only gets explicitly set when we swith to preview mode.
+        return this.state.editMode ? {
+                description: this.descriptionRef.current.innerText,
+                content: this.contentRef.current.innerText
+            } : this.state.draft;
     }
 
-    getLatestEditsAsDraft() {
-        return {
-            description: this.descriptionRef.current.innerText,
-            content: this.contentRef.current.innerText
-        }
-    }
-
-    toggleMode() {
+    /**
+     * Toggles between editor (only if owner) and preview (default) mode.
+     */
+    switchMode() {
         // Switch between edit and view
         const isEditMode = !this.state.editMode;
         this.setState({editMode: isEditMode});
@@ -116,6 +104,7 @@ class Editor extends React.Component {
         const descriptionEl = this.descriptionRef.current;
         const contentEl = this.contentRef.current;
         
+        // Disable/enable contentEditable
         descriptionEl.contentEditable = isEditMode;
         contentEl.contentEditable = isEditMode;
 
@@ -134,19 +123,21 @@ class Editor extends React.Component {
 
 
     render() {
+        const {atUser, bit, onDelete} = this.props;
+
         return <StyledEditor className={this.state.editMode ? 'editor' : 'preview'}>
             <SubHeader>
-                <UserProfile user={this.props.user} />
-                {!this.state.viewOnly && <ActionBar>
-                    <Action onClick={this.delete} className="danger">Delete</Action>
+                <UserProfile atUser={atUser} />
+                {atUser.authenticated && <ActionBar>
+                    <Action onClick={onDelete} className="danger">Delete</Action>
                     &nbsp; &nbsp;
-                    <Action onClick={this.save} hidden={!this.state.editMode}>Save</Action>
-                    <Action onClick={this.toggleMode}>{this.state.editMode ? 'Done' : 'Edit'}</Action>
+                    <Action onClick={this.onSave} hidden={!this.state.editMode}>Save</Action>
+                    <Action onClick={this.switchMode}>{this.state.editMode ? 'Done' : 'Edit'}</Action>
                 </ActionBar>}
             </SubHeader>
             <h1 className="description" ref={this.descriptionRef}></h1>
             <div className="content" ref={this.contentRef}></div>
-        </StyledEditor>
+        </StyledEditor>                
     }
 }
 

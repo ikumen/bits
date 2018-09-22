@@ -42,8 +42,8 @@ class BitPage extends React.Component {
     constructor(props) {
         super(props);
         
-        this.onAtUserLoaded = this.onAtUserLoaded.bind(this);
-        this.onDeleteComplete = this.onDeleteComplete.bind(this);
+        this.onDelete = this.onDelete.bind(this);
+        this.onBitLoaded = this.onBitLoaded.bind(this);
 
         this.state = {
             atUserId: props.match.params.userId,
@@ -52,34 +52,37 @@ class BitPage extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
-        console.log('did update in bitpage', this.props)
+        if (prevProps.match.params.bitId != this.props.match.params.bitId) {
+            const {userId, bitId} = this.props.match.params;
+            this.setState({atUserId: userId, bitId: bitId});
+            this.loadBit(userId, bitId);
+        }
+    }
+
+    loadBit(userId, bitId) {
+        BitService.get(userId, bitId)
+            .then(this.onBitLoaded)
+            .catch(err => Log.error(err));
     }
 
     componentDidMount() {
-        UserService.getAtUser(this.state.atUserId)
-            .then(this.onAtUserLoaded)
-            .catch(err => Log.error(err));        
+        this.loadBit(this.state.atUserId, this.state.bitId);
     }
 
-    onAtUserLoaded(user) {
-        this.setState({
-            atUser: user,
-            editor: <Editor 
-                bitId={this.state.bitId} 
-                user={user} 
-                onDeleteComplete={this.onDeleteComplete}
-                viewOnly={!user.authenticated}
-            /> 
-        });
+    onBitLoaded(resp) {
+        const {bits, ...atUser} = resp;
+        this.setState({bit: bits[0], atUser: atUser});
     }
 
-    onDeleteComplete() {
-        this.props.history.replace('/@' + this.state.atUserId)
+    onDelete() {
+        BitService.delete(this.state.atUser._id, this.state.bit._id)
+            .then(() => this.props.history.replace('/@' + this.state.atUserId))
+            .catch(err => Log.error(err))
     }
 
     render() {
         return <Page>
-            {this.state.editor}
+            {this.state.atUser && <Editor bit={this.state.bit} onDelete={this.onDelete} atUser={this.state.atUser} />}
         </Page>
     }
 }

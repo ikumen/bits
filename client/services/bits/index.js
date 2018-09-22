@@ -5,11 +5,6 @@ const HEADERS = {
     'Accept': 'application/json'
 };
 
-const DEFAULTS = {
-    description: 'Enter description here',
-    content: 'Enter markdown here',
-}
-
 class BitService {
 
     async list(userId) {
@@ -18,19 +13,19 @@ class BitService {
         return await resp.json(); 
     }
 
-    async get(bitId) {
+    async get(userId, bitId) {
         Log.info('Get bit', bitId)
-        let resp = await fetch('/api/bits/' + bitId);
+        let resp = await fetch('/api/@' + userId + '/bits/' + bitId);
         return await resp.json();
     }
 
-    async create() {
+    async create(userId) {
         Log.info('Creating new bit!')
-        let resp = await fetch('/api/bits', {
+        let resp = await fetch('/api/@' + userId + '/bits', {
             method: 'POST',
             body: JSON.stringify({
-                description: DEFAULTS.description,
-                content: DEFAULTS.content,
+                description: 'Enter description here',
+                content: 'Enter markdown here',
                 published: false,
                 published_at: '',
                 tags: []
@@ -40,9 +35,9 @@ class BitService {
         return await resp.json();
     }
 
-    async update(bit) {
+    async update(userId, bit) {
         Log.info('Save bit', bit)
-        let resp = await fetch('/api/bits/' + bit._id, {
+        let resp = await fetch('/api/@' + userId + '/bits/' + bit._id, {
             method: 'PATCH',
             body: JSON.stringify(bit),
             headers: HEADERS
@@ -50,9 +45,9 @@ class BitService {
         return await resp.json();
     }
 
-    async delete(bitId) {
+    async delete(userId, bitId) {
         Log.info('Deleting bit', bitId);
-        let resp = await fetch('/api/bits/' + bitId, {
+        let resp = await fetch('/api/@' + userId + '/bits/' + bitId, {
             method: 'DELETE',
             headers: HEADERS
         });
