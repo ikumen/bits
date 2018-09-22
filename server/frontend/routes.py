@@ -5,9 +5,7 @@ from .. import security
 from ..services import github
 
 
-bp = Blueprint('/', __name__, 
-    static_folder="/Volumes/Data/Projects/python-apps/bits/dist/static",
-    static_url_path="/static")
+bp = Blueprint('/', __name__)
 log = logging.getLogger(__name__)
 
 @bp.route('/', methods=['get'])

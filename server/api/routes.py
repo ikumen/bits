@@ -54,7 +54,6 @@ def api_get_bit(user_id, bit_id):
     """
     try:
         user_with_bit = bit_service.get(user_id, bit_id)
-        print(user_with_bit)
         _set_authenticated_flag(user_with_bit)
         return json_util.dumps(user_with_bit)
     except KeyError as err:
