@@ -24,7 +24,6 @@ const Action = styled.button`
         opacity: .6;
     }
 `;
-        // margin-bottom: 10px;
 
 const StyledEditor = styled.div`
     margin-bottom: 40px;
@@ -69,6 +68,7 @@ class Editor extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
+        console.log('component did update', this.props)
         if (this.props.viewOnly !== prevProps.viewOnly) {
             this.setState({viewOnly: this.props.viewOnly})
         }
@@ -77,7 +77,7 @@ class Editor extends React.Component {
     componentDidMount() {
         BitService.get(this.props.bitId)
             .then(this.onBitLoaded)
-            .catch(err => Log.error(err)); 
+            .catch(err => Log.error(err));
     }
 
     save() {
@@ -96,7 +96,7 @@ class Editor extends React.Component {
     delete() {
         BitService.delete(this.state.bit._id)
             //TODO: redirect to /@user
-            .then(resp => Log.info('deleted', resp))
+            .then(this.props.onDeleteComplete)
             .catch(err => Log.error(err))
     }
 
