@@ -90,7 +90,7 @@ const Footer = () => (
         <div className="contact">
             <a href="https://github.com/ikumen/bits"><i className="icon-github-circled" title="projects"></i></a>
             <a href="https://github.com/ikumen/bits/issues">Contact</a>
-            <a href="/about">About</a>
+            <Link to={{pathname: '/about'}}>About</Link>
         </div>
     </StyledFooter>
 )
