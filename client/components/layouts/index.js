@@ -108,7 +108,7 @@ class Header extends React.Component {
     }
 
     componentDidMount() {
-        console.log('in header didmount')
+        Log.info('Header.componentDidMount():')
         UserService.getCurrentUser()
             .then(this.onCurrentUserLoaded)
             .catch(err => Log.error(err));
@@ -122,7 +122,7 @@ class Header extends React.Component {
 
     createNewBit(evt) {
         if (this.state.user) {
-            BitService.create()
+            BitService.create(this.state.user._id)
                 .then(this.onCreateNewBit)
                 .catch(err => Log.error(err));
         } else {
@@ -139,7 +139,11 @@ class Header extends React.Component {
     render() {
         return <StyledHeader>
         <header>
-            <div className="logo"><a href={this.state.user ? '/@' + this.state.user._id : '/'}><i className="icon-spinner"></i> Bits</a></div>
+            <div className="logo">
+                <Link to={{pathname: this.state.user ? '/@' + this.state.user._id : '/'}}>
+                    <i className="icon-spinner"></i> Bits
+                </Link>
+            </div>
             {this.state.user ?
                 <div className="signin">
                     <a onClick={this.createNewBit}>New Bit</a>

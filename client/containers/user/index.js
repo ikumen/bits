@@ -8,7 +8,7 @@ import {Page, SubHeader} from '../../components/layouts';
 import UserProfile from '../../components/userprofile';
 
 
-const BitList = styled.ul`
+const StyledBitList = styled.ul`
     padding: 0;
     margin-top: 20px;
 `;
@@ -16,56 +16,47 @@ const BitList = styled.ul`
 const Bit = styled.li`
 `;
 
+const BitList = ({user, bits}) => (
+    <StyledBitList> 
+        {bits && bits.map((bit) => 
+            <Bit key={bit._id}>
+                <Link to={{pathname: '/@' + user._id + '/bits/' + bit._id}}>
+                    {bit.description || bit._id}
+                </Link>
+            </Bit>
+        )}
+    </StyledBitList>
+);
+
 class UserPage extends React.Component {
     constructor(props) {
         super(props);
 
         this.onBitsLoaded = this.onBitsLoaded.bind(this);
-        this.onAtUserLoaded = this.onAtUserLoaded.bind(this);
 
         //TODO: check for userId
-
         this.state = {
             atUserId: props.match.params.userId,
         }
-
     }
 
     componentDidMount() {
-        UserService.getAtUser(this.state.atUserId)
-            .then(this.onAtUserLoaded)
-            .catch(err => Log.error(err));
-
         BitService.list(this.state.atUserId)
             .then(this.onBitsLoaded)
             .catch(err => Log.error(err));
     }
 
-    onBitsLoaded(bits) {
-        this.setState({bits: bits.map((bit, i) => {
-            return <Bit key={i}>
-                <Link to={{pathname: '/@' + this.state.atUserId + '/bits/' + bit._id}}>
-                    {bit.description || bit._id}
-                </Link>
-            </Bit>
-        })});
-    }
-
-    onAtUserLoaded(user) {
-        this.setState({
-            atUser: user,
-            atUserProfile: <UserProfile user={user} />
-        });
+    onBitsLoaded(resp) {
+        const {bits, ...user} = resp
+        this.setState({atUser: user, bits: bits});
     }
 
     render() {
         return <Page>
             <SubHeader>
-                {this.state.atUserProfile}
+                <UserProfile atUser={this.state.atUser} />
             </SubHeader>
-            <BitList>
-                {this.state.bits}
-            </BitList>
+            <BitList user={this.state.atUser} bits={this.state.bits} />
         </Page>
 
     }

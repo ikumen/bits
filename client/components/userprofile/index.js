@@ -1,7 +1,8 @@
 import React from 'react';
+import {Link} from 'react-router-dom';
 import styled from 'styled-components';
 
-const Profile = styled.div`
+const StyledProfile = styled.div`
     flex: 1;
     display: flex;
     align-items: center;
@@ -11,10 +12,15 @@ const Profile = styled.div`
     }
 `;
 
-const UserProfile = (props) => (
-    <Profile>
-        <img src={props.user.avatar_url} width='40'/> <a href={'/@' + props.user._id}>{props.user._id}</a>
-    </Profile>
+const UserProfile = ({atUser}) => (
+    <StyledProfile>
+        {atUser && <div>
+            <img src={atUser.avatar_url} width='40'/> 
+            <Link to={{pathname: '/@' + atUser._id}}>
+                {atUser.name ? atUser.name : atUser._id}
+            </Link>
+        </div>}
+    </StyledProfile>
 );
 
 export default UserProfile;
