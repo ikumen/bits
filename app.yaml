@@ -7,21 +7,31 @@ builtins:
 
 libraries:
 - name: ssl
-  version: 2.7
+  version: latest
 
 handlers:
 - url: /static
-  static_dir: static
-  secure: always
-- url: /robots.txt
-  static_files: static/robots.txt
-  upload: static/robots.txt
-- url: /_ah/queue/deferred
-  script: google.appengine.ext.deferred.deferred.application
-  login: admin
+  static_dir: dist/static
   secure: always
 - url: /.*
-  script: main.app
+  script: run.app
   secure: always
 
-
+skip_files:
+- ^(.*/)?.*/assets/.*$
+- ^(.*/)?.*/build/.*$
+- ^(.*/)?.*/test/.*$
+- ^(.*/)?.*/templates/.*$
+- ^(.*/)?.*/node_modules/.*$
+- ^(client/.*)
+- ^(assets/.*)
+- ^(build/.*)
+- ^(test/.*)
+- ^(templates/.*)
+- ^(node_modules/.*)
+- ^(.*/)?#.*#$
+- ^(.*/)?.*~$
+- ^(.*/)?.*\.DS_Store$
+- ^(.*/)?.*\.py[co]$
+- ^(.*/)?.*/RCS/.*$
+- ^(.*/)?\..*$

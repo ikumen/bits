@@ -1,98 +1,182 @@
-# from abc import abstractmethod
-# from helpers import JSONSerializable
+import logging
+
+from collections import namedtuple
+from google.appengine.ext import ndb
+from google.net.proto.ProtocolBuffer import ProtocolBufferDecodeError
+from .helpers import JSONSerializable
 
 
+class GAEModel(JSONSerializable, ndb.Model):
+    _default_indexed = False
+    __model__ = None
 
-# class Dao(object):
+    def __init__(self, **kwargs):
+        super(GAEModel, self).__init__(**kwargs)
+        if self.__model__ is None:
+            raise TypeError('Model (__model__) is not defined!')
 
-#     def __init__(self, db, **kwargs):
-#         self.__db = db
-#         if not self.__model__.__collection_name__:
-#             raise ValueError('__collection_name__ is not set for %s' % (self.__model__))
-#         self._collection = db[self.__model__.__collection_name__]
+    @classmethod
+    def id_to_key(cls, id):
+        """Helper for converting id to model key.
+        https://cloud.google.com/appengine/docs/standard/python/ndb/creating-entity-keys
 
-#     def _check_type(self, model):
-#         if not isinstance(model, self.__model__):
-#             raise ValueError('%s is not type %s' % (model, self.__model__))
+        @param id identifier to convert to a key
+        """
+        return ndb.Key(cls, id)
 
-#     def list(self, **filters):
-#         return self._collection.find()
+    @classmethod
+    def urlsafe_to_key(cls, urlsafe_key):
+        """Helper for converting urlsafe key to model key.
+        https://cloud.google.com/appengine/docs/standard/python/ndb/creating-entity-keys
 
-#     def get(self, id):
-#         return self._collection.find_one({'_id': id})
+        @param urlsafe_key urlsafe key string to convert to a key
+        """
+        return ndb.Key(urlsafe=urlsafe_key)
 
-#     def save(self, model):
-#         self._check_type(model)
-#         self._collection.insert_one(model.to_dict(), )
-#         return model  
+    @classmethod
+    def _isinstance(cls, model, raise_error=True):
+        """Check if given model is of same type as implementing class.
 
-#     def _upsert(self, model)   
+        @param model the model instance to check
+        @param raise_error indicate if we should raise an error on type mismatch
+        @returns True if model is instance of given class
+        """
+        result = isinstance(model, cls)
+        if not result and raise_error:
+            raise ValueError('%s is not of type %s' % (model, cls))
+        return result
 
-#     @abstractmethod
-#     def update(self, id, **kwargs):
-#         model = self.get(id)
-#         if model is None:
-#             raise LookupError('Unable to find model %s to update' % (id))
-#         for k,v in kwargs.items():
-#             setattr(model, k, v)
+    @classmethod
+    def create(cls, **kwargs):
+        """Creates a new instance of implementing class and saves it.
+
+        @param kwargs dictionary of params for creating new instance
+        @returns saved instance
+        """
+        instance = cls(**kwargs)
+        instance.put()
+        return instance
+
+    @classmethod
+    def list(cls, parent_key=None, limit=50):
+        """Returns all instances of implementing class.
+
+        @param parent_key optional ancestor key to filter by
+        @param limit optional fetch limit, defaults to 50
+        """
+        query = cls.query() if parent_key is None else cls.query(ancestor=ndb.Key(urlsafe=parent_key))
+        return query.fetch(limit)
+
+    @classmethod
+    def get_by_key(cls, key):
+        """Returns instance of implementing class identified by given urlsafe key.
+        Key should be in urlsafe format, see:
+        https://cloud.google.com/appengine/docs/python/ndb/creating-entities#Python_retrieving_entities
+
+        @param key identifying key
+        """
+        try:
+            return ndb.Key(urlsafe=key).get()
+        except ProtocolBufferDecodeError:
+            return None
+
+    @classmethod
+    def get_by_id(cls, id):
+        """Returns instance of implementing class identified by given id.
         
+        @param id identifier
+        """
+        try:
+            return ndb.Key(cls, id).get()
+        except ProtocolBufferDecodeError:
+            return None
 
-#     def delete(self, id):
-#         self._collection.delete_one({'_id': id})
-
-
-# class BaseModel(JSONSerializable, object):
-#     __collection_name__ = None
-
-#     def to_dict(self):
-#         return self.__dict__
-
-#     def to_json(self):
-#         return self.to_dict()
-
-#     def __repr__(self):
-#         return str(self.to_dict())
-
-
-# class User(BaseModel):
-#     __collection_name__ = 'users'
-
-#     def __init__(self, id, name=None, oauth=None):
-#         self._id = id
-#         self.name = name
-#         self.oauth = oauth
+    @classmethod
+    def update(cls, id, **kwargs):
+        """update this instance to datastore.
+        """
+        upsert = kwargs.pop('upsert', False)
+        model = cls.get_by_id(id)
+        if model is None:
+            if upsert is False:
+                return None
+            model = cls(id=id, **kwargs)
+        else:        
+            for k,v in kwargs.items():
+                setattr(model, k, v)
+        model.put()
+        return model
 
 
-# class UserDao(Dao):
-#     """User Dao implementation."""
-#     __model__ = User
+    @classmethod
+    def delete(cls, id):
+        """Delete this instance from datastore.
+        """
+        cls.get_by_id(id).key.delete()
 
-#     def update(self, ):
-#         self._check_type(up_user)
-#         user = self.get(up_user.id)
-#         if user is None:
-#             raise LookupError('Unable to find user %s' % (user.id))
-#         user.oauth = up_user.oauth
-#         self._collection.up
+    def get_key(self):
+        """Returns the key for this instance.
+        https://cloud.google.com/appengine/docs/standard/python/ndb/creating-entity-keys
+        """
+        return self.key.urlsafe()
 
-#     def upsert(self, user):
-#         if self.exists(user):
-#             self.update(user)
+    def get_parent_key(self):
+        """Returns this instance's parent key.
+        """
+        return self.key.parent().urlsafe()
 
 
-# class Bit(BaseModel):
-#     __collection_name__ = 'bits'
+    @property
+    def id(self):
+        return self.key.id()
 
-#     def __init__(self, id, user_id, title, content=None, created_at=None, updated_at=None):
-#         self._id = id
-#         self.title = title
-#         self.content = content
-#         self.created_at = created_at
-#         self.updated_at = updated_at
-#         self.user_id = user_id
-    
+    def to_json(self):
+        rv = self.to_dict()
+        rv['id'] = self.id
+        return rv
 
-# class BitDao(Dao):
-#     __model__ = Bit
+class DescendentModel(GAEModel):
+    __parent__ = None
+    def __init__(self, **kwargs):
+        super(DescendentModel, self).__init__(**kwargs)
+        if self.__parent__ is None:
+            raise TypeError('Parent is not defined!')
+
+    """For models that require an ancestor.
+    """
+    def _pre_put_hook(self):
+        """Make sure all descendents have an ancestors.
+        """
+        if not isinstance(self.key.parent, self.__parent__):
+            raise ValueError('Descendents require an ancestor (e.g. parent)')
+
+    def to_json(self):
+        rv = super(DescendentModel, self).to_json()
+        rv['id'] = self.key.parent.id()
+        return rv
+
+
+class Setting(GAEModel):
+    value = ndb.StringProperty(required=True, indexed=True)
+        
+class User(GAEModel):
+    name = ndb.StringProperty()
+    avatar_url = ndb.StringProperty()
+    oauth = ndb.StringProperty(required=True, indexed=True)
+
+class Bit(GAEModel):
+    __parent__ = User
+
+    title = ndb.StringProperty(required=True)
+    content = ndb.StringProperty(required=True)
+    tags = ndb.StringProperty(repeated=True)
+    published_at = ndb.DateTimeProperty(indexed=True)
+    created_at = ndb.DateTimeProperty(auto_now_add=True)
+    updated_at = ndb.DateTimeProperty(auto_now=True)
+
+    @classmethod
+    def update(cls, user_id, id, **kwargs):
+        user_key = User.id_to_key(user_id)
+        return super(Bit, cls).update(id, parent=user_key, **kwargs)
 
 
