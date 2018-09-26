@@ -1,4 +1,5 @@
 from functools import wraps
+from google.appengine.ext import ndb
 from flask import request, json, jsonify, session, redirect
 
 MIME_TYPE_APPLICATION_JSON = 'application/json'
@@ -28,4 +29,6 @@ class JSONSerializableEncoder(json.JSONEncoder):
     def default(self, obj): # pylint: disable=E0202
         if isinstance(obj, JSONSerializable):
             return obj.to_json()
+        if isinstance(obj, ndb.Key):
+            return obj.id()
         return super(JSONSerializableEncoder, self).default(obj)

@@ -26,7 +26,7 @@ py==1.6.0
 pylint==1.9.2
 pymongo==3.7.1
 pytest==3.7.4
-requests==2.19.1
+requests==2.3.0
 scandir==1.9.0
 singledispatch==3.4.0.3
 six==1.11.0
