@@ -2,7 +2,7 @@ import logging
 
 from flask import session, jsonify, redirect
 from functools import wraps
-from services import github, user_service
+from services import github, UserService
 from helpers import handle_error
 
 
@@ -13,10 +13,7 @@ OAUTH_ATTR_NAME = 'oauth'
 
 @github.access_token_getter
 def token_getter():
-    oauth_token = session.get(OAUTH_ATTR_NAME)
-    if oauth_token is None:
-        oauth_token = session.get(USER_SESS_ATTR, {}).get(OAUTH_ATTR_NAME)
-    return oauth_token
+    return session.get(OAUTH_ATTR_NAME)
 
 
 def authorized(f):
@@ -61,26 +58,21 @@ def post_authorization(f):
 
         # remove temporary token
         session.pop(OAUTH_ATTR_NAME)
+
         # persists/update user associated with this token
+        user = UserService.update(
+            id=user_info['login'], 
+            name=user_info['name'],
+            avatar_url=user_info['avatar_url'],
+            oauth=oauth_token,
+            upsert=True)
 
-        user = user_service.get(user_info['login'])
-        if user is None:
-            user = {
-                '_id': user_info['login'], 
-                'name': user_info['name'],
-                'avatar_url': user_info['avatar_url'],
-                'oauth': oauth_token
-            }
-            user_service.save(user)
-        else:           
-            user.update({
-                'name': user_info['name'],
-                'avatar_url': user_info['avatar_url'],
-                'oauth': oauth_token
-            })
-            user_service.update(user['_id'], **user)
-
+        # put user back in session
+        # NOTE: oauth is removed from user before serialized into session
+        # see User.to_json for details. Use session[OAUTH_ATTR_NAME] for
+        # authenticated user's oauth token
         session[USER_SESS_ATTR] = user
+        session[OAUTH_ATTR_NAME] = user.oauth
         return f(user, **kwargs)
     return decorated
 
