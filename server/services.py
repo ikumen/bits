@@ -121,7 +121,7 @@ class BitService(object):
         return {'tags': tags, 'published_at': published_at}
 
     @classmethod
-    def _build_gist_data(cls, bit_data=BLANK_BIT):
+    def _build_gist_data(cls, bit_data):
         return {
             'description': bit_data.get('title',''),
             'files': {
@@ -132,22 +132,22 @@ class BitService(object):
     @classmethod
     def _denormalize_meta(cls, bit_data):
         return  '---\n' \
-                + 'title:' + bit_data.get('title', '') + '\n' \
-                + 'tags:' + ','.join(bit_data.get('tags', '')) + '\n' \
-                + 'published_at:' + bit_data.get('published_at','') + '\n' \
+                + 'title: ' + bit_data.get('title', '') + '\n' \
+                + 'tags: ' + ','.join(bit_data.get('tags', '')) + '\n' \
+                + 'published_at: ' + bit_data.get('published_at','') + '\n' \
                 + '---\n'
     
     @classmethod
     def update(cls, id, **kwargs):
         # convert bit -> gist data -> github -> gist -> bit model -> ndb
-        gist_data = cls._build_gist_data(**kwargs)
+        gist_data = cls._build_gist_data(kwargs)
         gist = cls._patch_to_github(id, gist_data)
         return cls._to_bit_from_gist(gist)
 
     @classmethod
     def create(cls, **kwargs):
         # convert bit -> gist data -> github -> gist -> bit model -> ndb
-        gist_data = cls._build_gist_data(**kwargs)
+        gist_data = cls._build_gist_data(kwargs)
         gist = cls._post_to_github(gist_data)
         return cls._to_bit_from_gist(gist, upsert=True)
 

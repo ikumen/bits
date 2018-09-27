@@ -115,14 +115,14 @@ class Header extends React.Component {
     }
 
     onCurrentUserLoaded(user) {
-        if (user && user.authenticated) {
+        if (user) {
             this.setState({user: user});
         }
     }
 
     createNewBit(evt) {
         if (this.state.user) {
-            BitService.create(this.state.user._id)
+            BitService.create(this.state.user.id)
                 .then(this.onCreateNewBit)
                 .catch(err => Log.error(err));
         } else {
@@ -132,7 +132,7 @@ class Header extends React.Component {
 
     onCreateNewBit(bit) {
         Log.debug('Created bit:', bit);
-        const url = '/@' + this.state.user._id + '/bits/' + bit._id;
+        const url = '/@' + this.state.user.id + '/bits/' + bit.id;
         this.props.history.push(url);
     }
 
@@ -140,7 +140,7 @@ class Header extends React.Component {
         return <StyledHeader>
         <header>
             <div className="logo">
-                <Link to={{pathname: this.state.user ? '/@' + this.state.user._id : '/'}}>
+                <Link to={{pathname: this.state.user ? '/@' + this.state.user.id : '/'}}>
                     <i className="icon-spinner"></i> Bits
                 </Link>
             </div>

@@ -19,9 +19,9 @@ const Bit = styled.li`
 const BitList = ({user, bits}) => (
     <StyledBitList> 
         {bits && bits.map((bit) => 
-            <Bit key={bit._id}>
-                <Link to={{pathname: '/@' + user._id + '/bits/' + bit._id}}>
-                    {bit.description || bit._id}
+            <Bit key={bit.id}>
+                <Link to={{pathname: '/@' + user.id + '/bits/' + bit.id}}>
+                    {bit.title || 'New Bit (' + bit.created_at + ')'}
                 </Link>
             </Bit>
         )}
@@ -31,24 +31,18 @@ const BitList = ({user, bits}) => (
 class UserPage extends React.Component {
     constructor(props) {
         super(props);
-
-        this.onBitsLoaded = this.onBitsLoaded.bind(this);
-
         //TODO: check for userId
         this.state = {
-            atUserId: props.match.params.userId,
+            atUserId: props.match.params.atUserId,
         }
     }
 
     componentDidMount() {
-        BitService.list(this.state.atUserId)
-            .then(this.onBitsLoaded)
+        Promise.all([
+                UserService.getAtUser(this.state.atUserId),
+                BitService.list(this.state.atUserId)])
+            .then(([atUser, bits]) => this.setState({atUser: atUser, bits: bits}))
             .catch(err => Log.error(err));
-    }
-
-    onBitsLoaded(resp) {
-        const {bits, ...user} = resp
-        this.setState({atUser: user, bits: bits});
     }
 
     render() {

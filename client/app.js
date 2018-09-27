@@ -24,8 +24,8 @@ const App = () => (
             <Route exact={true} path="/" component={AboutPage} />
             <Route exact={true} path="/about" component={AboutPage} />
             <Route exact={true} path="/bits/new" component={CreateBitPage} />
-            <Route exact path={`/@:userId`} component={UserPage} />
-            <Route path={`/@:userId/bits/:bitId`} component={BitPage} />
+            <Route exact path={`/@:atUserId`} component={UserPage} />
+            <Route path={`/@:atUserId/bits/:bitId`} component={BitPage} />
             <Route path="*" component={Footer} />
         </AppWrapper>  
     </BrowserRouter>

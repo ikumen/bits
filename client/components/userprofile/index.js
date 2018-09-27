@@ -16,8 +16,8 @@ const UserProfile = ({atUser}) => (
     <StyledProfile>
         {atUser && <div>
             <img src={atUser.avatar_url} width='40'/> 
-            <Link to={{pathname: '/@' + atUser._id}}>
-                {atUser.name ? atUser.name : atUser._id}
+            <Link to={{pathname: '/@' + atUser.id}}>
+                {atUser.name ? atUser.name : atUser.id}
             </Link>
         </div>}
     </StyledProfile>
