@@ -8,6 +8,7 @@ const StyledProfile = styled.div`
     align-items: center;
 
     img {
+        width: 40px;
         margin-right: 10px;
     }
 `;
@@ -15,9 +16,9 @@ const StyledProfile = styled.div`
 const UserProfile = ({atUser}) => (
     <StyledProfile>
         {atUser && <div>
-            <img src={atUser.avatar_url} width='40'/> 
-            <Link to={{pathname: '/@' + atUser._id}}>
-                {atUser.name ? atUser.name : atUser._id}
+            <img src={atUser.avatar_url}/> 
+            <Link to={{pathname: '/@' + atUser.id}}>
+                {atUser.name ? atUser.name : atUser.id}
             </Link>
         </div>}
     </StyledProfile>

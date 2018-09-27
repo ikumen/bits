@@ -11,7 +11,7 @@ log = logging.getLogger(__name__)
 @bp.route('/', methods=['get'])
 def home():
     if 'user' in session:
-        return redirect('/@' + session['user']['_id'])
+        return redirect('/@' + session['user']['id'])
     return render_template('index.html')
 
 
@@ -24,10 +24,9 @@ def index(user_id=None, bit_id=None):
 
 @bp.route('/signin')
 @security.authorization_start
-def signin():
+def signin(user):
     log.debug('Found authenticated user, redirect to home!')
-    user = security.current_user()
-    return redirect('/@' + user['_id'])
+    return redirect('/@' + user['id'])
 
 
 @bp.route('/signout', methods=['get'])
@@ -41,4 +40,4 @@ def signout():
 @github.authorized_handler
 @security.post_authorization
 def authorized(user):
-    return redirect('/@' + user['_id'])
+    return redirect('/@' + user['id'])

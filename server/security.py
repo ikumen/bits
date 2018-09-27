@@ -34,10 +34,11 @@ def authorization_start(f):
     """Decorator for method that starts authorization."""
     @wraps(f)
     def decorated(*args, **kwargs):
-        if current_user() is None:
+        user = current_user()
+        if not user:
             log.debug('User is not authenticated, starting authentication!')
             return github.authorize(scope='read:user,gist')
-        return f(*args, **kwargs)
+        return f(user, **kwargs)
     return decorated
 
 
@@ -45,7 +46,7 @@ def post_authorization(f):
     """Decorator for method that handles authorization."""
     @wraps(f)
     def decorated(oauth_token, **kwargs):
-        if oauth_token is None:
+        if not oauth_token:
             return handle_error(message='Authorization failed!', status=401)
 
         # temporarily save access token

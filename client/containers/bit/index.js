@@ -43,25 +43,26 @@ class BitPage extends React.Component {
         super(props);
         
         this.onDelete = this.onDelete.bind(this);
-        this.onBitLoaded = this.onBitLoaded.bind(this);
 
         this.state = {
-            atUserId: props.match.params.userId,
+            atUserId: props.match.params.atUserId,
             bitId: props.match.params.bitId
         }
     }
 
     componentDidUpdate(prevProps) {
         if (prevProps.match.params.bitId != this.props.match.params.bitId) {
-            const {userId, bitId} = this.props.match.params;
-            this.setState({atUserId: userId, bitId: bitId});
-            this.loadBit(userId, bitId);
+            const {atUserId, bitId} = this.props.match.params;
+            this.setState({atUserId: atUserId, bitId: bitId});
+            this.loadBit(atUserId, bitId);
         }
     }
 
-    loadBit(userId, bitId) {
-        BitService.get(userId, bitId)
-            .then(this.onBitLoaded)
+    loadBit(atUserId, bitId) {
+        Promise.all([
+                UserService.getAtUser(atUserId),
+                BitService.get(bitId)])
+            .then(([atUser, bit]) => this.setState({atUser: atUser, bit: bit}))
             .catch(err => Log.error(err));
     }
 
@@ -69,13 +70,8 @@ class BitPage extends React.Component {
         this.loadBit(this.state.atUserId, this.state.bitId);
     }
 
-    onBitLoaded(resp) {
-        const {bits, ...atUser} = resp;
-        this.setState({bit: bits[0], atUser: atUser});
-    }
-
     onDelete() {
-        BitService.delete(this.state.atUser._id, this.state.bit._id)
+        BitService.delete(this.state.bit.id)
             .then(() => this.props.history.replace('/@' + this.state.atUserId))
             .catch(err => Log.error(err))
     }
