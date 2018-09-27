@@ -128,7 +128,9 @@ class Bit(GAEModel):
         return super(cls, Bit).update(id, user=User.id_to_key(user_id), **kwargs)
 
     @classmethod
-    def list(cls, limit=50):
-        query = cls.query()
+    def list(cls, user_id, published_only=True, limit=50):
+        query = cls.query().filter(cls.user == User.id_to_key(user_id))
+        if published_only:
+            query = query.filter(cls.published == True)
         return query.order(cls.published, -cls.published_at, cls.title).fetch(limit)
 
