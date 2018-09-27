@@ -19,9 +19,9 @@ const Bit = styled.li`
 `;
 
 const StyledDate = styled.span`
-    font-size: .9rem;
-    font-family: sans-serif;
-    font-weight: 300;
+    font-size: .8rem;
+    font-weight: 400;
+    font-family: 'Courier New';
     opacity: .3;
     margin-right: 2px;
 `;
@@ -31,7 +31,11 @@ const BitList = ({user, bits}) => {
     return <StyledBitList> 
         {bits && bits.map((bit) => 
             <Bit key={bit.id}>
-                <StyledDate>{Utils.formatDateString(bit.created_at)} &raquo; </StyledDate>
+                {bit.published_at ? 
+                    <StyledDate>{Utils.formatDateString(bit.created_at)} &raquo; </StyledDate>
+                    :
+                    <StyledDate>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Draft &raquo; </StyledDate>
+                }
                 <Link to={{pathname: '/@' + user.id + '/bits/' + bit.id}}>
                      {bit.title || 'New Bit '}
                 </Link>

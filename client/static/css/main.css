@@ -1,7 +1,9 @@
 html {
     box-sizing: border-box;
-    font-family: Arial,"Helvetica Neue",Helvetica,sans-serif;
-    font-weight: 400;
+    font-family: Helvetica,sans-serif;
+    /* font-family: 'Roboto Mono', monospace; */
+    /* font-family: 'Overpass Mono', monospace; */
+    font-weight: 300;
     line-height: 1.6;
     font-size: 18px;
 }

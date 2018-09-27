@@ -67,7 +67,7 @@ const StyledFooter = styled.div`
     display: flex;
     border-top: 1px solid #ddd;
     padding: 6px 0px 12px 0px;
-    font-size: .9rem;
+    font-size: .8rem;
     color: #666;
     flex-direction: row;
 
