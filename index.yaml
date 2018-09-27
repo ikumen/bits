@@ -16,6 +16,24 @@ indexes:
   - name: title
 
 - kind: Bit
+  properties:
+  - name: published
+  - name: published_at
+    direction: desc
+  - name: title
+
+- kind: Bit
+  properties:
+  - name: published_at
+  - name: title
+
+- kind: Bit
+  properties:
+  - name: published_at
+    direction: desc
+  - name: title
+
+- kind: Bit
   ancestor: yes
   properties:
   - name: content
