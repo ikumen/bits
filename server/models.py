@@ -115,8 +115,8 @@ class User(GAEModel):
 
 class Bit(GAEModel):
     user = ndb.KeyProperty(required=True, kind=User)
-    title = ndb.StringProperty(required=True)
-    content = ndb.StringProperty(required=True)
+    title = ndb.StringProperty(required=True, default='')
+    content = ndb.TextProperty(required=True, default='')
     tags = ndb.StringProperty(repeated=True)
     published_at = ndb.DateTimeProperty(indexed=True)
     created_at = ndb.DateTimeProperty(auto_now_add=True)
