@@ -29,7 +29,6 @@ const Action = styled.button`
 const StyledEditor = styled.div`
     padding: 0;
     margin: 0;
-    margin-bottom: 60px;
     &.editor .content, &.editor .title, &.editor .tags, &.editor .publishedAt  {
         outline: none;
         opacity: 1;
@@ -116,8 +115,8 @@ class Editor extends React.Component {
             title: this.titleRef.current.innerText,
             content: this.contentRef.current.innerText,
             tags: this.tagsRef.current.innerText,
-            published_at: this.publishedAtRef.current.innerText.trim() === '' ?
-                'Draft' : this.publishedAtRef.current.innerText
+            published_at: this.publishedAtRef.current.innerText === '' ?
+                '' : this.publishedAtRef.current.innerText
         }
     }
 
@@ -136,7 +135,7 @@ class Editor extends React.Component {
             this.contentRef.current.focus();
         } else {
             this.setState({draft: this.getDraftFromContentEditables()});
-            this.publishedAtRef.current.innerText = draft.published_at === '' ? 'Draft' : draft.published_at; 
+            this.publishedAtRef.current.innerText = this.publishedAtRef.current.innerText.trim() === '' ? 'Draft' : this.publishedAtRef.current.innerText; 
             this.contentRef.current.innerHTML = marked(this.contentRef.current.innerText);
         }
     }

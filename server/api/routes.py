@@ -15,8 +15,11 @@ log = logging.getLogger(__name__)
 def list_bits(user_id):
     """Return bits for given user.
     """
-    bits = BitService.list(user_id)
-    return jsonify(bits)
+    auth_user = current_user()
+    if auth_user and auth_user['id'] == user_id:
+        return jsonify(BitService.list(user_id, published_only=False))
+    else:
+        return jsonify(BitService.list(user_id))
 
 
 @bp.route('/bits/<bit_id>', methods=['patch'])

@@ -119,6 +119,7 @@ class Bit(GAEModel):
     content = ndb.TextProperty(required=True, default='')
     tags = ndb.StringProperty(repeated=True)
     published_at = ndb.DateTimeProperty(indexed=True)
+    published = ndb.ComputedProperty(lambda self: self.published_at is not None)
     created_at = ndb.DateTimeProperty(auto_now_add=True)
     updated_at = ndb.DateTimeProperty(auto_now=True)
 
@@ -126,4 +127,10 @@ class Bit(GAEModel):
     def update(cls, id, user_id, **kwargs):
         return super(cls, Bit).update(id, user=User.id_to_key(user_id), **kwargs)
 
+    @classmethod
+    def list(cls, user_id, published_only=True, limit=50):
+        query = cls.query().filter(cls.user == User.id_to_key(user_id))
+        if published_only:
+            query = query.filter(cls.published == True)
+        return query.order(cls.published, -cls.published_at, cls.title).fetch(limit)
 

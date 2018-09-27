@@ -14,7 +14,7 @@ const SubHeader = styled.div`
 const Page = styled.div`
     width: 100%;
     padding: 0;
-    margin: 80px auto 0;
+    margin: 80px auto 60px;
     flex: 1;
 `;
 

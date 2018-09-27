@@ -152,8 +152,8 @@ class BitService(object):
         return cls._to_bit_from_gist(gist, upsert=True)
 
     @classmethod
-    def list(cls, user_id):
-        return cls.__model__.list()
+    def list(cls, user_id, **kwargs):
+        return cls.__model__.list(user_id, **kwargs)
 
     @classmethod
     def delete(cls, id):

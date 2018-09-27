@@ -1,7 +1,9 @@
 import Log from '../logger';
+import Service from '../../services';
 
-class UserService {
+class UserService extends Service {
     constructor() {
+        super()
         this.getCurrentUser = this.getCurrentUser.bind(this);
         this.atUsers = {}
     }
@@ -9,30 +11,26 @@ class UserService {
     async getCurrentUser() {
         if (!this.user) {
             Log.info('Fetching user from backend!')
-            this.user = await fetch('/api/user')
-                .then(this.parseResponse)
-                .catch(err => err.status == 401 ? false : err)
-                .catch(this.onError);
+            return await fetch('/api/user')
+                .then(this.status)
+                .then(this.json)
+                .catch(err => Log.error(err));
         }
         return this.user;
     }
 
     async getAtUser(userId) {
         if (!this.atUsers[userId]) {
-            this.atUsers[userId] = await fetch('/api/@' + userId)
-                .then(this.parseResponse)
-                .catch(this.onError);
+            return await fetch('/api/@' + userId)
+                .then(this.status)
+                .then(this.json)
+                .then(user => {
+                    this.atUsers[userId] = user;
+                    return user;
+                })
+                .catch(err => Log.error(err));
         }
         return this.atUsers[userId];
-    }
-
-    async parseResponse(resp) {
-        return await resp.json();
-    }
-
-    onError(err) {
-        Log.info(err);
-        return err;
     }
 }
 
