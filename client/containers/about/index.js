@@ -17,7 +17,7 @@ class AboutPage extends React.Component {
     }
 
     onCurrentUserLoaded(user) {
-        if (!user.authenticated) {
+        if (user) {
             this.setState({showSignin: true});
         }
     }
