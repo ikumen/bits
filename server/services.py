@@ -112,7 +112,7 @@ class BitService(object):
             if not t:
                 continue
             if t.startswith('tags:'):
-                tags = filter(None, re.split(',\s+', t[5:].strip()))
+                tags = filter(None, re.split(',\s*', t[5:].strip()))
             elif t.startswith('published_at:'):
                 t = t[13:].strip()
                 published_at = t or None
