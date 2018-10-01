@@ -1,6 +1,6 @@
 export default (function() {
     return {
-        formatDateString: function(s) {
+        formatDateString: function(s, opts) {
             if (s != null && s !== undefined && s !== '') {
                 const d = new Date(s);
                 const mon = d.getMonth()+1;
@@ -9,7 +9,7 @@ export default (function() {
                     (mon < 10 ? '0' : '') + mon + '-' +
                     (day < 10 ? '0' : '') + day;
             } else {
-                return '';
+                return opts && opts.default ? opts.default : '';
             }
         }
     }

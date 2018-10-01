@@ -18,6 +18,7 @@ def home():
 @bp.route('/about', methods=['get'])
 @bp.route('/@<user_id>', methods=['get'])
 @bp.route('/@<user_id>/bits/<bit_id>', methods=['get'])
+@bp.route('/@<user_id>/bits/<bit_id>/edit', methods=['get'])
 def index(user_id=None, bit_id=None):
     return render_template('index.html')    
 

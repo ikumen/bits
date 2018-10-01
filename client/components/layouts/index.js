@@ -132,7 +132,7 @@ class Header extends React.Component {
 
     onCreateNewBit(bit) {
         Log.debug('Created bit:', bit);
-        const url = '/@' + this.state.user.id + '/bits/' + bit.id;
+        const url = '/@' + this.state.user.id + '/bits/' + bit.id + '/edit';
         this.props.history.push(url);
     }
 
