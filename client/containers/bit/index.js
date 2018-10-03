@@ -43,19 +43,23 @@ class BitPage extends React.Component {
         super(props);
         
         this.onDelete = this.onDelete.bind(this);
+        this.switchMode = this.switchMode.bind(this);
 
         this.state = {
             atUserId: props.match.params.atUserId,
-            bitId: props.match.params.bitId
+            bitId: props.match.params.bitId,
+            editMode: props.match.params.edit === 'edit'
         }
     }
 
     componentDidUpdate(prevProps) {
         if (prevProps.match.params.bitId != this.props.match.params.bitId) {
             const {atUserId, bitId} = this.props.match.params;
-            this.setState({atUserId: atUserId, bitId: bitId});
+            this.setState({atUserId: atUserId, bitId: bitId, editMode: this.props.match.params.edit === 'edit'});
             this.loadBit(atUserId, bitId);
-        }
+        } else if (prevProps.match.params.edit !== this.props.match.params.edit) {
+            this.setState({editMode: this.props.match.params.edit === 'edit'})
+        }        
     }
 
     loadBit(atUserId, bitId) {
@@ -64,6 +68,15 @@ class BitPage extends React.Component {
                 BitService.get(bitId)])
             .then(([atUser, bit]) => this.setState({atUser: atUser, bit: bit}))
             .catch(err => Log.error(err));
+    }
+
+    switchMode() {
+        const viewUrl = '/@' + this.state.atUserId + '/bits/' + this.state.bitId;
+        if (this.state.editMode) {
+            this.props.history.push(viewUrl)
+        } else {
+            this.props.history.push(viewUrl + '/edit')
+        }
     }
 
     componentDidMount() {
@@ -78,7 +91,14 @@ class BitPage extends React.Component {
 
     render() {
         return <Page>
-            {this.state.atUser && <Editor bit={this.state.bit} onDelete={this.onDelete} atUser={this.state.atUser} />}
+            {this.state.atUser && 
+                <Editor bit={this.state.bit} 
+                    onDelete={this.onDelete} 
+                    atUser={this.state.atUser} 
+                    editMode={this.state.editMode && this.state.atUser.is_auth}
+                    switchMode={this.switchMode}
+                />
+            }
         </Page>
     }
 }

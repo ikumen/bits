@@ -1,4 +1,5 @@
 import React from 'react';
+import {Link} from 'react-router-dom';
 import BitService from '../../services/bits';
 import marked from 'marked';
 import Log from '../../services/logger';
@@ -44,10 +45,14 @@ const StyledEditor = styled.div`
         display: flex;
         flex-direction: row;
     }
-    & .tags, & .publishedAt, & .spacer {
+    & .spacer {
         flex: 1;
     }
+    & .publishedAt {
+        flex: 9;
+    }
     & .tags {
+        flex: 20;
         text-align: right;
     }
     &.preview .meta {
@@ -56,22 +61,22 @@ const StyledEditor = styled.div`
 `;
 
 
+
 class Editor extends React.Component {
     constructor(props) {
         super(props);
 
-        this.switchMode = this.switchMode.bind(this);
+        this.onSwitchMode = this.onSwitchMode.bind(this);
         this.onSave = this.onSave.bind(this);
         this.onPropsLoaded = this.onPropsLoaded.bind(this);
 
-        this.state = {editMode: false}
         this.contentRef = React.createRef();
         this.titleRef = React.createRef();
         this.tagsRef = React.createRef();
         this.publishedAtRef = React.createRef();
     }
 
-    onPropsLoaded({atUser, bit}) {
+    onPropsLoaded({atUser, bit, editMode}) {
         const draft = {
             title: bit.title, 
             content: bit.content,
@@ -80,14 +85,31 @@ class Editor extends React.Component {
         }
         this.setState({draft: draft});
         this.titleRef.current.innerText = draft.title;
-        this.contentRef.current.innerHTML = marked(draft.content);
-        this.tagsRef.current.innerText = draft.tags;
-        this.publishedAtRef.current.innerText = draft.published_at === '' ? 'Draft' : draft.published_at;
+
+        if (editMode) {
+            this.contentRef.current.innerText = draft.content;
+            this.publishedAtRef.current.innerText = draft.published_at;
+            this.tagsRef.current.innerText = draft.tags;
+        } else {
+            this.contentRef.current.innerHTML = marked(draft.content);
+            this.publishedAtRef.current.innerHTML = this.formatPublishedDate(draft.published_at === '' ? 'Draft' : draft.published_at);
+            this.tagsRef.current.innerHTML = this.formatTags(draft.tags);
+        }
+    }
+
+    formatTags(tags) {
+        return '<div><i class="icon-tags"></i> ' + tags + '</div>'
+    }
+
+    formatPublishedDate(pubdate) {
+        return '<time dateTime="' + pubdate + '"><i class="icon-calendar"></i> ' + pubdate + '</time>';
     }
 
     componentDidUpdate(prevProps) {
         if (prevProps.bit.id != this.props.bit.id) {
             this.onPropsLoaded(this.props);
+        } else if (prevProps.editMode !== this.props.editMode) {
+            this.onSwitchMode(this.props.editMode);
         }
     }
 
@@ -101,8 +123,8 @@ class Editor extends React.Component {
     onSave() {
         // Create an dict with original bit data, then update that with
         // latest changes in draft (e.g. description, content).
-        const {bit, atUser} = this.props;
-        const updatedBit = this.state.editMode ? this.getDraftFromContentEditables() : this.state.draft;
+        const {bit, atUser, editMode} = this.props;
+        const updatedBit = editMode ? this.getDraftFromContentEditables() : this.state.draft;
         updatedBit.published_at = updatedBit.published_at.trim() === '' ? '' : updatedBit.published_at + 'T00:00:00Z' // hack to append time+zone
         updatedBit.tags = updatedBit.tags ? updatedBit.tags.split(',').map((s)=>{return s.trim()}) : [];
         BitService.update(bit.id, updatedBit)
@@ -121,38 +143,35 @@ class Editor extends React.Component {
     }
 
     /**
-     * Toggles between editor (only if owner) and preview (default) mode.
+     * Handles loading/unloading between editor and preview mode.
      */
-    switchMode() {
-        // Switch between edit and view
-        const isEditMode = !this.state.editMode;
-        this.setState({editMode: isEditMode});
-
-        const draft = this.state.draft;
-        if (isEditMode) {
+    onSwitchMode(editMode) {
+        let draft = this.state.draft;
+        if (editMode) {
             this.contentRef.current.innerText = draft.content;
             this.publishedAtRef.current.innerText = draft.published_at; 
+            this.tagsRef.current.innerText = draft.tags;
             this.contentRef.current.focus();
         } else {
-            this.setState({draft: this.getDraftFromContentEditables()});
-            this.publishedAtRef.current.innerText = this.publishedAtRef.current.innerText.trim() === '' ? 'Draft' : this.publishedAtRef.current.innerText; 
+            draft = this.getDraftFromContentEditables();
+            this.setState({draft: draft});
+            this.publishedAtRef.current.innerHTML = this.formatPublishedDate(this.publishedAtRef.current.innerText.trim() === '' ? 'Draft' : this.publishedAtRef.current.innerText); 
             this.contentRef.current.innerHTML = marked(this.contentRef.current.innerText);
+            this.tagsRef.current.innerHTML = this.formatTags(draft.tags);
         }
     }
 
 
     render() {
-        const {atUser, bit, onDelete} = this.props;
-        const editMode = this.state.editMode;
-
-        return <StyledEditor className={this.state.editMode ? 'editor' : 'preview'}>
+        const {atUser, bit, onDelete, editMode, switchMode} = this.props;
+        return <StyledEditor className={editMode ? 'editor' : 'preview'}>
             <SubHeader>
                 <UserProfile atUser={atUser} />
                 {atUser.is_auth && <ActionBar>
                     <Action onClick={onDelete} className="danger">Delete</Action>
                     &nbsp; &nbsp;
-                    <Action onClick={this.onSave} hidden={!this.state.editMode}>Save</Action>
-                    <Action onClick={this.switchMode}>{this.state.editMode ? 'Done' : 'Edit'}</Action>
+                    <Action onClick={this.onSave} hidden={!editMode}>Save</Action>
+                    <Action onClick={switchMode}>{editMode ? 'Done' : 'Edit'}</Action>
                 </ActionBar>}
             </SubHeader>
             <h1 className="title" contentEditable={editMode} placeholder="Enter a title" ref={this.titleRef}></h1>

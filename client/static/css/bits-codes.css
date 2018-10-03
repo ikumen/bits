@@ -1,10 +1,6 @@
 
-.icon-camera-alt:before { content: '\e800'; } /* '' */
-.icon-logout:before { content: '\e801'; } /* '' */
-.icon-plus:before { content: '\e802'; } /* '' */
-.icon-bookmark-empty:before { content: '\f097'; } /* '' */
+.icon-calendar:before { content: '\e800'; } /* '' */
+.icon-tags:before { content: '\e801'; } /* '' */
 .icon-github-circled:before { content: '\f09b'; } /* '' */
-.icon-doc-text:before { content: '\f0f6'; } /* '' */
 .icon-spinner:before { content: '\f110'; } /* '' */
-.icon-ellipsis-vert:before { content: '\f142'; } /* '' */
-.icon-stackoverflow:before { content: '\f16c'; } /* '' */
+.icon-user-circle:before { content: '\f2bd'; } /* '' */

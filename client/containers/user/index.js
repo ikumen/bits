@@ -15,61 +15,51 @@ const StyledBitList = styled.ul`
 `;
 
 const Bit = styled.li`
-    margin-bottom: 4px;
+    margin-bottom: 15px;
+    display: flex;
+    flex-direction: column;
+`;
+const Meta = styled.div`
+    margin-top: -2px;
     display: flex;
     flex-direction: row;
-
-    & .title {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        margin-left: 4px;
-    }
-
-    & a, & .tags {
-        flex: 1;
-    }
-    .tags {
-        margin-top: -6px;
-        color: #aaa;
-        font-size: .9rem;
-    }
-
-`;
-
-const StyledDate = styled.span`
     font-size: .9rem;
-    font-family: 'Courier New';
-    color: #aaa;
-    margin-top: 2px;
-    margin-right: 2px;
+    opacity: .4;
+    & time {
+        margin-right: 10px;
+    }
+    & i {
+        opacity: .3;
+    }
 `;
 
+const PublishDate = ({pubdate}) => {
+    const formattedDate = Utils.formatDateString(pubdate, {default: 'Draft'});
+    return <time dateTime={formattedDate}><i className="icon-calendar"></i> {formattedDate}</time>
+};
+
+const TagList = ({tags}) => {
+    return tags && tags.length > 0 ? <div><i className="icon-tags"></i> {tags.join(', ')}</div> : <div></div>
+        
+}
 
 const BitList = ({user, bits}) => {
     const options = {year: 'numeric', month: 'short'}
     return <StyledBitList> 
         {bits && bits.map((bit) => 
             <Bit key={bit.id}>
-                {bit.published_at ? 
-                    <StyledDate>{Utils.formatDateString(bit.published_at)} &raquo; </StyledDate>
-                    :
-                    <StyledDate>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Draft &raquo; </StyledDate>
-                }
-                <div className="title">
-                    <Link to={{pathname: '/@' + user.id + '/bits/' + bit.id}}>
-                        {bit.title || 'New Bit '}
-                    </Link>
-                    <div className="tags">
-                        {bit.tags.join(', ')}
-                    </div>
-                </div>
-                <div>
-                </div>
+                <Link className="link" to={{pathname: '/@' + user.id + '/bits/' + bit.id}}>
+                    {bit.title || 'New Bit '}
+                </Link>
+                <Meta>
+                    <PublishDate pubdate={bit.published_at} />
+                    <TagList tags={bit.tags} />
+                </Meta>
             </Bit>
         )}
     </StyledBitList>
 };
+
 
 class UserPage extends React.Component {
     constructor(props) {

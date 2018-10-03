@@ -72,9 +72,10 @@ def post_authorization(f):
         # NOTE: oauth is removed from user before serialized into session
         # see User.to_json for details. Use session[OAUTH_ATTR_NAME] for
         # authenticated user's oauth token
-        session[USER_SESS_ATTR] = user
+        serialized_user = user.to_json()
+        session[USER_SESS_ATTR] = serialized_user
         session[OAUTH_ATTR_NAME] = user.oauth
-        return f(user, **kwargs)
+        return f(serialized_user, **kwargs)
     return decorated
 
 
