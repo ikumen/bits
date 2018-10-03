@@ -77,7 +77,7 @@ class BitService(object):
                 tags=meta.get('tags', []),
                 updated_at=cls._parse_datetime(gist['updated_at']),
                 created_at=cls._parse_datetime(gist['created_at']),
-                published_at=cls._parse_datetime(meta['published_at']),
+                published_at=cls._parse_datetime(meta.get('published_at')),
                 content=content,
                 upsert=upsert)
 
@@ -92,8 +92,8 @@ class BitService(object):
         @param bit_file raw bit file from gist
         @returns tuple of (meta, content)
         """
-        meta = None
-        content = None
+        meta = {}
+        content = ''
         matches = re.search(r'^---(.*?)---\s*(.*)', bit_file['content'], re.DOTALL)
         if matches:
             meta = cls._normalize_meta(matches.groups()[0])
