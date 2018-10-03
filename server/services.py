@@ -4,7 +4,7 @@ import re
 from datetime import datetime
 from abc import abstractmethod, ABCMeta
 from flask import current_app, app
-from flask_github import GitHub
+from flask_github import GitHub, GitHubError
 from pymongo import MongoClient
 from werkzeug.contrib.cache import SimpleCache
 from .models import User, Bit
@@ -43,8 +43,7 @@ class BitService(object):
 
     @classmethod
     def _fetch_all_from_github(cls, user_id):
-        """TODO: only able to fetch currently authenticated user's bits."""
-        gists = github.get('/gists')
+        gists = github.get('/gists', all_pages=True)
         for gist in gists:
             if cls._is_bit(gist):
                 full_gist = cls._fetch_one_from_github(gist['id'])
@@ -157,6 +156,10 @@ class BitService(object):
 
     @classmethod
     def delete(cls, id):
+        try:
+            resp = github.delete('/gists/' + id)
+        except GitHubError as e:
+            log.exception('Delete unsuccessful, but removing local copy from datastore anyways.')
         cls.__model__.delete(id)
 
     @classmethod
