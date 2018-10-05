@@ -53,11 +53,14 @@ class BitPage extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
+        console.log('====== bit editor wrapper: did UPDATE')
         if (prevProps.match.params.bitId != this.props.match.params.bitId) {
+            console.log('====== bit editor wrapper: did UPDATE: new bit id')
             const {atUserId, bitId} = this.props.match.params;
             this.setState({atUserId: atUserId, bitId: bitId, editMode: this.props.match.params.edit === 'edit'});
             this.loadBit(atUserId, bitId);
         } else if (prevProps.match.params.edit !== this.props.match.params.edit) {
+            console.log('====== bit editor wrapper: did UPDATE: switching mode')
             this.setState({editMode: this.props.match.params.edit === 'edit'})
         }        
     }
@@ -80,6 +83,7 @@ class BitPage extends React.Component {
     }
 
     componentDidMount() {
+        console.log('====== bit editor wrapper: did mount')
         this.loadBit(this.state.atUserId, this.state.bitId);
     }
 
