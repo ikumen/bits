@@ -22,6 +22,10 @@ export default (function() {
         },
         flattenArray(arr) {
             return Array.isArray(arr) ? arr.join(', ') : arr;
+        },
+        arraysAreEqual(a1, a2) {
+            if (!Array.isArray(a1) || !Array.isArray(a2)) return false;
+            return a1.join() === a2.join();
         }
     }
 })();
