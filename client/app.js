@@ -7,7 +7,7 @@ import ReactDOM from 'react-dom';
 import {BrowserRouter, Route} from 'react-router-dom';
 import AboutPage from './containers/about';
 import UserPage from './containers/user';
-import {BitPage, CreateBitPage} from './containers/bit';
+import {BitPage} from './containers/bit';
 import {Footer, Header} from './components/layouts';
 import styled from 'styled-components';
 
@@ -23,7 +23,6 @@ const App = () => (
             <Route path="*" component={Header} />
             <Route exact={true} path="/" component={AboutPage} />
             <Route exact={true} path="/about" component={AboutPage} />
-            <Route exact={true} path="/bits/new" component={CreateBitPage} />
             <Route exact path={`/@:atUserId`} component={UserPage} />
             <Route path={`/@:atUserId/bits/:bitId/:edit?`} component={BitPage} />
             <Route path="*" component={Footer} />

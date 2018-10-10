@@ -77,23 +77,16 @@ class Editor extends React.Component {
     }
 
     onPropsLoaded({atUser, bit, editMode}) {
-        const draft = {
+        this.draft = {
             title: bit.title, 
             content: bit.content,
             published_at: Utils.formatDateString(bit.published_at),
             tags: bit.tags ? bit.tags.join(', ') : ''
         }
-        this.setState({draft: draft});
-        this.titleRef.current.innerText = draft.title;
-
         if (editMode) {
-            this.contentRef.current.innerText = draft.content;
-            this.publishedAtRef.current.innerText = draft.published_at;
-            this.tagsRef.current.innerText = draft.tags;
+            this.setEditModeValues(this.draft);
         } else {
-            this.contentRef.current.innerHTML = marked(draft.content);
-            this.publishedAtRef.current.innerHTML = this.formatPublishedDate(draft.published_at === '' ? 'Draft' : draft.published_at);
-            this.tagsRef.current.innerHTML = this.formatTags(draft.tags);
+            this.setPreviewModeValues(this.draft);
         }
     }
 
@@ -106,15 +99,24 @@ class Editor extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
+        console.log('===new===\n', this.props.bit, '====')
+        console.log('===\prev===\n', prevProps.bit, '====')
         if (prevProps.bit.id != this.props.bit.id) {
+            console.log('------> loading')
             this.onPropsLoaded(this.props);
         } else if (prevProps.editMode !== this.props.editMode) {
+            console.log('------> switch')
             this.onSwitchMode(this.props.editMode);
         }
     }
 
     componentDidMount() {
         this.onPropsLoaded(this.props);
+    }
+
+    componentWillUnmount() {
+        console.log('====> editor will unmount')
+        this.onSave();
     }
 
     /** 
@@ -124,7 +126,15 @@ class Editor extends React.Component {
         // Create an dict with original bit data, then update that with
         // latest changes in draft (e.g. description, content).
         const {bit, atUser, editMode} = this.props;
-        const updatedBit = editMode ? this.getDraftFromContentEditables() : this.state.draft;
+        if (Utils.formatDateString(bit.published_at) === this.draft.published_at &&
+                bit.title === this.draft.title &&
+                bit.content === this.draft.content &&
+                bit.tags.join(', ') === this.draft.tags) {
+            console.log(this.draft.title)
+            console.log('====== no changes');
+            return;
+        }
+        const updatedBit = editMode ? this.getDraftFromContentEditables() : this.draft; //this.state.draft;
         updatedBit.published_at = updatedBit.published_at.trim() === '' ? '' : updatedBit.published_at + 'T00:00:00Z' // hack to append time+zone
         updatedBit.tags = updatedBit.tags ? updatedBit.tags.split(',').map((s)=>{return s.trim()}) : [];
         BitService.update(bit.id, updatedBit)
@@ -142,22 +152,31 @@ class Editor extends React.Component {
         }
     }
 
+    setEditModeValues(draft) {
+        this.titleRef.current.innerText = draft.title;
+        this.contentRef.current.innerText = draft.content;
+        this.publishedAtRef.current.innerText = draft.published_at; 
+        this.tagsRef.current.innerText = draft.tags;
+        this.contentRef.current.focus();
+    }
+
+    setPreviewModeValues(draft) {
+        this.titleRef.current.innerHTML = draft.title;
+        this.contentRef.current.innerHTML = marked(draft.content);
+        this.publishedAtRef.current.innerHTML = draft.published_at === '' ? 'Draft' : this.formatPublishedDate(draft.published_at); 
+        this.tagsRef.current.innerHTML = this.formatTags(draft.tags);
+    }
+
     /**
      * Handles loading/unloading between editor and preview mode.
      */
     onSwitchMode(editMode) {
-        let draft = this.state.draft;
         if (editMode) {
-            this.contentRef.current.innerText = draft.content;
-            this.publishedAtRef.current.innerText = draft.published_at; 
-            this.tagsRef.current.innerText = draft.tags;
-            this.contentRef.current.focus();
+            this.setEditModeValues(this.draft);
         } else {
-            draft = this.getDraftFromContentEditables();
-            this.setState({draft: draft});
-            this.publishedAtRef.current.innerHTML = this.formatPublishedDate(this.publishedAtRef.current.innerText.trim() === '' ? 'Draft' : this.publishedAtRef.current.innerText); 
-            this.contentRef.current.innerHTML = marked(this.contentRef.current.innerText);
-            this.tagsRef.current.innerHTML = this.formatTags(draft.tags);
+            this.draft = this.getDraftFromContentEditables();
+            this.setPreviewModeValues(this.draft);
+            this.onSave();
         }
     }
 
@@ -170,7 +189,6 @@ class Editor extends React.Component {
                 {atUser.is_auth && <ActionBar>
                     <Action onClick={onDelete} className="danger">Delete</Action>
                     &nbsp; &nbsp;
-                    <Action onClick={this.onSave} hidden={!editMode}>Save</Action>
                     <Action onClick={switchMode}>{editMode ? 'Done' : 'Edit'}</Action>
                 </ActionBar>}
             </SubHeader>
