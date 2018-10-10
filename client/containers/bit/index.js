@@ -5,8 +5,74 @@ import {Link} from 'react-router-dom';
 import UserService from '../../services/user';
 import Editor from '../../components/editor';
 import Log from '../../services/logger';
-import {Page} from '../../components/layouts';
+import Utils from '../../services/utils';
+import UserProfile from '../../components/userprofile';
+import {Page, SubHeader, If} from '../../components/layouts';
+import marked from 'marked';
 
+
+const ActionBar = styled.div`
+    flex: 1;
+    display: flex;
+    align-items: center;
+    flex-direction: row-reverse;
+`;
+
+const Action = styled.button`
+    font-size: .7rem;
+    padding: 3px 12px;
+    cursor: pointer;
+
+    &.danger {
+        background-color: red;
+        color: #fff;
+        opacity: .6;
+    }
+`;
+
+const StyledEditor = styled.div`
+    padding: 0;
+    margin: 0;
+    #title.edit, #content.edit, #pubdate.edit, #tags.edit {
+        outline: none;
+        opacity: 1;
+        background: #F8F4E3;
+    }
+
+    & #title {
+        font-size: 2rem;
+        font-weight: 500;
+        margin-bottom: 4px;
+    }
+    & [contenteditable=true]:empty:before {
+        content: attr(placeholder);
+        opacity: .2;
+        display: block; /* For Firefox */
+    }
+    & .meta {
+        margin: 0px 0 40px;
+        width: 100%;
+        display: flex;
+        flex-flow: flex-start;
+        font-size: .9rem;
+    }
+    & #pubdate {
+        margin-right: 20px;
+    }
+    & #tags {
+        text-align: right;
+    }
+    & .meta .view, & .meta i  {
+        color: #bbb;
+    }
+`;
+
+const EditStatus = styled.div`
+    color: #bbb;
+    font-size: .8rem;
+    display: flex;
+    flex-direction: row-reverse;
+`;
 
 class BitPage extends React.Component {
     constructor(props) {
@@ -17,9 +83,26 @@ class BitPage extends React.Component {
         this.setStateWithParams = this.setStateWithParams.bind(this);
         this.onUpdate = this.onUpdate.bind(this);
         this.loadBit = this.loadBit.bind(this);
+        this.saveIfModified = this.saveIfModified.bind(this);
         this.loadBitComplete = this.loadBitComplete.bind(this);
 
         this.setStateWithParams(props.match.params);
+    }
+
+    saveIfModified() {
+        console.log('---------draft====>', this.state.draft);
+        if (this.state.savedAt != this.state.updatedAt) {
+            Log.info('===> changes detected, saving ....');
+            BitService.update(this.state.bitId, this.state.draft)
+                .then(resp => {
+                    Log.info('saved ', resp);
+                    this.setState({savedAt: this.state.updatedAt});
+                })
+                .catch(err => Log.err(err));
+            
+        } else {
+            Log.info('===> No change, skipping save!');
+        }
     }
 
     getEditMode(editParam) {
@@ -37,7 +120,6 @@ class BitPage extends React.Component {
     componentDidUpdate(prevProps) {
         const params = this.props.match.params
             , prevParams = prevProps.match.params;
-
         /* We only care about two state updates:
             - bitId, when we want to load a new bit
             - edit, when we switch between edit/view mode for a bit */
@@ -66,7 +148,7 @@ class BitPage extends React.Component {
             draft: {
                 title: bit.title,
                 content: bit.content,
-                pubdate: bit.published_at,
+                pubdate: bit.pubdate,
                 tags: bit.tags},
             updatedAt: bit.updated_at,
             savedAt: bit.updated_at,
@@ -82,12 +164,14 @@ class BitPage extends React.Component {
         }
     }
 
-    componentDidUpdate(prevProps) {
-        Log.info('updating', 'prevProps=', prevProps, ', props=', this.props)
-    }
-
     componentDidMount() {
         this.loadBit(this.state.atUserId, this.state.bitId);
+        const autoSaveId = setInterval(this.saveIfModified, 20000);
+        this.setState({autoSaveId: autoSaveId});
+    }
+
+    componentWillUnmount() {
+        clearInterval(this.state.autoSaveId);
     }
 
     onDelete() {
@@ -97,31 +181,71 @@ class BitPage extends React.Component {
     }
 
     onUpdate(draft) {
+        Log.info('Updating:', draft);
         const prevDraft = this.state.draft;
         this.setState({
             draft: {
                 title: 'title' in draft ? draft.title : prevDraft.title,
                 content: 'content' in draft ? draft.content : prevDraft.content,
-                //pubdate: 'pubdate' in draft ?  draft.pubdate : prevDraft.pubdate,
-                tags: 'tags' in draft ? draft.tags : prevDraft.tags
-            },
-            updatedAt: new Date()
+                pubdate: 'pubdate' in draft ?  draft.pubdate : prevDraft.pubdate,
+                tags: 'tags' in draft ? draft.tags : prevDraft.tags},
+            updatedAt: Utils.toFullISOFormat(new Date())
         })
     }
 
+    pubdatePreprocessor(pubdate) {
+        return Utils.toFullISOFormat(pubdate);
+    }
+    
+    tagsPreprocessor(tags) {
+        const specialCharsRE = /[^-a-zA-Z0-9,\s]+/g
+            , whiteSpaceRE = /\s+/g;
+    
+        tags = (tags || '').trim()
+            .replace(specialCharsRE, '-')
+            .replace(whiteSpaceRE, '')
+            .split(',')
+            .filter(a => a != '');
+    
+        if (tags.length > 3) {
+            Log.warn('More than 3 tags entered,', tags.length-3, 'will be ignored!')
+            return tags.slice(0, 3);
+        }
+        return tags;
+    }
+
     render() {
-        console.log('rendering ....', this.state.draft)
+        const {atUser, editMode, draft} = this.state;
+        console.log('====== rerendering ....', draft)
+        const props = {editMode: editMode, onUpdate: this.onUpdate}
         return <Page>
-            {/* {this.state.atUser && 
-                <Editor bit={this.state.bit} 
-                    onDelete={this.onDelete} 
-                    atUser={this.state.atUser} 
-                    editMode={this.state.editMode && this.state.atUser.is_auth}
-                    switchMode={this.switchMode}
-                />
-            } */}
-            {this.state.draft && <_Editor draft={this.state.draft} onUpdate={this.onUpdate}></_Editor>}
-            hi-ho
+            <SubHeader>
+                <UserProfile atUser={atUser} />
+                {atUser && atUser.is_auth && 
+                <ActionBar>
+                    <Action onClick={this.onDelete} className="danger">Delete</Action>
+                    &nbsp; &nbsp;
+                    <Action onClick={this.switchMode}>{editMode ? 'Done' : 'Edit'}</Action>
+                </ActionBar>}
+            </SubHeader>
+            {draft &&
+            <StyledEditor>
+                <Title value={draft.title} editMode={editMode} onUpdate={this.onUpdate}/>
+                <div className="meta">
+                    <Pubdate value={draft.pubdate} editMode={editMode} onUpdate={this.onUpdate}
+                        preprocessor={this.pubdatePreprocessor} validator={Utils.isValidDate} />
+                    <Tags value={draft.tags} editMode={editMode} onUpdate={this.onUpdate} 
+                        preprocessor={this.tagsPreprocessor} />
+                </div>
+                <Content value={draft.content} editMode={editMode} onUpdate={this.onUpdate} 
+                    renderer={marked} />
+            </StyledEditor>
+            }
+            <EditStatus> 
+                Last: &nbsp; 
+                <div>saved  {this.state.savedAt}</div> &nbsp; / &nbsp; 
+                <div>updated {this.state.updatedAt}</div>
+            </EditStatus>
         </Page>
     }
 }
@@ -136,143 +260,66 @@ class Editable extends React.Component {
     }
 
     componentDidMount() {
-        Log.info('value=', this.props.value)
-        this.setValue(this.props.value);
+        this.setValue(this.props);
     }
 
-    setValue(value) {
-        Log.info('value=', value)
-        this.elementRef.current.innerText = value;
+    componentDidUpdate(prevProps) {
+        this.setValue(this.props);
+    }
+
+    setValue({value, editMode, renderer}) {
+        if (editMode) {
+            this.elementRef.current.innerText = value;
+        } else {
+            this.elementRef.current.innerHTML = renderer ? renderer(value) : value;
+        }
     }
 
     onInput(e) {
-        const {validator, preprocessor, onChange} = this.props;
+        const {validator, preprocessor, onUpdate} = this.props;
         const value = e.target.innerText;
         if (!validator || validator(value)) {
-            onChange(this.props.id, (preprocessor ? preprocessor(value) : value));
+            onUpdate({[this.props.id]: (preprocessor ? preprocessor(value) : value)});
         } else {
             Log.info('Invalid input!')
         }
     }
 
     render() {
-        return <div 
-            id={this.props.id}
-            contentEditable={true}
-            placeholder={this.props.placeholder}
+        const {id, editMode, placeholder} = this.props;
+        console.log('====editable rerender: editMode=', editMode)
+        return <div id={id} 
+            className={editMode ? 'edit' : 'view'}
+            contentEditable={editMode}
+            placeholder={placeholder}
             onInput={this.onInput}
             ref={this.elementRef}>
         </div>
     }
 }
 
-class Content extends React.Component {
-    constructor(props) {
-        super(props);
+const Title = (props) => (
+    <Editable id="title" {...props} placeholder="Enter a title" />
+);
 
-        this.setValue = this.setValue.bind(this);
-        this.elementRef = React.createRef();
-    }
+const Pubdate = ({value, ...props}) => (
+    <React.Fragment>
+        <i className="icon-calendar"></i>
+        <Editable id="pubdate" {...{...props, value: value ? Utils.toSimpleISOFormat(value) : ''}} 
+            placeholder="e.g, YYYY-MM-DD"/>
+    </React.Fragment>
+);
 
-    componentDidMount() {
-        this.setValue(this.props.preRender(this.props.value));
-    }
+const Tags = ({value, ...props}) => (
+    <React.Fragment>
+        <i className="icon-tags"></i>
+        <Editable id="tags" {...{...props, value: Utils.flattenArray(value)}}  
+            placeholder="e.g, java, spring-jpa (comma separated, 3 max)"/>
+    </React.Fragment>
+);
 
-    setValue(value) {
-        this.elementRef.current.innerHTML = value;
-    }
-
-    render() {
-        return <div
-            id={this.props.id}
-            contentEditable={false}
-            placeholder={this.props.placeholder}
-            ref={this.elementRef}>
-        </div>
-            
-    }
-}
-
-const StyledEditor = styled.div`
-    .title {
-        font-size: 2rem;
-    }
-    & [contenteditable=true]:empty:before {
-        content: attr(placeholder);
-        opacity: .2;
-        display: block; /* For Firefox */
-    }
-
-`;
-
-class _Editor extends React.Component {
-    constructor(props) {
-        super(props);
-
-       this.onChange = this.onChange.bind(this);
-       this.pubdateValidator = this.pubdateValidator.bind(this);
-       this.preprocessTags = this.preprocessTags.bind(this);
-
-    }
-
-    onChange(id, value) {
-        Log.info(id, 'changed:', value)
-        this.props.onUpdate({[id]: value});
-    }
-
-    flattenArray(arr) {
-        return arr.join(', ')
-    }
-
-    preprocessTags(tags) {
-        const specialCharsRE = /[^-a-zA-Z0-9,\s]+/g
-            , whiteSpaceRE = /\s+/g;
-
-        tags = (tags || '').trim()
-            .replace(specialCharsRE, '-')
-            .replace(whiteSpaceRE, '')
-            .split(',');
-
-        if (tags.length > 3) {
-            Log.warn('More than 3 tags entered,', tags.length-3, 'will be ignored!')
-            return tags.slice(0, 3);
-        }
-        return tags;
-    }
-
-    pubdateValidator(pubdate) {
-        if (isNaN(Date.parse(pubdate))) 
-            return false;        
-        // we already have valid date, just make 
-        // sure it's in the format we want yyyy-mm-dd
-        const re = /(\d{4})-(\d{2})-(\d{2})/;
-        const m = re.exec(pubdate);
-        return m && m.length == 4;
-    }
-
-    render() {
-        const draft = this.props.draft;
-        console.log(draft)
-        return <StyledEditor>
-            <Editable id="title" onChange={this.onChange} 
-                placeholder="Enter a title" 
-                value={draft.title} />
-            <div className="meta">
-                <Editable id="pubdate" onChange={this.onChange} 
-                    placeholder="e.g, 2018-12-30" 
-                    validator={this.pubdateValidator}  
-                    value={draft.pubdate} />
-                <div className="spaver"></div>
-                <Editable id="tags" onChange={this.onChange} 
-                    placeholder="e.g, java, spring-framework, jpa" 
-                    preprocess={this.preprocessTags} 
-                    value={this.flattenArray(draft.tags)} />
-            </div>
-            <Editable id="content" onChange={this.onChange} 
-                    placeholder="e.g, Enter your markdown" 
-                    value={draft.content} />
-        </StyledEditor>
-    }
-}
+const Content = (props) => (
+    <Editable id="content" {...props} placeholder="e.g, Enter your markdown"/>
+);
 
 export {BitPage};

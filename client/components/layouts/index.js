@@ -158,4 +158,11 @@ class Header extends React.Component {
     }
 }
 
-export {Footer, Header, SubHeader, Page};
+const If = (props) => {
+    console.log("inside if....", props.value)
+    return <React.Fragment>
+        {props.value ? props.children : ''}
+    </React.Fragment>
+}
+
+export {Footer, Header, SubHeader, Page, If};

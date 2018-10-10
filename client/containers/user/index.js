@@ -34,7 +34,7 @@ const Meta = styled.div`
 `;
 
 const PublishDate = ({pubdate}) => {
-    const formattedDate = Utils.formatDateString(pubdate, {default: 'Draft'});
+    const formattedDate = pubdate ? Utils.toSimpleISOFormat(pubdate) : 'Draft';
     return <time dateTime={formattedDate}><i className="icon-calendar"></i> {formattedDate}</time>
 };
 
@@ -52,7 +52,7 @@ const BitList = ({user, bits}) => {
                     {bit.title || 'New Bit '}
                 </Link>
                 <Meta>
-                    <PublishDate pubdate={bit.published_at} />
+                    <PublishDate pubdate={bit.pubdate} />
                     <TagList tags={bit.tags} />
                 </Meta>
             </Bit>
