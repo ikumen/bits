@@ -1,3 +1,4 @@
+from datetime import date
 from functools import wraps
 from google.appengine.ext import ndb
 from flask import request, json, jsonify, session, redirect
@@ -7,6 +8,7 @@ MIME_TYPE_TEXT_HTML = 'text/html'
 
 __accepted_mimetypes = [MIME_TYPE_APPLICATION_JSON, MIME_TYPE_TEXT_HTML]
 
+ISO_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S.%fZ'
 
 def handle_error(message, status=400):
     response = jsonify({'message': message, 'status_code': status})
@@ -27,6 +29,8 @@ class JSONSerializable(object):
 
 class JSONSerializableEncoder(json.JSONEncoder):
     def default(self, obj): # pylint: disable=E0202
+        if isinstance(obj, date):
+            return obj.strftime(ISO_DATETIME_FORMAT)
         if isinstance(obj, JSONSerializable):
             return obj.to_json()
         if isinstance(obj, ndb.Key):
