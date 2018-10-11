@@ -118,8 +118,8 @@ class Bit(GAEModel):
     title = ndb.StringProperty(required=True, default='')
     content = ndb.TextProperty(required=True, default='')
     tags = ndb.StringProperty(repeated=True)
-    published_at = ndb.DateTimeProperty(indexed=True)
-    published = ndb.ComputedProperty(lambda self: self.published_at is not None)
+    pubdate = ndb.DateTimeProperty(indexed=True)
+    published = ndb.ComputedProperty(lambda self: self.pubdate is not None)
     created_at = ndb.DateTimeProperty(auto_now_add=True)
     updated_at = ndb.DateTimeProperty(auto_now=True)
 
@@ -132,5 +132,5 @@ class Bit(GAEModel):
         query = cls.query().filter(cls.user == User.id_to_key(user_id))
         if published_only:
             query = query.filter(cls.published == True)
-        return query.order(cls.published, -cls.published_at, cls.title).fetch(limit)
+        return query.order(cls.published, -cls.pubdate, cls.title).fetch(limit)
 

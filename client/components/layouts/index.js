@@ -108,7 +108,7 @@ class Header extends React.Component {
     }
 
     componentDidMount() {
-        Log.info('Header.componentDidMount():')
+        Log.info('-->')
         UserService.getCurrentUser()
             .then(this.onCurrentUserLoaded)
             .catch(err => Log.error(err));
@@ -158,4 +158,11 @@ class Header extends React.Component {
     }
 }
 
-export {Footer, Header, SubHeader, Page};
+const If = (props) => {
+    console.log("inside if....", props.value)
+    return <React.Fragment>
+        {props.value ? props.children : ''}
+    </React.Fragment>
+}
+
+export {Footer, Header, SubHeader, Page, If};

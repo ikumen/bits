@@ -1,278 +1,247 @@
 import React from 'react';
-import BitService from '../../services/bits';
 import styled from 'styled-components';
-import {Link} from 'react-router-dom';
-import UserService from '../../services/user';
-import Editor from '../../components/editor';
 import Log from '../../services/logger';
-import {Page} from '../../components/layouts';
+import {Page, SubHeader} from '../../components/layouts';
+import UserProfile from '../../components/userprofile';
+import UserService from '../../services/user';
+import BitService from '../../services/bits';
+import Utils from '../../services/utils';
+import {Title, Tags, Pubdate, Content, Editor} from '../../components/editor';
 
+const ActionBar = styled.div`
+    flex: 1;
+    display: flex;
+    align-items: center;
+    flex-direction: row-reverse;
+`;
+
+const Action = styled.button`
+    font-size: .7rem;
+    padding: 3px 12px;
+    cursor: pointer;
+
+    &.danger {
+        background-color: red;
+        color: #fff;
+        opacity: .6;
+    }
+`;
 
 class BitPage extends React.Component {
     constructor(props) {
         super(props);
-        
-        this.onDelete = this.onDelete.bind(this);
-        this.switchMode = this.switchMode.bind(this);
-        this.setStateWithParams = this.setStateWithParams.bind(this);
-        this.onUpdate = this.onUpdate.bind(this);
-        this.loadBit = this.loadBit.bind(this);
-        this.loadBitComplete = this.loadBitComplete.bind(this);
 
-        this.setStateWithParams(props.match.params);
+        this.onUpdate = this.onUpdate.bind(this);
+        this.autoSave = this.autoSave.bind(this);
+        this.afterAutoSave = this.afterAutoSave.bind(this);
+        this.beforeDataLoaded = this.beforeDataLoaded.bind(this);
+        this.whenDataLoaded = this.whenDataLoaded.bind(this);
+        this.afterDataLoaded = this.afterDataLoaded.bind(this);
+        this.state = {}
     }
 
-    getEditMode(editParam) {
+    /** Helper for enabling editable flag if url 'edit' param is present. */
+    isEditable(editParam) {
         return editParam === 'edit';
     }
 
-    setStateWithParams(params) {
-        this.state = {
-            atUserId: params.atUserId,
-            bitId: params.bitId,
-            editMode: this.getEditMode(params.edit)
-        }
-    }
-
-    componentDidUpdate(prevProps) {
-        const params = this.props.match.params
-            , prevParams = prevProps.match.params;
-
-        /* We only care about two state updates:
-            - bitId, when we want to load a new bit
-            - edit, when we switch between edit/view mode for a bit */
-        if (prevParams.bitId != params.bitId) {
-            this.setStateWithParams(params);
-            this.loadBit(params.atUserId, params.bitId)
-        } else if (prevParams.edit !== params.edit) {
-            this.setState({editMode: this.getEditMode(params.edit)});
-        }        
-    }
-
-    loadBit(atUserId, bitId) {
-        Log.info('Loading bit', bitId)
-        Promise.all([
-                UserService.getAtUser(atUserId),
-                BitService.get(bitId)])
-            .then(([atUser, bit]) => this.loadBitComplete(atUser, bit))
-            .catch(err => Log.error(err));
-    }
-
-    loadBitComplete(atUser, bit) {
-        Log.info('atUser=', atUser, ', bit=', bit)
-        this.setState({
-            atUser: atUser,
-            bit: bit,
-            draft: {
-                title: bit.title,
-                content: bit.content,
-                pubdate: bit.published_at,
-                tags: bit.tags},
-            updatedAt: bit.updated_at,
-            savedAt: bit.updated_at,
-        })
-    }
-
-    switchMode() {
-        const viewUrl = '/@' + this.state.atUserId + '/bits/' + this.state.bitId;
-        if (this.state.editMode) {
+    /** Toggle between edit and view modes. */
+    toggleEditable() {
+        const {atUserId, bitId, edit} = this.getParams(this.props);
+        const viewUrl = '/@' + atUserId + '/bits/' + bitId;
+        if (this.isEditable(edit)) {
             this.props.history.push(viewUrl)
         } else {
             this.props.history.push(viewUrl + '/edit')
         }
     }
 
-    componentDidUpdate(prevProps) {
-        Log.info('updating', 'prevProps=', prevProps, ', props=', this.props)
+    /** Helper for props match params. */
+    getParams(props) {
+        return props && props.match && props.match.params ?
+            props.match.params : {};
     }
-
-    componentDidMount() {
-        this.loadBit(this.state.atUserId, this.state.bitId);
-    }
-
-    onDelete() {
-        BitService.delete(this.state.bit.id)
-            .then(() => this.props.history.replace('/@' + this.state.atUserId))
-            .catch(err => Log.error(err))
-    }
-
-    onUpdate(draft) {
-        const prevDraft = this.state.draft;
+    
+    /** When data is loaded do the following. */
+    whenDataLoaded([atUser, bit]) {
         this.setState({
-            draft: {
-                title: 'title' in draft ? draft.title : prevDraft.title,
-                content: 'content' in draft ? draft.content : prevDraft.content,
-                //pubdate: 'pubdate' in draft ?  draft.pubdate : prevDraft.pubdate,
-                tags: 'tags' in draft ? draft.tags : prevDraft.tags
-            },
-            updatedAt: new Date()
-        })
+            atUser: atUser, 
+            // TODO: just too difficult to handle arrays, flatten 
+            /// while in editor, join back when saving to backend
+            bit: {...{...bit, tags: Utils.flattenArray(bit.tags)}}, 
+            savedAt: bit.updated_at,
+            updatedAt: bit.updated_at
+        });
+        return [atUser, bit];
     }
 
-    render() {
-        console.log('rendering ....', this.state.draft)
-        return <Page>
-            {/* {this.state.atUser && 
-                <Editor bit={this.state.bit} 
-                    onDelete={this.onDelete} 
-                    atUser={this.state.atUser} 
-                    editMode={this.state.editMode && this.state.atUser.is_auth}
-                    switchMode={this.switchMode}
-                />
-            } */}
-            {this.state.draft && <_Editor draft={this.state.draft} onUpdate={this.onUpdate}></_Editor>}
-            hi-ho
-        </Page>
-    }
-}
-
-class Editable extends React.Component {
-    constructor(props) {
-        super(props);
-
-        this.onInput = this.onInput.bind(this);
-        this.setValue = this.setValue.bind(this);
-        this.elementRef = React.createRef();
+    beforeDataLoaded(resp) {
+        Log.info('Clearing autoSaveId: ' + this.state.autoSaveId);
+        clearInterval(this.state.autoSaveId);
+        return resp;
     }
 
-    componentDidMount() {
-        Log.info('value=', this.props.value)
-        this.setValue(this.props.value);
+    afterDataLoaded(resp) {
+        const autoSaveId = setInterval(this.autoSave, 20000);
+        Log.info('Setting autoSaveId: ' + autoSaveId);
+        this.setState({autoSaveId: autoSaveId})
+        return resp;
     }
 
-    setValue(value) {
-        Log.info('value=', value)
-        this.elementRef.current.innerText = value;
+    /** Loads main data (atUser, bit) for this component. */
+    loadData({atUserId, bitId}) {
+        Log.info('atUserId=', atUserId, ', bitId=', bitId)
+        Promise.all([
+            UserService.getAtUser(atUserId),
+            BitService.get(bitId)
+        ]).then(this.beforeDataLoaded)
+        .then(this.whenDataLoaded)
+        .then(this.afterDataLoaded)
+        .catch(Log.error);
     }
 
-    onInput(e) {
-        const {validator, preprocessor, onChange} = this.props;
-        const value = e.target.innerText;
-        if (!validator || validator(value)) {
-            onChange(this.props.id, (preprocessor ? preprocessor(value) : value));
+    onUpdate(id, value) {
+        Log.info('Updating:', id, '=', value);
+        this.setState({
+            bit: {...this.state.bit, ...{[id]: value}},
+            updatedAt: Utils.toFullISOFormat(new Date())
+        });
+    }
+
+    afterAutoSave(resp) {
+        Log.info('resp=', resp);
+        this.setState({savedAt: this.state.updatedAt});
+        return resp;
+    }
+
+    autoSave() {
+        const {bit, lastSavedBit, updatedAt, savedAt} = this.state;
+        if (updatedAt != savedAt && this.isBitModified(bit, lastSavedBit)) {
+            Log.info('Changes detected, auto saving ....')
+            BitService.update(bit.id, {
+                    title: bit.title,
+                    pubdate: bit.pubdate, 
+                    tags: this.tagsPreprocessor(bit.tags),
+                    content: bit.content})
+                .then(this.afterAutoSave)
+            .catch(Log.err);
         } else {
-            Log.info('Invalid input!')
+            Log.info('No changes detected, skipping auto save');
         }
     }
 
-    render() {
-        return <div 
-            id={this.props.id}
-            contentEditable={true}
-            placeholder={this.props.placeholder}
-            onInput={this.onInput}
-            ref={this.elementRef}>
-        </div>
+    isBitModified(bit={}, lastBit={}) {
+        return bit.title !== lastBit.title ||
+            bit.content !== lastBit.content ||
+            bit.pubdate !== lastBit.pubdate ||
+            //!Utils.arraysAreEqual(bit.tags, lastBit.tags)
+            bit.tags !== lastBit.tags;
     }
-}
 
-class Content extends React.Component {
-    constructor(props) {
-        super(props);
+    /** Determines if we should reload data, based on new prop match params. */
+    shouldReloadData(prevProps, props) {
+        const params = this.getParams(props), 
+            prevParams = this.getParams(prevProps);
+        return prevParams.atUserId != params.atUserId || 
+            prevParams.bitId != params.bitId;
+    }
 
-        this.setValue = this.setValue.bind(this);
-        this.elementRef = React.createRef();
+    componentWillUnmount() {
+        clearInterval(this.state.autoSaveId);
     }
 
     componentDidMount() {
-        this.setValue(this.props.preRender(this.props.value));
+        this.loadData({...this.getParams(this.props)});
     }
 
-    setValue(value) {
-        this.elementRef.current.innerHTML = value;
+    componentDidUpdate(prevProps, prevState) {
+        Log.debug('prevProps=', prevProps, ', this.props=', this.props);
+        if(this.shouldReloadData(prevProps, this.props)) {
+            this.loadData({...this.getParams(this.props)});
+        } else {
+            Log.debug('Not reloading data.')
+        }
     }
 
-    render() {
-        return <div
-            id={this.props.id}
-            contentEditable={false}
-            placeholder={this.props.placeholder}
-            ref={this.elementRef}>
-        </div>
-            
-    }
-}
-
-const StyledEditor = styled.div`
-    .title {
-        font-size: 2rem;
-    }
-    & [contenteditable=true]:empty:before {
-        content: attr(placeholder);
-        opacity: .2;
-        display: block; /* For Firefox */
+    pubdatePreprocessor(pubdate) {
+        return Utils.toFullISOFormat(pubdate);
     }
 
-`;
-
-class _Editor extends React.Component {
-    constructor(props) {
-        super(props);
-
-       this.onChange = this.onChange.bind(this);
-       this.pubdateValidator = this.pubdateValidator.bind(this);
-       this.preprocessTags = this.preprocessTags.bind(this);
-
-    }
-
-    onChange(id, value) {
-        Log.info(id, 'changed:', value)
-        this.props.onUpdate({[id]: value});
-    }
-
-    flattenArray(arr) {
-        return arr.join(', ')
-    }
-
-    preprocessTags(tags) {
+    tagsPreprocessor(tags) {
         const specialCharsRE = /[^-a-zA-Z0-9,\s]+/g
             , whiteSpaceRE = /\s+/g;
-
+    
         tags = (tags || '').trim()
             .replace(specialCharsRE, '-')
-            .replace(whiteSpaceRE, '')
-            .split(',');
-
+            .replace(whiteSpaceRE, '-')
+            .split(',')
+            .map(a => a.trim())
+            .filter(a => a != '');
+    
         if (tags.length > 3) {
             Log.warn('More than 3 tags entered,', tags.length-3, 'will be ignored!')
-            return tags.slice(0, 3);
         }
         return tags;
     }
 
-    pubdateValidator(pubdate) {
-        if (isNaN(Date.parse(pubdate))) 
-            return false;        
-        // we already have valid date, just make 
-        // sure it's in the format we want yyyy-mm-dd
-        const re = /(\d{4})-(\d{2})-(\d{2})/;
-        const m = re.exec(pubdate);
-        return m && m.length == 4;
+    onDelete() {
+        const {atUser, bit} = this.state;
+        BitService.delete(bit.id)
+            .then(() => this.props.history.replace('/@' + atUser.id))
+            .catch(err => Log.error(err))
     }
 
     render() {
-        const draft = this.props.draft;
-        console.log(draft)
-        return <StyledEditor>
-            <Editable id="title" onChange={this.onChange} 
-                placeholder="Enter a title" 
-                value={draft.title} />
-            <div className="meta">
-                <Editable id="pubdate" onChange={this.onChange} 
-                    placeholder="e.g, 2018-12-30" 
-                    validator={this.pubdateValidator}  
-                    value={draft.pubdate} />
-                <div className="spaver"></div>
-                <Editable id="tags" onChange={this.onChange} 
-                    placeholder="e.g, java, spring-framework, jpa" 
-                    preprocess={this.preprocessTags} 
-                    value={this.flattenArray(draft.tags)} />
-            </div>
-            <Editable id="content" onChange={this.onChange} 
-                    placeholder="e.g, Enter your markdown" 
-                    value={draft.content} />
-        </StyledEditor>
+        const {bit={}, atUser, savedAt, updatedAt} = this.state;
+        const editable = this.isEditable(this.props.match.params.edit);
+        const props = {bitId: bit.id, editable: editable, onUpdate: this.onUpdate}
+        return <Page>
+            <SubHeader>
+                <UserProfile atUser={atUser} />
+                {atUser && atUser.is_auth && 
+                <ActionBar>
+                    <Action onClick={() => this.onDelete()} className="danger">Delete</Action>
+                    <Action onClick={() => this.toggleEditable()}>{editable ? 'Done' : 'Edit'}</Action>
+                </ActionBar>}
+            </SubHeader>
+            <Editor>
+                <div className="wrapper">
+                <Title {...{...props, value:bit.title}} />
+                <div className="meta">
+                    <Pubdate {...{...props, 
+                        value:bit.pubdate, 
+                        preprocessor:this.pubdatePreprocessor, 
+                        validator:Utils.isValidDate}} />
+                    <Tags {...{...props, value:bit.tags}} /> 
+                        {/* preprocessor:this.tagsPreprocessor */}
+                </div>
+                <Content {...{...props, value:bit.content}} />
+                </div>
+            </Editor>
+            {/* <Debug editable={editable}>
+                id: {bit.id} <br/>
+                editable: {editable ? 'true' : 'false'} <br/>
+                title: {bit.title} <br/>
+                pubdate: {bit.pubdate} <br/>
+                tags: {bit.tags} <br/>
+                content: {(bit.content || '').substring(0, 50)} <br/>
+                last updated: {updatedAt} <br/>
+                last saved: {savedAt} <br/>
+            </Debug> */}
+        </Page>
     }
 }
+
+
+const Debug = styled.div`
+    font-size: .7rem;
+    display: ${props => props.editable ? 'block' : 'none'};
+    font-family: monospace;
+    margin: 0 0 10px 0;
+    padding: 10px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+`;
+
 
 export {BitPage};

@@ -50,6 +50,14 @@ indexes:
   properties:
   - name: user
   - name: published
+  - name: pubdate
+    direction: desc
+  - name: title
+
+- kind: Bit
+  properties:
+  - name: user
+  - name: published
   - name: published_at
     direction: desc
   - name: title

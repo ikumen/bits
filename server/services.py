@@ -1,6 +1,7 @@
 import logging
 import re
 
+from dateutil import parser
 from datetime import datetime
 from abc import abstractmethod, ABCMeta
 from flask import current_app, app
@@ -8,6 +9,7 @@ from flask_github import GitHub, GitHubError
 from pymongo import MongoClient
 from werkzeug.contrib.cache import SimpleCache
 from .models import User, Bit
+from .helpers import ISO_DATETIME_FORMAT
 
 
 # shared db instance
@@ -18,7 +20,6 @@ github = GitHub()
 cache = SimpleCache()
 log = logging.getLogger(__name__)
 
-DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 BLANK_BIT = {}
 
 
@@ -68,6 +69,7 @@ class BitService(object):
     @classmethod
     def _to_bit_from_gist(cls, gist, upsert=False):
         # TODO: validate upstream
+        log.debug('Converting gist: ' + str(gist['id']))
         raw_bit_file = gist.get('files', {}).get('bit.md')
         meta, content = cls._parse_raw_bit_file(raw_bit_file)
         return cls.__model__.update(
@@ -77,13 +79,13 @@ class BitService(object):
                 tags=meta.get('tags', []),
                 updated_at=cls._parse_datetime(gist['updated_at']),
                 created_at=cls._parse_datetime(gist['created_at']),
-                published_at=cls._parse_datetime(meta.get('published_at')),
+                pubdate=cls._parse_datetime(meta.get('pubdate')),
                 content=content,
                 upsert=upsert)
 
     @classmethod
     def _parse_datetime(cls, s):
-        return datetime.strptime(s, DATETIME_FORMAT) if s else None
+        return parser.parse(s).replace(tzinfo=None) if s else None
 
     @classmethod
     def _parse_raw_bit_file(cls, bit_file):
@@ -104,7 +106,7 @@ class BitService(object):
     def _normalize_meta(cls, meta):
         tokens = re.split('\n', meta)
         tags = None
-        published_at = None
+        pubdate = None
 
         for t in tokens:
             t = t.strip()
@@ -112,12 +114,12 @@ class BitService(object):
                 continue
             if t.startswith('tags:'):
                 tags = filter(None, re.split(',\s*', t[5:].strip()))
-            elif t.startswith('published_at:'):
-                t = t[13:].strip()
-                published_at = t or None
+            elif t.startswith('pubdate:'):
+                t = t[8:].strip() # remove pubdate:
+                pubdate = t or None
 
 
-        return {'tags': tags, 'published_at': published_at}
+        return {'tags': tags, 'pubdate': pubdate}
 
     @classmethod
     def _build_gist_data(cls, bit_data):
@@ -133,7 +135,7 @@ class BitService(object):
         return  '---\n' \
                 + 'title: ' + bit_data.get('title', '') + '\n' \
                 + 'tags: ' + ','.join(bit_data.get('tags', '')) + '\n' \
-                + 'published_at: ' + bit_data.get('published_at','') + '\n' \
+                + 'pubdate: ' + bit_data.get('pubdate','') + '\n' \
                 + '---\n'
     
     @classmethod
