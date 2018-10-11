@@ -1,16 +1,16 @@
 export default (function() {
     return {
         toSimpleISOFormat(date) {
-            const d = this.toFullISOFormat(date);
-            if (d === NaN)
-                return d;
-            return d.substring(0, 10);
+            const d = Date.parse(date);
+            if (isNaN(d))
+                return date;
+            return new Date(d).toISOString().substring(0, 10);
 
         },
         toFullISOFormat(date) {
             const d = Date.parse(date);
             if (isNaN(d))
-                return d;
+                return data;
             return new Date(d).toISOString();
         },
         isValidDate(d, f) {

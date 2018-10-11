@@ -17,47 +17,55 @@ const StyledBitList = styled.ul`
 const Bit = styled.li`
     margin-bottom: 15px;
     display: flex;
-    flex-direction: column;
-`;
-const Meta = styled.div`
-    margin-top: -2px;
-    display: flex;
     flex-direction: row;
-    font-size: .9rem;
-    opacity: .4;
-    & time {
-        margin-right: 10px;
+    align-items: baseline;
+    //font-family: monospace;
+    font-size: 1.1rem;
+    flex-wrap: nowrap;
+    time, .tags {
+        font-family: monospace;
+        font-size: .9rem;
+        color: #bbb;
     }
-    & i {
-        opacity: .3;
+    time {
+        margin-right: 10px;
+        white-space: nowrap;
+    }
+    .tags {
+        margin-top: -4px;
     }
 `;
 
-const PublishDate = ({pubdate}) => {
-    const formattedDate = pubdate ? Utils.toSimpleISOFormat(pubdate) : 'Draft';
-    return <time dateTime={formattedDate}><i className="icon-calendar"></i> {formattedDate}</time>
+const Pubdate = ({value}) => {
+    if (value) {
+        const formattedDate = Utils.toSimpleISOFormat(value);    
+        return <time dateTime={formattedDate}>{formattedDate}</time>
+    } else {
+        return <time>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</time>
+    }
 };
 
-const TagList = ({tags}) => {
-    return tags && tags.length > 0 ? <div><i className="icon-tags"></i> {tags.join(', ')}</div> : <div></div>
+const Tags = ({value}) => {
+    return value && value.length > 0 ? <div className="tags">[{value.join(', ')}]</div> : <div></div>
         
 }
 
 const BitList = ({user, bits}) => {
-    const options = {year: 'numeric', month: 'short'}
-    return <StyledBitList> 
-        {bits && bits.map((bit) => 
-            <Bit key={bit.id}>
-                <Link className="link" to={{pathname: '/@' + user.id + '/bits/' + bit.id}}>
-                    {bit.title || 'New Bit '}
-                </Link>
-                <Meta>
-                    <PublishDate pubdate={bit.pubdate} />
-                    <TagList tags={bit.tags} />
-                </Meta>
-            </Bit>
-        )}
-    </StyledBitList>
+    return bits ? 
+        <StyledBitList> {bits.map((bit) => {
+            const {id, title='New Bit', pubdate, tags} = bit;
+            const formattedDate = pubdate ? Utils.toSimpleISOFormat(pubdate) : '';
+            return <Bit key={id}>
+                <Pubdate value={pubdate} />
+                <div className="title-tags">
+                    <Link to={{pathname: '/@' + user.id + '/bits/' + bit.id}}>
+                        {bit.title || 'New Bit '}
+                    </Link>
+                    <Tags className="tags" value={bit.tags} />
+                </div>
+            </Bit>})}
+        </StyledBitList> 
+        : <div></div>
 };
 
 

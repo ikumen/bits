@@ -9,7 +9,6 @@ function _logWithCaller(log, ...args) {
         var re = /(\w+)@|at (\w+)\.?(_?\w+\$?) \(/g, st = e.stack, m;
         re.exec(st), // skip this wrapper/callback
         m = re.exec(st);
-        //console.log(m)
         callerName = m[2] + (m[3] ? '.' + m[3] : '') + '(): ';
     }
     log(callerName, ...args)

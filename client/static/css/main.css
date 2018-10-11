@@ -1,9 +1,9 @@
 html {
     box-sizing: border-box;
-    font-family: "Helvetica Neue", Helvetica,sans-serif;
+    font-family: Courier, "Helvetica Neue", Helvetica,sans-serif;
     font-weight: 400;
     line-height: 1.6;
-    font-size: 18px;
+    font-size: 16px;
 }
 body {
     width: 100%;
@@ -39,7 +39,7 @@ code, pre, .badge {
     padding: 2px 5px;
     background-color: #D7E0E9;
     line-height: 1.5;
-    font-size: .8rem;
+    font-size: .9rem;
     border-radius: 3px;
     font-weight: 300;
 }
@@ -62,12 +62,24 @@ button {
     border-radius: 4px;
     outline: none;
 }
-/* [contenteditable=true]:empty:before {
-    content: attr(placeholder);
-    opacity: .2; */
-    /* display: block; For Firefox */
-/* } */
-
+table {
+    border: 1px solid;
+    font-size: .9rem;
+}
+th {
+    background: #D7E0E9;
+    text-align: left;
+}
+td, th {
+    padding: 2px 4px;
+}
+blockquote {
+    font-style: italic;
+    font-size: .9rem;
+    color: #666;
+    border-left: 1px solid #000;
+    padding-left: 10px;
+}
 
 @font-face {
     font-family: 'bits';

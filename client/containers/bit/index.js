@@ -16,7 +16,7 @@ const ActionBar = styled.div`
 `;
 
 const Action = styled.button`
-    font-size: .7rem;
+    font-size: .8rem;
     padding: 3px 12px;
     cursor: pointer;
 
@@ -114,7 +114,7 @@ class BitPage extends React.Component {
         return resp;
     }
 
-    autoSave() {
+    autoSave(opts) {
         const {bit, lastSavedBit, updatedAt, savedAt} = this.state;
         if (updatedAt != savedAt && this.isBitModified(bit, lastSavedBit)) {
             Log.info('Changes detected, auto saving ....')
@@ -123,7 +123,7 @@ class BitPage extends React.Component {
                     pubdate: bit.pubdate, 
                     tags: this.tagsPreprocessor(bit.tags),
                     content: bit.content})
-                .then(this.afterAutoSave)
+                .then((resp) => {return opts && opts.ignoreResponse ? resp : this.afterAutoSave(resp)})
             .catch(Log.err);
         } else {
             Log.info('No changes detected, skipping auto save');
@@ -148,6 +148,7 @@ class BitPage extends React.Component {
 
     componentWillUnmount() {
         clearInterval(this.state.autoSaveId);
+        this.autoSave({ignoreResponse: true});
     }
 
     componentDidMount() {
@@ -167,13 +168,17 @@ class BitPage extends React.Component {
         return Utils.toFullISOFormat(pubdate);
     }
 
+    pubdateValidator(pubdate) {
+        return (!pubdate || Utils.isValidDate(pubdate));
+    }
+
     tagsPreprocessor(tags) {
         const specialCharsRE = /[^-a-zA-Z0-9,\s]+/g
             , whiteSpaceRE = /\s+/g;
     
         tags = (tags || '').trim()
             .replace(specialCharsRE, '-')
-            .replace(whiteSpaceRE, '-')
+            .replace(whiteSpaceRE, '')
             .split(',')
             .map(a => a.trim())
             .filter(a => a != '');
@@ -204,21 +209,7 @@ class BitPage extends React.Component {
                     <Action onClick={() => this.toggleEditable()}>{editable ? 'Done' : 'Edit'}</Action>
                 </ActionBar>}
             </SubHeader>
-            <Editor>
-                <div className="wrapper">
-                <Title {...{...props, value:bit.title}} />
-                <div className="meta">
-                    <Pubdate {...{...props, 
-                        value:bit.pubdate, 
-                        preprocessor:this.pubdatePreprocessor, 
-                        validator:Utils.isValidDate}} />
-                    <Tags {...{...props, value:bit.tags}} /> 
-                        {/* preprocessor:this.tagsPreprocessor */}
-                </div>
-                <Content {...{...props, value:bit.content}} />
-                </div>
-            </Editor>
-            {/* <Debug editable={editable}>
+            <Debug editable={editable}>
                 id: {bit.id} <br/>
                 editable: {editable ? 'true' : 'false'} <br/>
                 title: {bit.title} <br/>
@@ -227,7 +218,21 @@ class BitPage extends React.Component {
                 content: {(bit.content || '').substring(0, 50)} <br/>
                 last updated: {updatedAt} <br/>
                 last saved: {savedAt} <br/>
-            </Debug> */}
+            </Debug>
+            <Editor>
+                <div className="wrapper">
+                <Title {...{...props, value:bit.title}} />
+                <div className="meta">
+                    <Pubdate {...{...props, 
+                        value:bit.pubdate, 
+                        preprocessor:this.pubdatePreprocessor, 
+                        validator:this.pubdateValidator}} />
+                    <Tags {...{...props, value:bit.tags}} /> 
+                        {/* preprocessor:this.tagsPreprocessor */}
+                </div>
+                <Content {...{...props, value:bit.content}} />
+                </div>
+            </Editor>
         </Page>
     }
 }

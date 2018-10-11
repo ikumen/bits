@@ -25,7 +25,7 @@ const StyledHeader = styled.div`
     top: 0;
     left: 0;
     width: 100%;
-    background-color: #20232a;
+    background-color: #292c34;
 
     header {
         margin-left: auto;
@@ -42,7 +42,7 @@ const StyledHeader = styled.div`
     }
     header .logo, header .signin {
         flex: 1;
-        font-size: .8rem;
+        font-size: .9rem;
         font-weight: 400;
     }
     header .signin {
@@ -67,7 +67,7 @@ const StyledFooter = styled.div`
     display: flex;
     border-top: 1px solid #ddd;
     padding: 6px 0px 12px 0px;
-    font-size: .8rem;
+    font-size: .9rem;
     color: #666;
     flex-direction: row;
 
@@ -159,7 +159,6 @@ class Header extends React.Component {
 }
 
 const If = (props) => {
-    console.log("inside if....", props.value)
     return <React.Fragment>
         {props.value ? props.children : ''}
     </React.Fragment>

@@ -132,11 +132,12 @@ class BitService(object):
 
     @classmethod
     def _denormalize_meta(cls, bit_data):
-        return  '---\n' \
-                + 'title: ' + bit_data.get('title', '') + '\n' \
-                + 'tags: ' + ','.join(bit_data.get('tags', '')) + '\n' \
-                + 'pubdate: ' + bit_data.get('pubdate','') + '\n' \
+        rv = '---\n' \
+                + 'title: ' + (bit_data.get('title') or '') + '\n' \
+                + 'tags: ' + ','.join(bit_data.get('tags') or []) + '\n' \
+                + 'pubdate: ' + (bit_data.get('pubdate') or '') + '\n' \
                 + '---\n'
+        return rv
     
     @classmethod
     def update(cls, id, **kwargs):

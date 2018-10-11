@@ -6,7 +6,7 @@ const StyledProfile = styled.div`
     flex: 1;
     display: flex;
     align-items: center;
-
+    font-size: 1.1rem;
     img {
         width: 40px;
         margin-right: 10px;

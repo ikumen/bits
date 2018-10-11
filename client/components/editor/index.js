@@ -19,7 +19,7 @@ const Editor = styled.div`
 
     & #title {
         font-size: 2rem;
-        font-weight: 500;
+        font-weight: 600;
         margin-bottom: 4px;
     }
     & [contenteditable=true]:empty:before {
@@ -35,10 +35,8 @@ const Editor = styled.div`
         font-size: .9rem;
     }
     & #pubdate {
-        margin-right: 20px;
-    }
-    & #tags {
-        text-align: right;
+        margin-right: 30px;
+        white-space:nowrap;
     }
     & .meta .view, & .meta i  {
         color: #bbb;
@@ -119,18 +117,20 @@ const Title = (props) => (
 
 const Pubdate = ({value, ...props}) => (
     <React.Fragment>
-        <i className="icon-calendar"></i>
+        <i className="icon-calendar"></i>&nbsp;
         <Editable id="pubdate" {...{...props, value: value ? Utils.toSimpleISOFormat(value) : value}} 
             placeholder="e.g, YYYY-MM-DD"/>
     </React.Fragment>
 );
 
+/*
+isEqual={Utils.arraysAreEqual}
+viewRenderer={Utils.flattenArray}
+editRenderer={Utils.flattenArray} */
+            
 const Tags = (props) => (
     <React.Fragment>
-        <i className="icon-tags"></i>
-            {/* isEqual={Utils.arraysAreEqual}
-            viewRenderer={Utils.flattenArray}
-            editRenderer={Utils.flattenArray} */}
+        <i className="icon-tags"></i>&nbsp;
         <Editable id="tags" {...props} placeholder="e.g, java, spring-jpa (comma separated, 3 max)"/>
     </React.Fragment>
 );

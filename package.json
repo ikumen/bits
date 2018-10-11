@@ -8,7 +8,7 @@
         "start": "webpack-dev-server --mode development --open",
         "_pre-build": "rm -rf dist/*",
         "_post-build": "mkdir -p dist/static && cp -R client/static/* dist/static",
-        "build": "npm run _pre-build && webpack --mode production && npm run _post-build"
+        "build": "npm run _pre-build && webpack --mode development && npm run _post-build"
     },
     "keywords": [],
     "author": "ikumen@gnoht.com",
