@@ -1,46 +1,30 @@
 import React from 'react';
 import styled from 'styled-components';
 import Log from '../../services/logger';
-import {Page} from '../../components/layouts';
+import {Page, SubHeader} from '../../components/layouts';
+import UserProfile from '../../components/userprofile';
 import UserService from '../../services/user';
 import BitService from '../../services/bits';
 import Utils from '../../services/utils';
+import {Title, Tags, Pubdate, Content, Editor} from '../../components/editor';
 
-const Editor = styled.div`
-padding: 0;
-margin: 0;
-#title.edit, #content.edit, #pubdate.edit, #tags.edit {
-    outline: none;
-    opacity: 1;
-    background: #F8F4E3;
-}
-
-& #title {
-    font-size: 2rem;
-    font-weight: 500;
-    margin-bottom: 4px;
-}
-& [contenteditable=true]:empty:before {
-    content: attr(placeholder);
-    opacity: .2;
-    display: block; /* For Firefox */
-}
-& .meta {
-    margin: 0px 0 40px;
-    width: 100%;
+const ActionBar = styled.div`
+    flex: 1;
     display: flex;
-    flex-flow: flex-start;
-    font-size: .9rem;
-}
-& #pubdate {
-    margin-right: 20px;
-}
-& #tags {
-    text-align: right;
-}
-& .meta .view, & .meta i  {
-    color: #bbb;
-}
+    align-items: center;
+    flex-direction: row-reverse;
+`;
+
+const Action = styled.button`
+    font-size: .7rem;
+    padding: 3px 12px;
+    cursor: pointer;
+
+    &.danger {
+        background-color: red;
+        color: #fff;
+        opacity: .6;
+    }
 `;
 
 class BitPage extends React.Component {
@@ -49,7 +33,9 @@ class BitPage extends React.Component {
 
         this.onUpdate = this.onUpdate.bind(this);
         this.autoSave = this.autoSave.bind(this);
+        this.afterAutoSave = this.afterAutoSave.bind(this);
         this.beforeDataLoaded = this.beforeDataLoaded.bind(this);
+        this.whenDataLoaded = this.whenDataLoaded.bind(this);
         this.afterDataLoaded = this.afterDataLoaded.bind(this);
         this.state = {}
     }
@@ -77,10 +63,12 @@ class BitPage extends React.Component {
     }
     
     /** When data is loaded do the following. */
-    whenDataLoaded(atUser, bit) {
+    whenDataLoaded([atUser, bit]) {
         this.setState({
             atUser: atUser, 
-            bit: bit,
+            // TODO: just too difficult to handle arrays, flatten 
+            /// while in editor, join back when saving to backend
+            bit: {...{...bit, tags: Utils.flattenArray(bit.tags)}}, 
             savedAt: bit.updated_at,
             updatedAt: bit.updated_at
         });
@@ -106,10 +94,10 @@ class BitPage extends React.Component {
         Promise.all([
             UserService.getAtUser(atUserId),
             BitService.get(bitId)
-        ]).then((resp) => this.beforeDataLoaded(resp))
-        .then((resp) => this.whenDataLoaded(...resp))
-        .then((resp)=> this.afterDataLoaded(resp))
-        .catch(err => Log.error(err));
+        ]).then(this.beforeDataLoaded)
+        .then(this.whenDataLoaded)
+        .then(this.afterDataLoaded)
+        .catch(Log.error);
     }
 
     onUpdate(id, value) {
@@ -120,10 +108,23 @@ class BitPage extends React.Component {
         });
     }
 
+    afterAutoSave(resp) {
+        Log.info('resp=', resp);
+        this.setState({savedAt: this.state.updatedAt});
+        return resp;
+    }
+
     autoSave() {
         const {bit, lastSavedBit, updatedAt, savedAt} = this.state;
         if (updatedAt != savedAt && this.isBitModified(bit, lastSavedBit)) {
             Log.info('Changes detected, auto saving ....')
+            BitService.update(bit.id, {
+                    title: bit.title,
+                    pubdate: bit.pubdate, 
+                    tags: this.tagsPreprocessor(bit.tags),
+                    content: bit.content})
+                .then(this.afterAutoSave)
+            .catch(Log.err);
         } else {
             Log.info('No changes detected, skipping auto save');
         }
@@ -133,7 +134,8 @@ class BitPage extends React.Component {
         return bit.title !== lastBit.title ||
             bit.content !== lastBit.content ||
             bit.pubdate !== lastBit.pubdate ||
-            !Utils.arraysAreEqual(bit.tags, lastBit.tags);
+            //!Utils.arraysAreEqual(bit.tags, lastBit.tags)
+            bit.tags !== lastBit.tags;
     }
 
     /** Determines if we should reload data, based on new prop match params. */
@@ -144,22 +146,20 @@ class BitPage extends React.Component {
             prevParams.bitId != params.bitId;
     }
 
-    bitToString(bit) {
-        return 'bit[' +
-            'title=' + bit.title + ',\n' +
-            'pubdate=' + bit.pubdate + ',\n' +
-            'tags=' + bit.tags + ']\n';
+    componentWillUnmount() {
+        clearInterval(this.state.autoSaveId);
     }
 
     componentDidMount() {
-        Log.info('-->');
         this.loadData({...this.getParams(this.props)});
     }
 
     componentDidUpdate(prevProps, prevState) {
-        Log.info('--> prevProps=', prevProps, ', props=', this.props, ', prevState=', prevState, ', state=', this.state);
+        Log.debug('prevProps=', prevProps, ', this.props=', this.props);
         if(this.shouldReloadData(prevProps, this.props)) {
             this.loadData({...this.getParams(this.props)});
+        } else {
+            Log.debug('Not reloading data.')
         }
     }
 
@@ -173,8 +173,9 @@ class BitPage extends React.Component {
     
         tags = (tags || '').trim()
             .replace(specialCharsRE, '-')
-            .replace(whiteSpaceRE, '')
+            .replace(whiteSpaceRE, '-')
             .split(',')
+            .map(a => a.trim())
             .filter(a => a != '');
     
         if (tags.length > 3) {
@@ -183,132 +184,64 @@ class BitPage extends React.Component {
         return tags;
     }
 
-    render() {
-        Log.info('---> ')
-        const {atUserId, bitId, edit} = this.getParams(this.props);
-        const {bit = {}, savedAt, updatedAt} = this.state;
-        const editable = this.isEditable(edit);
-        return <Page>
-            <button onClick={()=> this.toggleEditable()}>{editable ? 'done' : 'edit'}</button>
-            <br/>
-            atUser: {atUserId} <br/>
-            bitId: {bitId} <br/>
-            isEdit: {editable ? 'true' : 'false'}<br/>
-            updatedAt/savedAt: {savedAt} / {updatedAt} <br/>
-            <hr/>
-            <Editor>
-            <Title value={bit.title} bitId={bit.id} editable={editable} onUpdate={this.onUpdate} /> <br/>
-            <Pubdate value={bit.pubdate} bitId={bit.id} editable={editable} onUpdate={this.onUpdate}
-                preprocessor={this.pubdatePreprocessor} validator={Utils.isValidDate} /><br/>
-            <Tags value={bit.tags} editable={editable} onUpdate={this.onUpdate} 
-                preprocessor={this.tagsPreprocessor} />
-            </Editor>
-            <pre>
-                {this.bitToString(bit)}
-            </pre>
+    onDelete() {
+        const {atUser, bit} = this.state;
+        BitService.delete(bit.id)
+            .then(() => this.props.history.replace('/@' + atUser.id))
+            .catch(err => Log.error(err))
+    }
 
+    render() {
+        const {bit={}, atUser, savedAt, updatedAt} = this.state;
+        const editable = this.isEditable(this.props.match.params.edit);
+        const props = {bitId: bit.id, editable: editable, onUpdate: this.onUpdate}
+        return <Page>
+            <SubHeader>
+                <UserProfile atUser={atUser} />
+                {atUser && atUser.is_auth && 
+                <ActionBar>
+                    <Action onClick={() => this.onDelete()} className="danger">Delete</Action>
+                    <Action onClick={() => this.toggleEditable()}>{editable ? 'Done' : 'Edit'}</Action>
+                </ActionBar>}
+            </SubHeader>
+            <Editor>
+                <div className="wrapper">
+                <Title {...{...props, value:bit.title}} />
+                <div className="meta">
+                    <Pubdate {...{...props, 
+                        value:bit.pubdate, 
+                        preprocessor:this.pubdatePreprocessor, 
+                        validator:Utils.isValidDate}} />
+                    <Tags {...{...props, value:bit.tags}} /> 
+                        {/* preprocessor:this.tagsPreprocessor */}
+                </div>
+                <Content {...{...props, value:bit.content}} />
+                </div>
+            </Editor>
+            {/* <Debug editable={editable}>
+                id: {bit.id} <br/>
+                editable: {editable ? 'true' : 'false'} <br/>
+                title: {bit.title} <br/>
+                pubdate: {bit.pubdate} <br/>
+                tags: {bit.tags} <br/>
+                content: {(bit.content || '').substring(0, 50)} <br/>
+                last updated: {updatedAt} <br/>
+                last saved: {savedAt} <br/>
+            </Debug> */}
         </Page>
     }
 }
 
-class Editable extends React.Component {
-    constructor(props) {
-        super(props);
 
-        this.onInput = this.onInput.bind(this);
-        this.setValue = this.setValue.bind(this);
-        this.elementRef = React.createRef();
-        this.state = {
-            defaultValue: '',
-            hasErrors: false
-        }
-    }
+const Debug = styled.div`
+    font-size: .7rem;
+    display: ${props => props.editable ? 'block' : 'none'};
+    font-family: monospace;
+    margin: 0 0 10px 0;
+    padding: 10px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+`;
 
-    componentDidMount() {
-        this.setValue(this.props);
-    }
-
-    componentDidUpdate(prevProps) {
-        console.log('prev=', prevProps, ', props=', this.props)
-        if (!this.state.hasErrors)
-            this.setValue(this.props)
-    }
-
-    /* 
-     * Decide if we should re-render this component.
-     * 
-     * DO re-render under the following conditions:
-     *  - if value is 'undefined', meaning we just loaded for the first time
-     *  - if current value and next value is equal, meaning we are not editing this component
-     *  - if parent bit id has not changed, meaning we are still on same bit
-     *  - if don't have any errors, details below:
-     *    - when there are errors, the value is not pushed to parent update method 
-     *      to prevent errors from being auto-saved. So if parent doesn't have our
-     *      latest changes (w/ the errors), we should have it push back down a new
-     *      value to re-render, which would wipe away our current edit
-     */
-    shouldComponentUpdate(nextProps, nextState) {
-        const {value, isEqual, bitId} = this.props;
-        const areEqual = isEqual ? isEqual(value, nextProps.value) : value === nextProps.value;
-        return (value === undefined || areEqual || bitId != nextProps.bitId) && !this.state.hasErrors;
-    }
-
-    setValue({value, editable, renderer}) {
-        if (editable) {
-            this.elementRef.current.innerText = value;
-        } else {
-            this.elementRef.current.innerHTML = renderer ? renderer(value) : value;
-        }
-    }
-
-    onInput(e) {
-        const {validator, preprocessor, onUpdate, editable, renderer} = this.props;
-        const value = e.target.innerText;
-        if (!validator || validator(value)) {
-            this.setState({hasErrors: false})
-            onUpdate(this.props.id, (preprocessor ? preprocessor(value) : value));
-        } else {
-            this.setState({hasErrors: true})
-            Log.info('Invalid input!')
-        }
-    }
-
-    render() {
-        const {id, editable, placeholder} = this.props;
-        return <div id={id} 
-            className={editable ? 'edit' : 'view'}
-            contentEditable={editable}
-            placeholder={placeholder}
-            onInput={this.onInput}
-            ref={this.elementRef}>
-        </div>
-    }
-}
-
-const Title = (props) => (
-    <Editable id="title" {...props} placeholder="Enter a title" />
-);
-
-const Pubdate = ({value, ...props}) => (
-    <React.Fragment>
-        <i className="icon-calendar"></i>
-        <Editable id="pubdate" {...{...props, value: value ? Utils.toSimpleISOFormat(value) : value}} 
-            placeholder="e.g, YYYY-MM-DD"/>
-    </React.Fragment>
-);
-
-const Tags = ({value, ...props}) => (
-    <React.Fragment>
-        <i className="icon-tags"></i>
-        <Editable id="tags" {...{...props, value: Utils.flattenArray(value)}}
-            defaultValue={[]}
-            isEqual={Utils.arraysAreEqual}
-            placeholder="e.g, java, spring-jpa (comma separated, 3 max)"/>
-    </React.Fragment>
-);
-
-const Content = (props) => (
-    <Editable id="content" {...props} placeholder="e.g, Enter your markdown"/>
-);
 
 export {BitPage};

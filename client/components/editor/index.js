@@ -1,207 +1,144 @@
 import React from 'react';
-import {Link} from 'react-router-dom';
-import BitService from '../../services/bits';
-import marked from 'marked';
-import Log from '../../services/logger';
-import Utils from '../../services/utils';
-import { SubHeader } from '../layouts';
-import UserProfile from '../../components/userprofile';
 import styled from 'styled-components';
+import Utils from '../../services/utils';
+import Log from '../../services/logger';
+import marked from 'marked';
 
-const ActionBar = styled.div`
-    flex: 1;
-    display: flex;
-    align-items: center;
-    flex-direction: row-reverse;
-`;
 
-const Action = styled.button`
-    font-size: .7rem;
-    padding: 3px 12px;
-    cursor: pointer;
-
-    &.danger {
-        background-color: red;
-        color: #fff;
-        opacity: .6;
-    }
-`;
-
-const StyledEditor = styled.div`
+const Editor = styled.div`
     padding: 0;
-    margin: 0;
-    &.editor .content, &.editor .title, &.editor .tags, &.editor .publishedAt  {
+    margin: 30px 0;
+    & .wrapper > .edit, & .wrapper > .view{
+        padding: 0px 6px;
+    }
+    #title.edit, #content.edit, #pubdate.edit, #tags.edit {
         outline: none;
         opacity: 1;
         background: #F8F4E3;
     }
-    &[contenteditable=true]:empty:before {
+
+    & #title {
+        font-size: 2rem;
+        font-weight: 500;
+        margin-bottom: 4px;
+    }
+    & [contenteditable=true]:empty:before {
         content: attr(placeholder);
+        opacity: .2;
         display: block; /* For Firefox */
     }
     & .meta {
-        margin: -20px 0 40px;
+        margin: 0px 0 40px;
         width: 100%;
         display: flex;
-        flex-direction: row;
+        flex-flow: flex-start;
+        font-size: .9rem;
     }
-    & .spacer {
-        flex: 1;
+    & #pubdate {
+        margin-right: 20px;
     }
-    & .publishedAt {
-        flex: 9;
-    }
-    & .tags {
-        flex: 20;
+    & #tags {
         text-align: right;
     }
-    &.preview .meta {
+    & .meta .view, & .meta i  {
         color: #bbb;
     }
 `;
 
-
-
-class Editor extends React.Component {
+class Editable extends React.Component {
     constructor(props) {
         super(props);
-
-        this.onSwitchMode = this.onSwitchMode.bind(this);
-        this.onSave = this.onSave.bind(this);
-        this.onPropsLoaded = this.onPropsLoaded.bind(this);
-
-        this.contentRef = React.createRef();
-        this.titleRef = React.createRef();
-        this.tagsRef = React.createRef();
-        this.publishedAtRef = React.createRef();
-    }
-
-    onPropsLoaded({atUser, bit, editMode}) {
-        this.draft = {
-            title: bit.title, 
-            content: bit.content,
-            published_at: Utils.formatDateString(bit.published_at),
-            tags: bit.tags ? bit.tags.join(', ') : ''
-        }
-        if (editMode) {
-            this.setEditModeValues(this.draft);
-        } else {
-            this.setPreviewModeValues(this.draft);
-        }
-    }
-
-    formatTags(tags) {
-        return '<div><i class="icon-tags"></i> ' + tags + '</div>'
-    }
-
-    formatPublishedDate(pubdate) {
-        return '<time dateTime="' + pubdate + '"><i class="icon-calendar"></i> ' + pubdate + '</time>';
-    }
-
-    componentDidUpdate(prevProps) {
-        console.log('===new===\n', this.props.bit, '====')
-        console.log('===\prev===\n', prevProps.bit, '====')
-        if (prevProps.bit.id != this.props.bit.id) {
-            console.log('------> loading')
-            this.onPropsLoaded(this.props);
-        } else if (prevProps.editMode !== this.props.editMode) {
-            console.log('------> switch')
-            this.onSwitchMode(this.props.editMode);
-        }
+        this.onInput = this.onInput.bind(this);
+        this.setValue = this.setValue.bind(this);
+        this.elementRef = React.createRef();
+        this.state = {hasErrors: false}
     }
 
     componentDidMount() {
-        this.onPropsLoaded(this.props);
+        this.setValue(this.props);
     }
 
-    componentWillUnmount() {
-        console.log('====> editor will unmount')
-        this.onSave();
+    componentDidUpdate(prevProps) {
+        Log.info('prev=', prevProps, ', props=', this.props)
+        if (!this.state.hasErrors)
+            this.setValue(this.props)
     }
 
-    /** 
-     * Saves the current draft of description and content. 
+    /* 
+     * Decide if we should re-render this component.
+     * 
+     * DO re-render under the following conditions:
+     *  - if value is 'undefined', meaning we just loaded for the first time
+     *  - if current value and next value is equal, meaning we are not editing this component
+     *  - if parent bit id has not changed, meaning we are still on same bit
+     *  - if don't have any errors, details below:
+     *    - when there are errors, the value is not pushed to parent update method 
+     *      to prevent errors from being auto-saved. So if parent doesn't have our
+     *      latest changes (w/ the errors), we should have it push back down a new
+     *      value to re-render, which would wipe away our current edit
      */
-    onSave() {
-        // Create an dict with original bit data, then update that with
-        // latest changes in draft (e.g. description, content).
-        const {bit, atUser, editMode} = this.props;
-        if (Utils.formatDateString(bit.published_at) === this.draft.published_at &&
-                bit.title === this.draft.title &&
-                bit.content === this.draft.content &&
-                bit.tags.join(', ') === this.draft.tags) {
-            console.log(this.draft.title)
-            console.log('====== no changes');
-            return;
-        }
-        const updatedBit = editMode ? this.getDraftFromContentEditables() : this.draft; //this.state.draft;
-        updatedBit.published_at = updatedBit.published_at.trim() === '' ? '' : updatedBit.published_at + 'T00:00:00Z' // hack to append time+zone
-        updatedBit.tags = updatedBit.tags ? updatedBit.tags.split(',').map((s)=>{return s.trim()}) : [];
-        BitService.update(bit.id, updatedBit)
-            .then(resp => Log.info('update resp:', resp))
-            .catch(err => Log.error(err))
+    shouldComponentUpdate(nextProps, nextState) {
+        const {value, isEqual, bitId} = this.props;
+        const areEqual = isEqual ? isEqual(value, nextProps.value) : value === nextProps.value;
+        return (value === undefined || areEqual || bitId != nextProps.bitId) && !this.state.hasErrors;
     }
 
-    getDraftFromContentEditables() {
-        return {
-            title: this.titleRef.current.innerText,
-            content: this.contentRef.current.innerText,
-            tags: this.tagsRef.current.innerText,
-            published_at: this.publishedAtRef.current.innerText === '' ?
-                '' : this.publishedAtRef.current.innerText
-        }
+    setValue({value, editable, viewRenderer, editRenderer}) {
+        if (value === undefined) { return; }
+        if (editable) { this.elementRef.current.innerText = editRenderer ? editRenderer(value) : value; } 
+        else { this.elementRef.current.innerHTML = viewRenderer ? viewRenderer(value) : value; }
     }
 
-    setEditModeValues(draft) {
-        this.titleRef.current.innerText = draft.title;
-        this.contentRef.current.innerText = draft.content;
-        this.publishedAtRef.current.innerText = draft.published_at; 
-        this.tagsRef.current.innerText = draft.tags;
-        this.contentRef.current.focus();
-    }
-
-    setPreviewModeValues(draft) {
-        this.titleRef.current.innerHTML = draft.title;
-        this.contentRef.current.innerHTML = marked(draft.content);
-        this.publishedAtRef.current.innerHTML = draft.published_at === '' ? 'Draft' : this.formatPublishedDate(draft.published_at); 
-        this.tagsRef.current.innerHTML = this.formatTags(draft.tags);
-    }
-
-    /**
-     * Handles loading/unloading between editor and preview mode.
-     */
-    onSwitchMode(editMode) {
-        if (editMode) {
-            this.setEditModeValues(this.draft);
+    onInput(e) {
+        const {validator, preprocessor, onUpdate} = this.props;
+        const value = e.target.innerText;
+        if (!validator || validator(value)) {
+            this.setState({hasErrors: false})
+            onUpdate(this.props.id, (preprocessor ? preprocessor(value) : value));
         } else {
-            this.draft = this.getDraftFromContentEditables();
-            this.setPreviewModeValues(this.draft);
-            this.onSave();
+            Log.info('Invalid input!')
+            this.setState({hasErrors: true})
         }
     }
-
 
     render() {
-        const {atUser, bit, onDelete, editMode, switchMode} = this.props;
-        return <StyledEditor className={editMode ? 'editor' : 'preview'}>
-            <SubHeader>
-                <UserProfile atUser={atUser} />
-                {atUser.is_auth && <ActionBar>
-                    <Action onClick={onDelete} className="danger">Delete</Action>
-                    &nbsp; &nbsp;
-                    <Action onClick={switchMode}>{editMode ? 'Done' : 'Edit'}</Action>
-                </ActionBar>}
-            </SubHeader>
-            <h1 className="title" contentEditable={editMode} placeholder="Enter a title" ref={this.titleRef}></h1>
-            <div className="meta">
-                <div className="publishedAt" contentEditable={editMode} placeholder="e.g, 2016-01-17" ref={this.publishedAtRef}></div>
-                <div className="spacer"></div>
-                <div className="tags" contentEditable={editMode} placeholder="e.g, java,react" ref={this.tagsRef}></div>
-            </div>
-            <div className="content" contentEditable={editMode} placeholder="Enter some markdown" ref={this.contentRef}></div>
-        </StyledEditor>                
+        const {id, editable, placeholder} = this.props;
+        return <div id={id} 
+            className={editable ? 'edit' : 'view'}
+            contentEditable={editable}
+            placeholder={placeholder}
+            onInput={this.onInput}
+            ref={this.elementRef}>
+        </div>
     }
 }
 
-export default Editor;
+const Title = (props) => (
+    <Editable id="title" {...props} placeholder="Enter a title" />
+);
 
+const Pubdate = ({value, ...props}) => (
+    <React.Fragment>
+        <i className="icon-calendar"></i>
+        <Editable id="pubdate" {...{...props, value: value ? Utils.toSimpleISOFormat(value) : value}} 
+            placeholder="e.g, YYYY-MM-DD"/>
+    </React.Fragment>
+);
+
+const Tags = (props) => (
+    <React.Fragment>
+        <i className="icon-tags"></i>
+            {/* isEqual={Utils.arraysAreEqual}
+            viewRenderer={Utils.flattenArray}
+            editRenderer={Utils.flattenArray} */}
+        <Editable id="tags" {...props} placeholder="e.g, java, spring-jpa (comma separated, 3 max)"/>
+    </React.Fragment>
+);
+
+const Content = (props) => (
+    <Editable id="content" {...props}
+        viewRenderer={marked}
+        placeholder="e.g, Enter your markdown"/>
+);
+
+export {Title, Content, Pubdate, Tags, Editable, Editor};
