@@ -10,7 +10,7 @@ export default (function() {
         toFullISOFormat(date) {
             const d = Date.parse(date);
             if (isNaN(d))
-                return data;
+                return date;
             return new Date(d).toISOString();
         },
         isValidDate(d, f) {

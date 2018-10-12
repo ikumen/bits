@@ -1,10 +1,8 @@
 import marked from 'marked';
 import hljs from 'highlight.js';
 
+// see: https://marked.js.org/#/USING_ADVANCED.md#options
 marked.setOptions({
-    gfm: true,
-    pedantic: false,
-    sanitize: true,
     highlight: function(code) {
         return hljs.highlightAuto(code).value;
     }

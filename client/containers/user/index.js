@@ -41,7 +41,7 @@ const Pubdate = ({value}) => {
         const formattedDate = Utils.toSimpleISOFormat(value);    
         return <time dateTime={formattedDate}>{formattedDate}</time>
     } else {
-        return <time>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</time>
+        return <time>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Draft</time>
     }
 };
 
@@ -50,17 +50,25 @@ const Tags = ({value}) => {
         
 }
 
+
 const BitList = ({user, bits}) => {
     return bits ? 
         <StyledBitList> {bits.map((bit) => {
-            const {id, title='New Bit', pubdate, tags} = bit;
+            const {id, title='New Bit', pubdate, tags, created_at} = bit;
             const formattedDate = pubdate ? Utils.toSimpleISOFormat(pubdate) : '';
             return <Bit key={id}>
                 <Pubdate value={pubdate} />
                 <div className="title-tags">
-                    <Link to={{pathname: '/@' + user.id + '/bits/' + bit.id}}>
-                        {bit.title || 'New Bit '}
-                    </Link>
+                    {pubdate ? 
+                        <Link to={{pathname: '/@' + user.id + '/bits/' + bit.id}}>
+                            {bit.title || ''}
+                        </Link>
+                    :   <React.Fragment>
+                        <Link to={{pathname: '/@' + user.id + '/bits/' + bit.id + '/edit'}}>
+                            {bit.title || 'No title'}
+                        </Link>
+                        </React.Fragment>
+                    } 
                     <Tags className="tags" value={bit.tags} />
                 </div>
             </Bit>})}

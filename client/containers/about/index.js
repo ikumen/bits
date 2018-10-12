@@ -36,7 +36,7 @@ class AboutPage extends React.Component {
             <ul>
                 <li>distraction free, simple plain text editor with support for markdown</li>
                 <li>for introverts, no social media baggage</li>
-                <li>all your bits belong to us, not really (they are your Gist, you own them)</li>
+                <li><a href="https://en.wikipedia.org/wiki/All_your_base_are_belong_to_us">all your bits belong to us</a>, just kidding, the Gist are under your account</li>
             </ul>
             
             To get started, all you need is a <a href="https://github.com">GitHub</a> account and a little <a href="https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet">knowledge of Markdown</a>. 
