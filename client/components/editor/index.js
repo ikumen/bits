@@ -2,7 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import Utils from '../../services/utils';
 import Log from '../../services/logger';
-import marked from 'marked';
+import {markedWithHljs} from '../../services/renderers';
 
 
 const Editor = styled.div`
@@ -16,7 +16,16 @@ const Editor = styled.div`
         opacity: 1;
         background: #F8F4E3;
     }
-
+    #content pre {
+        background: #2b303b;
+        padding: 10px;
+        font-size: .8rem;
+        font-weight: 100;
+        color: #c0c5ce;
+        overflow: auto;
+        word-wrap: normal;
+        white-space: pre;
+    }
     & #title {
         font-size: 2rem;
         font-weight: 600;
@@ -84,7 +93,10 @@ class Editable extends React.Component {
     setValue({value, editable, viewRenderer, editRenderer}) {
         if (value === undefined) { return; }
         if (editable) { this.elementRef.current.innerText = editRenderer ? editRenderer(value) : value; } 
-        else { this.elementRef.current.innerHTML = viewRenderer ? viewRenderer(value) : value; }
+        else { 
+            this.elementRef.current.innerHTML = viewRenderer ? viewRenderer(value) : value; 
+            
+        }
     }
 
     onInput(e) {
@@ -127,7 +139,6 @@ const Pubdate = ({value, ...props}) => (
 isEqual={Utils.arraysAreEqual}
 viewRenderer={Utils.flattenArray}
 editRenderer={Utils.flattenArray} */
-            
 const Tags = (props) => (
     <React.Fragment>
         <i className="icon-tags"></i>&nbsp;
@@ -135,10 +146,10 @@ const Tags = (props) => (
     </React.Fragment>
 );
 
-const Content = (props) => (
-    <Editable id="content" {...props}
-        viewRenderer={marked}
+const Content = (props) => {
+    return <Editable id="content" {...props}
+        viewRenderer={markedWithHljs}
         placeholder="e.g, Enter your markdown"/>
-);
+};
 
 export {Title, Content, Pubdate, Tags, Editable, Editor};
