@@ -1,5 +1,4 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
 import styled from 'styled-components';
 import Log from '../../services/logger';
 import {Page, SubHeader} from '../../components/layouts';
@@ -51,9 +50,9 @@ class BitPage extends React.Component {
         const {atUserId, bitId, edit} = this.getParams(this.props);
         const viewUrl = '/@' + atUserId + '/bits/' + bitId;
         if (this.isEditable(edit)) {
-            this.props.history.push(viewUrl)
+            this.props.history.replace(viewUrl)
         } else {
-            this.props.history.push(viewUrl + '/edit')
+            this.props.history.replace(viewUrl + '/edit')
         }
     }
 
@@ -210,7 +209,7 @@ class BitPage extends React.Component {
                     <Action onClick={() => this.toggleEditable()}>{editable ? 'Done' : 'Edit'}</Action>
                 </ActionBar>}
             </SubHeader>
-            <Debug editable={editable}>
+            {/* <Debug editable={editable}>
                 id: {bit.id} <br/>
                 editable: {editable ? 'true' : 'false'} <br/>
                 title: {bit.title} <br/>
@@ -219,7 +218,7 @@ class BitPage extends React.Component {
                 content: {(bit.content || '').substring(0, 50)} <br/>
                 last updated: {updatedAt} <br/>
                 last saved: {savedAt} <br/>
-            </Debug>
+            </Debug> */}
             <Editor>
                 <div className="wrapper">
                 <Title {...{...props, value:bit.title}} />

@@ -4,7 +4,6 @@ import Utils from '../../services/utils';
 import Log from '../../services/logger';
 import {markedWithHljs} from '../../services/renderers';
 
-
 const Editor = styled.div`
     padding: 0;
     margin: 30px 0;
@@ -14,7 +13,8 @@ const Editor = styled.div`
     #title.edit, #content.edit, #pubdate.edit, #tags.edit {
         outline: none;
         opacity: 1;
-        background: #F8F4E3;
+        //background: #F8F4E3;
+        background: #fff;
     }
     #content pre {
         background: #2b303b;
@@ -95,7 +95,6 @@ class Editable extends React.Component {
         if (editable) { this.elementRef.current.innerText = editRenderer ? editRenderer(value) : value; } 
         else { 
             this.elementRef.current.innerHTML = viewRenderer ? viewRenderer(value) : value; 
-            
         }
     }
 
@@ -113,7 +112,7 @@ class Editable extends React.Component {
 
     render() {
         const {id, editable, placeholder} = this.props;
-        return <div id={id} 
+        return <div id={id}
             className={editable ? 'edit' : 'view'}
             contentEditable={editable}
             placeholder={placeholder}
@@ -146,10 +145,11 @@ const Tags = (props) => (
     </React.Fragment>
 );
 
-const Content = (props) => {
-    return <Editable id="content" {...props}
-        viewRenderer={markedWithHljs}
-        placeholder="e.g, Enter your markdown"/>
-};
+const Content = (props) => (
+    <Editable id="content" {...props}
+            viewRenderer={markedWithHljs}
+            placeholder="e.g, Enter your markdown"/>
+);
+
 
 export {Title, Content, Pubdate, Tags, Editable, Editor};

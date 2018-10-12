@@ -19,7 +19,7 @@ const Page = styled.div`
 `;
 
 const StyledHeader = styled.div`
-    z-index: 1;
+    z-index: 1000;
     padding: 10px 0; 
     position: fixed;
     top: 0;
@@ -108,10 +108,10 @@ class Header extends React.Component {
     }
 
     componentDidMount() {
-        Log.info('-->')
+        Log.info('--> helo')
         UserService.getCurrentUser()
             .then(this.onCurrentUserLoaded)
-            .catch(err => Log.error(err));
+            .catch(Log.error);
     }
 
     onCurrentUserLoaded(user) {

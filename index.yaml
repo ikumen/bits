@@ -18,14 +18,6 @@ indexes:
 - kind: Bit
   properties:
   - name: published
-  - name: user
-  - name: pubdate
-    direction: desc
-  - name: title
-
-- kind: Bit
-  properties:
-  - name: published
   - name: published_at
     direction: desc
   - name: title
@@ -33,6 +25,14 @@ indexes:
 - kind: Bit
   properties:
   - name: published
+  - name: title
+
+- kind: Bit
+  properties:
+  - name: published
+  - name: user
+  - name: pubdate
+    direction: desc
   - name: title
 
 - kind: Bit
