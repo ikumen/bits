@@ -108,7 +108,6 @@ class Header extends React.Component {
     }
 
     componentDidMount() {
-        Log.info('--> helo')
         UserService.getCurrentUser()
             .then(this.onCurrentUserLoaded)
             .catch(Log.error);

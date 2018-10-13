@@ -151,5 +151,4 @@ const Content = (props) => (
             placeholder="e.g, Enter your markdown"/>
 );
 
-
 export {Title, Content, Pubdate, Tags, Editable, Editor};

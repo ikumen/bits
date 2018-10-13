@@ -82,9 +82,12 @@ class BitPage extends React.Component {
     }
 
     afterDataLoaded(resp) {
-        const autoSaveId = setInterval(this.autoSave, 20000);
-        Log.info('Setting autoSaveId: ' + autoSaveId);
-        this.setState({autoSaveId: autoSaveId})
+        const {atUser} = this.state;
+        if (atUser && atUser.is_auth) {
+            const autoSaveId = setInterval(this.autoSave, 60000);
+            Log.info('Setting autoSaveId: ' + autoSaveId);
+            this.setState({autoSaveId: autoSaveId})    
+        }
         return resp;
     }
 
@@ -198,11 +201,11 @@ class BitPage extends React.Component {
 
     render() {
         const {bit={}, atUser, savedAt, updatedAt} = this.state;
-        const editable = this.isEditable(this.props.match.params.edit);
+        const editable = this.isEditable(this.props.match.params.edit) && atUser && atUser.is_auth;
         const props = {bitId: bit.id, editable: editable, onUpdate: this.onUpdate}
         return <Page>
             <SubHeader>
-                <UserProfile atUser={atUser} />
+                <UserProfile atUser={atUser} bit={bit} />
                 {atUser && atUser.is_auth && 
                 <ActionBar>
                     <Action onClick={() => this.onDelete()} className="danger">Delete</Action>
