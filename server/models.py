@@ -41,33 +41,55 @@ class GAEModel(JSONSerializable, ndb.Model):
         instance.put()
         return instance
 
+    # @classmethod
+    # def get(cls, id):
+    #     """Returns instance of implementing class identified by given id.
+        
+    #     @param id identifier
+    #     """
+    #     try:
+    #         return ndb.Key(cls, id).get()
+    #     except ProtocolBufferDecodeError:
+    #         return None
+
     @classmethod
-    def list(cls, limit=50):
+    def __apply_filters(cls, query, **kwargs):
+        for k,v in kwargs.items():
+            if hasattr(cls, k) and v is not None:
+                if k == 'id':
+                    k = 'key'
+                    v = cls.id_to_key(v)
+                query = query.filter(getattr(cls, k) == v)
+        return query
+
+    @classmethod
+    def list(cls, offset=0, limit=100, filters={}, projection=None, keys_only=False, order=None, **kwargs):
         """Returns all instances of implementing class.
 
         @param parent_key optional ancestor key to filter by
         @param limit optional fetch limit, defaults to 50
         """
-        query = cls.query()
-        return query.fetch(limit)
+        query = cls.__apply_filters(cls.query(), **filters)
+        query = cls.__apply_filters(query, **kwargs)
+        if order is not None:
+            query = query.order(*order)
+        return query.fetch(offset=offset, limit=limit, keys_only=keys_only, projection=projection)
 
     @classmethod
-    def get(cls, id):
-        """Returns instance of implementing class identified by given id.
-        
-        @param id identifier
-        """
-        try:
-            return ndb.Key(cls, id).get()
-        except ProtocolBufferDecodeError:
+    def find_one(cls, raise_error=False, filters={}, projection=None, **kwargs):
+        rv = cls.list(offset=0, limit=1, filters=filters, projection=projection, **kwargs)
+        if len(rv) == 0:
+            if raise_error is True:
+                raise ValueError('Could not find any matching models!')
             return None
+        return rv[0]
 
     @classmethod
     def update(cls, id, **kwargs):
         """update this instance to datastore.
         """
         upsert = kwargs.pop('upsert', False)
-        model = cls.get(id)
+        model = cls.get_by_id(id)
         if model is None:
             if upsert is False:
                 return None
@@ -79,10 +101,12 @@ class GAEModel(JSONSerializable, ndb.Model):
         return model
 
     @classmethod
-    def delete(cls, id):
+    def delete(cls, id, raise_error=True, **kwargs):
         """Delete this instance from datastore.
         """
-        cls.get(id).key.delete()
+        kwargs['keys_only'] = True
+        key = cls.find_one(id=id, raise_error=raise_error, **kwargs)
+        key.delete()
 
     @property
     def id(self):
@@ -127,10 +151,18 @@ class Bit(GAEModel):
     def update(cls, id, user_id, **kwargs):
         return super(cls, Bit).update(id, user=User.id_to_key(user_id), **kwargs)
 
-    @classmethod
-    def list(cls, user_id, published_only=True, limit=50):
-        query = cls.query().filter(cls.user == User.id_to_key(user_id))
-        if published_only:
-            query = query.filter(cls.published == True)
-        return query.order(cls.published, -cls.pubdate, cls.title).fetch(limit)
+
+    def to_json(self, include_user=False):
+        """Returns the serializable JSON version of this model.
+        NOTE: Flask uses this to serialize for jsonify and session.
+        To prevent oauth token from being exposed to client (via jsonify)
+        we remove it before being serialized.
+        """
+        rv = super(Bit, self).to_json()
+        if include_user:
+            rv['user'] = self.user.get().to_json()
+        else:
+            del rv['user']
+        return rv
+
 

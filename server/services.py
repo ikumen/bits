@@ -10,6 +10,7 @@ from pymongo import MongoClient
 from werkzeug.contrib.cache import SimpleCache
 from .models import User, Bit
 from .helpers import ISO_DATETIME_FORMAT
+from google.appengine.ext import ndb
 
 
 # shared db instance
@@ -28,7 +29,7 @@ class UserService(object):
 
     @classmethod
     def get(cls, id):
-        return cls.__model__.get(id)
+        return cls.__model__.get_by_id(id)
 
     @classmethod
     def update(cls, id, **kwargs):
@@ -37,10 +38,6 @@ class UserService(object):
 
 class BitService(object):
     __model__ = Bit
-
-    @classmethod
-    def get(cls, id):
-        return cls.__model__.get(id)
 
     @classmethod
     def _fetch_all_from_github(cls, user_id):
@@ -117,8 +114,6 @@ class BitService(object):
             elif t.startswith('pubdate:'):
                 t = t[8:].strip() # remove pubdate:
                 pubdate = t or None
-
-
         return {'tags': tags, 'pubdate': pubdate}
 
     @classmethod
@@ -140,11 +135,16 @@ class BitService(object):
         return rv
     
     @classmethod
-    def update(cls, id, **kwargs):
+    def update(cls, id, user_id, **kwargs):
         # convert bit -> gist data -> github -> gist -> bit model -> ndb
-        gist_data = cls._build_gist_data(kwargs)
-        gist = cls._patch_to_github(id, gist_data)
-        return cls._to_bit_from_gist(gist)
+        try:
+            cls.get_by_user(id, user_id) # ignore, checking for existence
+            gist_data = cls._build_gist_data(kwargs)
+            gist = cls._patch_to_github(id, gist_data)
+            return cls._to_bit_from_gist(gist)
+        except ValueError:
+            # TODO: handle error
+            return None
 
     @classmethod
     def create(cls, **kwargs):
@@ -158,12 +158,28 @@ class BitService(object):
         return cls.__model__.list(user_id, **kwargs)
 
     @classmethod
-    def delete(cls, id):
+    def list_by_user(cls, user_id, **kwargs):
+        userkey = User.id_to_key(user_id)
+        user = userkey.get().to_json()
+        bits = cls.__model__.list(user=userkey, order=[Bit.published, -Bit.pubdate, Bit.title], **kwargs)
+        user['bits'] = bits
+        return user
+
+    @classmethod
+    def delete(cls, id, user_id):
         try:
-            resp = github.delete('/gists/' + id)
-        except GitHubError as e:
+            # TODO: handle error
+            cls.__model__.delete(id, user=User.id_to_key(user_id))            
+            github.delete('/gists/' + id)
+        except GitHubError:
             log.exception('Delete unsuccessful, but removing local copy from datastore anyways.')
-        cls.__model__.delete(id)
+        
+    @classmethod
+    def get_by_user(cls, id, user_id, published=True):
+        bit = cls.__model__.get_by_id(id)
+        if bit.user.id() == user_id and (published is None or published == bit.published):
+            return bit
+        return None
 
     @classmethod
     def sync(cls, user_id):
