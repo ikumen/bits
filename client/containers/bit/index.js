@@ -3,7 +3,6 @@ import styled from 'styled-components';
 import Log from '../../services/logger';
 import {Page, SubHeader} from '../../components/layouts';
 import UserProfile from '../../components/userprofile';
-import UserService from '../../services/user';
 import BitService from '../../services/bits';
 import Utils from '../../services/utils';
 import {Title, Tags, Pubdate, Content, Editor} from '../../components/editor';
@@ -63,16 +62,17 @@ class BitPage extends React.Component {
     }
     
     /** When data is loaded do the following. */
-    whenDataLoaded([atUser, bit]) {
+    whenDataLoaded({isAuthUser, bit}) {
         this.setState({
-            atUser: atUser, 
+            atUser: bit.user, 
+            isAuthUser: isAuthUser,
             // TODO: just too difficult to handle arrays, flatten 
             /// while in editor, join back when saving to backend
             bit: {...{...bit, tags: Utils.flattenArray(bit.tags)}}, 
             savedAt: bit.updated_at,
             updatedAt: bit.updated_at
         });
-        return [atUser, bit];
+        return {isAuthUser, bit}; // pass on
     }
 
     beforeDataLoaded(resp) {
@@ -81,26 +81,22 @@ class BitPage extends React.Component {
         return resp;
     }
 
-    afterDataLoaded(resp) {
-        const {atUser} = this.state;
-        if (atUser && atUser.is_auth) {
+    afterDataLoaded({user, isAuthUser, bit}) {
+        if (isAuthUser) {
             const autoSaveId = setInterval(this.autoSave, 60000);
             Log.info('Setting autoSaveId: ' + autoSaveId);
             this.setState({autoSaveId: autoSaveId})    
         }
-        return resp;
+        return {user, isAuthUser, bit};
     }
 
     /** Loads main data (atUser, bit) for this component. */
     loadData({atUserId, bitId}) {
         Log.info('atUserId=', atUserId, ', bitId=', bitId)
-        Promise.all([
-            UserService.getAtUser(atUserId),
-            BitService.get(bitId)
-        ]).then(this.beforeDataLoaded)
-        .then(this.whenDataLoaded)
-        .then(this.afterDataLoaded)
-        .catch(Log.error);
+        BitService.get(atUserId, bitId)
+            .then(this.beforeDataLoaded)
+            .then(this.whenDataLoaded)
+            .then(this.afterDataLoaded);
     }
 
     onUpdate(id, value) {
@@ -118,10 +114,10 @@ class BitPage extends React.Component {
     }
 
     autoSave(opts) {
-        const {bit, lastSavedBit, updatedAt, savedAt} = this.state;
+        const {bit, lastSavedBit, updatedAt, savedAt, atUser} = this.state;
         if (updatedAt != savedAt && this.isBitModified(bit, lastSavedBit)) {
             Log.info('Changes detected, auto saving ....')
-            BitService.update(bit.id, {
+            BitService.update(atUser.id, bit.id, {
                     title: bit.title,
                     pubdate: bit.pubdate, 
                     tags: this.tagsPreprocessor(bit.tags),
@@ -194,34 +190,24 @@ class BitPage extends React.Component {
 
     onDelete() {
         const {atUser, bit} = this.state;
-        BitService.delete(bit.id)
+        BitService.delete(atUser.id, bit.id)
             .then(() => this.props.history.replace('/@' + atUser.id))
             .catch(err => Log.error(err))
     }
 
     render() {
-        const {bit={}, atUser, savedAt, updatedAt} = this.state;
-        const editable = this.isEditable(this.props.match.params.edit) && atUser && atUser.is_auth;
+        const {bit={}, atUser, isAuthUser, savedAt, updatedAt} = this.state;
+        const editable = this.isEditable(this.props.match.params.edit) && isAuthUser;
         const props = {bitId: bit.id, editable: editable, onUpdate: this.onUpdate}
         return <Page>
             <SubHeader>
-                <UserProfile atUser={atUser} bit={bit} />
-                {atUser && atUser.is_auth && 
+                <UserProfile {...this.state} />
+                {isAuthUser && 
                 <ActionBar>
                     <Action onClick={() => this.onDelete()} className="danger">Delete</Action>
                     <Action onClick={() => this.toggleEditable()}>{editable ? 'Done' : 'Edit'}</Action>
                 </ActionBar>}
             </SubHeader>
-            {/* <Debug editable={editable}>
-                id: {bit.id} <br/>
-                editable: {editable ? 'true' : 'false'} <br/>
-                title: {bit.title} <br/>
-                pubdate: {bit.pubdate} <br/>
-                tags: {bit.tags} <br/>
-                content: {(bit.content || '').substring(0, 50)} <br/>
-                last updated: {updatedAt} <br/>
-                last saved: {savedAt} <br/>
-            </Debug> */}
             <Editor>
                 <div className="wrapper">
                 <Title {...{...props, value:bit.title}} />
@@ -239,17 +225,5 @@ class BitPage extends React.Component {
         </Page>
     }
 }
-
-
-const Debug = styled.div`
-    font-size: .7rem;
-    display: ${props => props.editable ? 'block' : 'none'};
-    font-family: monospace;
-    margin: 0 0 10px 0;
-    padding: 10px;
-    background-color: #fff;
-    border: 1px solid #ddd;
-`;
-
 
 export {BitPage};

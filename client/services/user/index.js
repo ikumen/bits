@@ -1,5 +1,5 @@
 import Log from '../logger';
-import Service from '../../services';
+import {Service} from '../../services';
 
 class UserService extends Service {
     constructor() {
@@ -13,8 +13,7 @@ class UserService extends Service {
             Log.info('Fetching user from backend!')
             return await fetch('/api/user')
                 .then(this.status)
-                .then(this.json)
-                .catch(err => Log.error(err));
+                .then(this.json);
         }
         return this.user;
     }
@@ -22,13 +21,12 @@ class UserService extends Service {
     async getAtUser(userId) {
         if (!this.atUsers[userId]) {
             return await fetch('/api/@' + userId)
-                .then(this.status)
-                .then(this.json)
+                .then(this.status) // make sure we have valid response
+                .then(this.json) // convert to json
                 .then(user => {
                     this.atUsers[userId] = user;
                     return user;
-                })
-                .catch(err => Log.error(err));
+                });
         }
         return this.atUsers[userId];
     }

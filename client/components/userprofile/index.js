@@ -30,7 +30,7 @@ const StyledProfile = styled.div`
 `;
 
 
-const UserProfile = ({atUser={}, bit}) => {
+const UserProfile = ({atUser={}, isAuthUser, bit}) => {
     const baseGistUrl = 'https://gist.github.com/';
     const url = baseGistUrl + (bit ? (atUser.id + '/' + bit.id) : ('search?q=user%3A' + atUser.id + '+filename%3Abit.md'));
     return <StyledProfile>
@@ -38,7 +38,7 @@ const UserProfile = ({atUser={}, bit}) => {
             <img src={atUser.avatar_url}/>
             <div className="links">
                 <Link className="user-link" to={{pathname: '/@' + atUser.id}}>{atUser.name ? atUser.name : atUser.id}</Link>&nbsp;
-                {atUser && atUser.is_auth && 
+                {isAuthUser && 
                 <div className="gh-links"><small>(</small><a href={url} target="_new"><i className="icon-github-circled"></i>Gist</a><small>)</small></div>
                 }
             </div>

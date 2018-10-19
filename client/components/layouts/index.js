@@ -1,5 +1,6 @@
 import React from 'react';
 import {Link} from 'react-router-dom';
+import {NotFoundError, AuthenticationError} from '../../services';
 import UserService from '../../services/user';
 import BitService from '../../services/bits';
 import Log from '../../services/logger';
@@ -82,6 +83,7 @@ const StyledFooter = styled.div`
     }
 `;
 
+
 const Footer = () => (
     <StyledFooter>
         <div className="copyright">
@@ -98,52 +100,29 @@ const Footer = () => (
 class Header extends React.Component {
     constructor(props) {
         super(props);
-        this.onCurrentUserLoaded = this.onCurrentUserLoaded.bind(this);
         this.createNewBit = this.createNewBit.bind(this);
-        this.onCreateNewBit = this.onCreateNewBit.bind(this);
-
-        this.state = {
-            user: false
-        }
-    }
-
-    componentDidMount() {
-        UserService.getCurrentUser()
-            .then(this.onCurrentUserLoaded)
-            .catch(Log.error);
-    }
-
-    onCurrentUserLoaded(user) {
-        if (user) {
-            this.setState({user: user});
-        }
     }
 
     createNewBit(evt) {
-        if (this.state.user) {
-            BitService.create(this.state.user.id)
-                .then(this.onCreateNewBit)
-                .catch(err => Log.error(err));
-        } else {
-            //TODO: signout
+        const {authUser} = this.props;
+        if (authUser) {
+            BitService.create(authUser.id)
+                .then(({bit, isAuthUser}) => 
+                    this.props.onHistoryChange('/@' + authUser.id + '/bits/' + bit.id + '/edit', true)
+                );
         }
     }
 
-    onCreateNewBit(bit) {
-        Log.debug('Created bit:', bit);
-        const url = '/@' + this.state.user.id + '/bits/' + bit.id + '/edit';
-        this.props.history.push(url);
-    }
-
     render() {
+        const {authUser} = this.props;
         return <StyledHeader>
         <header>
             <div className="logo">
-                <Link to={{pathname: this.state.user ? '/@' + this.state.user.id : '/'}}>
+                <Link to={{pathname: authUser ? '/@' + authUser.id : '/'}}>
                     <i className="icon-spinner"></i> Bits
                 </Link>
             </div>
-            {this.state.user ?
+            {authUser ?
                 <div className="signin">
                     <a onClick={this.createNewBit}>New Bit</a>
                     <a href="/signout">Sign out</a> 
@@ -157,10 +136,4 @@ class Header extends React.Component {
     }
 }
 
-const If = (props) => {
-    return <React.Fragment>
-        {props.value ? props.children : ''}
-    </React.Fragment>
-}
-
-export {Footer, Header, SubHeader, Page, If};
+export {Footer, Header, SubHeader, Page,};
