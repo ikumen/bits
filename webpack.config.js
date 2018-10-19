@@ -47,6 +47,9 @@ module.exports = {
       new CompressionPlugin()
   ],
   devServer: {
+    headers: {
+        'Access-Control-Allow-Origin': '*'
+    },  
     contentBase: __dirname + '/client',
     historyApiFallback: {
         rewrites: [

@@ -5,7 +5,7 @@
     "main": "index.js",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
-        "start": "webpack-dev-server --mode development --open",
+        "start": "webpack-dev-server --mode development --devtool source-map --history-api-fallback --hot",
         "_pre-build": "rm -rf dist/*",
         "_post-build": "mkdir -p dist/static && cp -R client/static/* dist/static",
         "build": "npm run _pre-build && webpack --mode production && npm run _post-build"
