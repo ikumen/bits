@@ -7,12 +7,12 @@ function _logWithCaller(log, ...args) {
     try { throw new Error(); }
     catch (e) { 
         var re = /(\w+)@|at (\w+)\.?(_?\w+\$?) \(/g, st = e.stack, m;
-        re.exec(st), // skip this wrapper/callback
+        m = re.exec(st); // skip this wrapper/callback
         m = re.exec(st);
-        //console.log(m)
-        callerName = m[2] + (m[3] ? '.' + m[3] : '') + '(): ';
+        callerName = m ? (m[2] + (m[3] ? '.' + m[3] : '') + '(): ') : '';
     }
-    log(callerName, ...args)
+    if (callerName) log(callerName, ...args);
+    else log(...args);
 }
 
 export default (function(){
@@ -28,7 +28,7 @@ export default (function(){
         logger.warn = console.warn;
         if (window.location.hostname === 'localhost') {
             logger.debug = (...args) => {_logWithCaller(console.debug, ...args)}
-            logger.info = (...args) => {_logWithCaller(console.info, ...args)}
+            logger.info = (...args) => {_logWithCaller(console.info, ...args)}    
         }
     }
 

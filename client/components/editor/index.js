@@ -2,8 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import Utils from '../../services/utils';
 import Log from '../../services/logger';
-import marked from 'marked';
-
+import {markedWithHljs} from '../../services/renderers';
 
 const Editor = styled.div`
     padding: 0;
@@ -14,12 +13,22 @@ const Editor = styled.div`
     #title.edit, #content.edit, #pubdate.edit, #tags.edit {
         outline: none;
         opacity: 1;
-        background: #F8F4E3;
+        //background: #F8F4E3;
+        background: #fff;
     }
-
+    #content pre {
+        background: #2b303b;
+        padding: 10px;
+        font-size: .8rem;
+        font-weight: 100;
+        color: #c0c5ce;
+        overflow: auto;
+        word-wrap: normal;
+        white-space: pre;
+    }
     & #title {
         font-size: 2rem;
-        font-weight: 500;
+        font-weight: 600;
         margin-bottom: 4px;
     }
     & [contenteditable=true]:empty:before {
@@ -35,10 +44,8 @@ const Editor = styled.div`
         font-size: .9rem;
     }
     & #pubdate {
-        margin-right: 20px;
-    }
-    & #tags {
-        text-align: right;
+        margin-right: 30px;
+        white-space:nowrap;
     }
     & .meta .view, & .meta i  {
         color: #bbb;
@@ -86,7 +93,9 @@ class Editable extends React.Component {
     setValue({value, editable, viewRenderer, editRenderer}) {
         if (value === undefined) { return; }
         if (editable) { this.elementRef.current.innerText = editRenderer ? editRenderer(value) : value; } 
-        else { this.elementRef.current.innerHTML = viewRenderer ? viewRenderer(value) : value; }
+        else { 
+            this.elementRef.current.innerHTML = viewRenderer ? viewRenderer(value) : value; 
+        }
     }
 
     onInput(e) {
@@ -103,7 +112,7 @@ class Editable extends React.Component {
 
     render() {
         const {id, editable, placeholder} = this.props;
-        return <div id={id} 
+        return <div id={id}
             className={editable ? 'edit' : 'view'}
             contentEditable={editable}
             placeholder={placeholder}
@@ -119,26 +128,27 @@ const Title = (props) => (
 
 const Pubdate = ({value, ...props}) => (
     <React.Fragment>
-        <i className="icon-calendar"></i>
+        <i className="icon-calendar"></i>&nbsp;
         <Editable id="pubdate" {...{...props, value: value ? Utils.toSimpleISOFormat(value) : value}} 
             placeholder="e.g, YYYY-MM-DD"/>
     </React.Fragment>
 );
 
+/*
+isEqual={Utils.arraysAreEqual}
+viewRenderer={Utils.flattenArray}
+editRenderer={Utils.flattenArray} */
 const Tags = (props) => (
     <React.Fragment>
-        <i className="icon-tags"></i>
-            {/* isEqual={Utils.arraysAreEqual}
-            viewRenderer={Utils.flattenArray}
-            editRenderer={Utils.flattenArray} */}
+        <i className="icon-tags"></i>&nbsp;
         <Editable id="tags" {...props} placeholder="e.g, java, spring-jpa (comma separated, 3 max)"/>
     </React.Fragment>
 );
 
 const Content = (props) => (
     <Editable id="content" {...props}
-        viewRenderer={marked}
-        placeholder="e.g, Enter your markdown"/>
+            viewRenderer={markedWithHljs}
+            placeholder="e.g, Enter your markdown"/>
 );
 
 export {Title, Content, Pubdate, Tags, Editable, Editor};

@@ -12,15 +12,21 @@ indexes:
 
 - kind: Bit
   properties:
-  - name: content
+  - name: __key__
+  - name: published
+  - name: title
+  - name: user
+
+- kind: Bit
+  properties:
+  - name: __key__
   - name: title
 
 - kind: Bit
   properties:
-  - name: published
-  - name: published_at
-    direction: desc
+  - name: __key__
   - name: title
+  - name: user
 
 - kind: Bit
   properties:
@@ -31,20 +37,14 @@ indexes:
   properties:
   - name: published
   - name: user
-  - name: published_at
+  - name: pubdate
     direction: desc
   - name: title
 
 - kind: Bit
   properties:
-  - name: published_at
-  - name: title
-
-- kind: Bit
-  properties:
-  - name: published_at
-    direction: desc
-  - name: title
+  - name: user
+  - name: published
 
 - kind: Bit
   properties:
@@ -57,13 +57,10 @@ indexes:
 - kind: Bit
   properties:
   - name: user
-  - name: published
-  - name: published_at
-    direction: desc
   - name: title
 
 - kind: Bit
-  ancestor: yes
   properties:
-  - name: content
+  - name: user
   - name: title
+    direction: desc

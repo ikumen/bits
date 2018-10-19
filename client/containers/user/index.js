@@ -2,7 +2,6 @@ import React from 'react';
 import BitService from '../../services/bits';
 import styled from 'styled-components';
 import {Link} from 'react-router-dom';
-import UserService from '../../services/user';
 import Log from '../../services/logger';
 import Utils from '../../services/utils';
 import {Page, SubHeader} from '../../components/layouts';
@@ -17,75 +16,86 @@ const StyledBitList = styled.ul`
 const Bit = styled.li`
     margin-bottom: 15px;
     display: flex;
-    flex-direction: column;
-`;
-const Meta = styled.div`
-    margin-top: -2px;
-    display: flex;
     flex-direction: row;
-    font-size: .9rem;
-    opacity: .4;
-    & time {
-        margin-right: 10px;
+    align-items: baseline;
+    font-size: 1.1rem;
+    flex-wrap: nowrap;
+    time, .tags {
+        font-family: monospace;
+        font-size: .9rem;
+        color: #bbb;
     }
-    & i {
-        opacity: .3;
+    time {
+        margin-right: 10px;
+        white-space: nowrap;
+    }
+    .tags {
+        margin-top: -4px;
     }
 `;
 
-const PublishDate = ({pubdate}) => {
-    const formattedDate = pubdate ? Utils.toSimpleISOFormat(pubdate) : 'Draft';
-    return <time dateTime={formattedDate}><i className="icon-calendar"></i> {formattedDate}</time>
+const Pubdate = ({value}) => {
+    if (value) {
+        const formattedDate = Utils.toSimpleISOFormat(value);    
+        return <time dateTime={formattedDate}>{formattedDate}</time>
+    } else {
+        return <time>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Draft</time>
+    }
 };
 
-const TagList = ({tags}) => {
-    return tags && tags.length > 0 ? <div><i className="icon-tags"></i> {tags.join(', ')}</div> : <div></div>
+const Tags = ({value}) => {
+    return value && value.length > 0 ? <div className="tags">[{value.join(', ')}]</div> : <div></div>
         
 }
 
-const BitList = ({user, bits}) => {
-    const options = {year: 'numeric', month: 'short'}
-    return <StyledBitList> 
-        {bits && bits.map((bit) => 
-            <Bit key={bit.id}>
-                <Link className="link" to={{pathname: '/@' + user.id + '/bits/' + bit.id}}>
-                    {bit.title || 'New Bit '}
-                </Link>
-                <Meta>
-                    <PublishDate pubdate={bit.pubdate} />
-                    <TagList tags={bit.tags} />
-                </Meta>
-            </Bit>
-        )}
-    </StyledBitList>
+
+const BitList = ({atUser}) => {
+    return atUser ? 
+        <StyledBitList> {atUser.bits.map((bit) => {
+            const {id, pubdate} = bit;
+            return <Bit key={id}>
+                <Pubdate value={pubdate} />
+                <div className="title-tags">
+                    {pubdate ? 
+                        <Link to={{pathname: '/@' + atUser.id + '/bits/' + bit.id}}>
+                            {bit.title || ''}
+                        </Link>
+                    :   <React.Fragment>
+                        <Link to={{pathname: '/@' + atUser.id + '/bits/' + bit.id + '/edit'}}>
+                            {bit.title || 'No title'}
+                        </Link>
+                        </React.Fragment>
+                    } 
+                    <Tags className="tags" value={bit.tags} />
+                </div>
+            </Bit>})}
+        </StyledBitList> 
+        : <div></div>
 };
 
 
 class UserPage extends React.Component {
     constructor(props) {
         super(props);
-        //TODO: check for userId
-        this.state = {
-            atUserId: props.match.params.atUserId,
-        }
+        this.state = {}
     }
 
     componentDidMount() {
-        Promise.all([
-                UserService.getAtUser(this.state.atUserId),
-                BitService.list(this.state.atUserId)])
-            .then(([atUser, bits]) => this.setState({atUser: atUser, bits: bits}))
-            .catch(err => Log.error(err));
+        BitService.list(this.props.match.params.atUserId)
+            .then(({user, isAuthUser}) => this.setState({
+                atUser: user, 
+                isAuthUser
+            }))
+            .catch(this.props.handleError)        
     }
 
     render() {
         return <Page>
             <SubHeader>
-                <UserProfile atUser={this.state.atUser} />
+                <UserProfile {...this.state} />
             </SubHeader>
-            <BitList user={this.state.atUser} bits={this.state.bits} />
+            <BitList {...this.state} />
         </Page>
-
     }
  }
 

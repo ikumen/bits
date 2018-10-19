@@ -1,4 +1,5 @@
 const HtmlWebPackPlugin = require("html-webpack-plugin");
+const CompressionPlugin = require('compression-webpack-plugin');
 
 const htmlPlugin = new HtmlWebPackPlugin({
   template: "./client/index.html",
@@ -41,8 +42,14 @@ module.exports = {
       }
     ]
   },
-  plugins: [htmlPlugin],
+  plugins: [
+      htmlPlugin,
+      new CompressionPlugin()
+  ],
   devServer: {
+    headers: {
+        'Access-Control-Allow-Origin': '*'
+    },  
     contentBase: __dirname + '/client',
     historyApiFallback: {
         rewrites: [

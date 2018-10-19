@@ -1,5 +1,6 @@
 import React from 'react';
 import {Link} from 'react-router-dom';
+import {NotFoundError, AuthenticationError} from '../../services';
 import UserService from '../../services/user';
 import BitService from '../../services/bits';
 import Log from '../../services/logger';
@@ -19,13 +20,13 @@ const Page = styled.div`
 `;
 
 const StyledHeader = styled.div`
-    z-index: 1;
+    z-index: 1000;
     padding: 10px 0; 
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
-    background-color: #20232a;
+    background-color: #292c34;
 
     header {
         margin-left: auto;
@@ -42,7 +43,7 @@ const StyledHeader = styled.div`
     }
     header .logo, header .signin {
         flex: 1;
-        font-size: .8rem;
+        font-size: .9rem;
         font-weight: 400;
     }
     header .signin {
@@ -67,7 +68,7 @@ const StyledFooter = styled.div`
     display: flex;
     border-top: 1px solid #ddd;
     padding: 6px 0px 12px 0px;
-    font-size: .8rem;
+    font-size: .9rem;
     color: #666;
     flex-direction: row;
 
@@ -81,6 +82,7 @@ const StyledFooter = styled.div`
         margin-left: 20px;
     }
 `;
+
 
 const Footer = () => (
     <StyledFooter>
@@ -98,53 +100,29 @@ const Footer = () => (
 class Header extends React.Component {
     constructor(props) {
         super(props);
-        this.onCurrentUserLoaded = this.onCurrentUserLoaded.bind(this);
         this.createNewBit = this.createNewBit.bind(this);
-        this.onCreateNewBit = this.onCreateNewBit.bind(this);
-
-        this.state = {
-            user: false
-        }
-    }
-
-    componentDidMount() {
-        Log.info('-->')
-        UserService.getCurrentUser()
-            .then(this.onCurrentUserLoaded)
-            .catch(err => Log.error(err));
-    }
-
-    onCurrentUserLoaded(user) {
-        if (user) {
-            this.setState({user: user});
-        }
     }
 
     createNewBit(evt) {
-        if (this.state.user) {
-            BitService.create(this.state.user.id)
-                .then(this.onCreateNewBit)
-                .catch(err => Log.error(err));
-        } else {
-            //TODO: signout
+        const {authUser} = this.props;
+        if (authUser) {
+            BitService.create(authUser.id)
+                .then(({bit, isAuthUser}) => 
+                    this.props.onHistoryChange('/@' + authUser.id + '/bits/' + bit.id + '/edit', true)
+                );
         }
     }
 
-    onCreateNewBit(bit) {
-        Log.debug('Created bit:', bit);
-        const url = '/@' + this.state.user.id + '/bits/' + bit.id + '/edit';
-        this.props.history.push(url);
-    }
-
     render() {
+        const {authUser} = this.props;
         return <StyledHeader>
         <header>
             <div className="logo">
-                <Link to={{pathname: this.state.user ? '/@' + this.state.user.id : '/'}}>
+                <Link to={{pathname: authUser ? '/@' + authUser.id : '/'}}>
                     <i className="icon-spinner"></i> Bits
                 </Link>
             </div>
-            {this.state.user ?
+            {authUser ?
                 <div className="signin">
                     <a onClick={this.createNewBit}>New Bit</a>
                     <a href="/signout">Sign out</a> 
@@ -158,11 +136,4 @@ class Header extends React.Component {
     }
 }
 
-const If = (props) => {
-    console.log("inside if....", props.value)
-    return <React.Fragment>
-        {props.value ? props.children : ''}
-    </React.Fragment>
-}
-
-export {Footer, Header, SubHeader, Page, If};
+export {Footer, Header, SubHeader, Page,};
