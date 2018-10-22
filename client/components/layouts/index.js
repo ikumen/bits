@@ -107,9 +107,10 @@ class Header extends React.Component {
         const {authUser} = this.props;
         if (authUser) {
             BitService.create(authUser.id)
-                .then(({bit, isAuthUser}) => 
-                    this.props.onHistoryChange('/@' + authUser.id + '/bits/' + bit.id + '/edit', true)
-                );
+                .then(({bit, isAuthUser}) => {
+                    this.props.onHistoryChange('/@' + authUser.id + '/bits/' + bit.id + '/edit')
+                })
+                .catch(this.props.handleError)
         }
     }
 

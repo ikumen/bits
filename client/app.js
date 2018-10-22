@@ -33,6 +33,7 @@ class App extends React.Component {
         super(props);
         this.handleError = this.handleError.bind(this);
         this.getAndClearError = this.getAndClearError.bind(this);
+        this.onHistoryChange = this.onHistoryChange.bind(this);
         this.state = {};
         this.clearError();
     }
@@ -70,7 +71,7 @@ class App extends React.Component {
             , handleError = this.handleError;
 
         return <React.Fragment>
-            <Header authUser={authUser} />
+            <Header authUser={authUser} handleError={handleError} onHistoryChange={this.onHistoryChange} />
             <Switch>
                 <Route exact={true} path="/" render={(props) => withAuthUser(AboutPage, {...props, authUser, handleError})} />
                 <Route exact={true} path="/about" render={(props) => withAuthUser(AboutPage, {...props, authUser, handleError})} />

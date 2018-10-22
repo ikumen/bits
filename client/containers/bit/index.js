@@ -96,7 +96,8 @@ class BitPage extends React.Component {
         BitService.get(atUserId, bitId)
             .then(this.beforeDataLoaded)
             .then(this.whenDataLoaded)
-            .then(this.afterDataLoaded);
+            .then(this.afterDataLoaded)
+            .catch(this.props.handleError)
     }
 
     onUpdate(id, value) {

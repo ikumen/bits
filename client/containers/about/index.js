@@ -21,7 +21,7 @@ const AboutPage = (props) => {
             </li>
         </ul>
         </div>
-        {props.authUser && <div hidden={props.authUser}>
+        <div hidden={props.authUser}>
         <p>
             To get started, all you need is a <a href="https://github.com">GitHub</a> account 
             and a little <a href="https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet">knowledge of Markdown</a>. 
@@ -29,7 +29,7 @@ const AboutPage = (props) => {
         <p>
             Sign in when you're ready.
         </p>
-        </div>}
+        </div>
     </Page>
 };
 

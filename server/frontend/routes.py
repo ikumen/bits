@@ -16,6 +16,7 @@ def home():
 
 
 @bp.route('/about', methods=['get'])
+@bp.route('/error', methods=['get'])
 @bp.route('/@<user_id>', methods=['get'])
 @bp.route('/@<user_id>/bits/<bit_id>', methods=['get'])
 @bp.route('/@<user_id>/bits/<bit_id>/edit', methods=['get'])
