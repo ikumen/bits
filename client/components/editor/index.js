@@ -85,15 +85,15 @@ class Editable extends React.Component {
      *      value to re-render, which would wipe away our current edit
      */
     shouldComponentUpdate(nextProps, nextState) {
-        const {value, isEqual, bitId} = this.props;
-        const areEqual = isEqual ? isEqual(value, nextProps.value) : value === nextProps.value;
-        return (value === undefined || areEqual || bitId != nextProps.bitId) && !this.state.hasErrors;
+        const {value, bitId, editable} = this.props;
+        return (value === undefined || bitId != nextProps.bitId || editable != nextProps.editable)
     }
 
     setValue({value, editable, viewRenderer, editRenderer}) {
         if (value === undefined) { return; }
-        if (editable) { this.elementRef.current.innerText = editRenderer ? editRenderer(value) : value; } 
-        else { 
+        if (editable) { 
+            this.elementRef.current.innerText = editRenderer ? editRenderer(value) : value; 
+        }  else { 
             this.elementRef.current.innerHTML = viewRenderer ? viewRenderer(value) : value; 
         }
     }

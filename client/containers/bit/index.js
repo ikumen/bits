@@ -83,7 +83,7 @@ class BitPage extends React.Component {
 
     afterDataLoaded({user, isAuthUser, bit}) {
         if (isAuthUser) {
-            const autoSaveId = setInterval(this.autoSave, 60000);
+            const autoSaveId = setInterval(this.autoSave, 120000);
             Log.info('Setting autoSaveId: ' + autoSaveId);
             this.setState({autoSaveId: autoSaveId})    
         }
