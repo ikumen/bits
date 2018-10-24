@@ -21,15 +21,18 @@ def _register_blueprints(app, pkg_name, pkg_path):
             if isinstance(item, Blueprint):
                 app.register_blueprint(item)
 
+def _load_config(app):
+    app.config.from_pyfile(__path__[0] + '/config/default.settings')
+    app.config.from_pyfile(__path__[0] + '/config/production.settings')
+    app.config.from_pyfile(__path__[0] + '/config/local.settings', silent=True)
+
 
 def create_app(pkg_name, pkg_path, override_settings=None):
     """Return a Flask application instance configured with defaults."""
     app = Flask(pkg_name, template_folder='../../dist', static_folder='../../dist/static', static_url_path='/static')
-    app.config.from_pyfile(__path__[0] + '/local.settings')
+    _load_config(app)
     github.init_app(app)
     app.json_encoder = JSONSerializableEncoder
     _register_blueprints(app, pkg_name, pkg_path)
 
     return app
-
-
