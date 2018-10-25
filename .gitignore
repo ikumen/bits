@@ -66,5 +66,6 @@ docs/_build/
 target/
 .vscode/
 **/local.settings
+**/production.settings
 
 **/node_modules

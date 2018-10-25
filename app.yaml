@@ -29,6 +29,7 @@ skip_files:
 - ^(test/.*)
 - ^(templates/.*)
 - ^(node_modules/.*)
+- ^(server/config/)local.settings
 - ^(.*/)?#.*#$
 - ^(.*/)?.*~$
 - ^(.*/)?.*\.DS_Store$
