@@ -4,17 +4,14 @@ import re
 from dateutil import parser
 from datetime import datetime
 from abc import abstractmethod, ABCMeta
-from flask import current_app, app
+from flask import current_app, app, abort
 from flask_github import GitHub, GitHubError
-from pymongo import MongoClient
 from werkzeug.contrib.cache import SimpleCache
 from .models import User, Bit
 from .helpers import ISO_DATETIME_FORMAT
 from google.appengine.ext import ndb
 
 
-# shared db instance
-# db = MongoClient()['bits_db']
 # shared github instance
 github = GitHub()
 # shared cache instance
@@ -160,10 +157,12 @@ class BitService(object):
     @classmethod
     def list_by_user(cls, user_id, **kwargs):
         userkey = User.id_to_key(user_id)
-        user = userkey.get().to_json()
-        bits = cls.__model__.list(user=userkey, order=[Bit.published, -Bit.pubdate, Bit.title], **kwargs)
-        user['bits'] = bits
-        return user
+        user = userkey.get()
+        if user:
+          rv = userkey.get().to_json()
+          rv['bits'] = cls.__model__.list(user=userkey, order=[Bit.published, -Bit.pubdate, Bit.title], **kwargs)
+          return rv
+        return None #abort(404)
 
     @classmethod
     def delete(cls, id, user_id):
