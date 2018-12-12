@@ -32,17 +32,25 @@ class UserService(object):
     def update(cls, id, **kwargs):
         return cls.__model__.update(id, **kwargs)
 
+    @classmethod
+    def list(cls):
+        return cls.__model__.list()
+
 
 class BitService(object):
     __model__ = Bit
 
     @classmethod
-    def _fetch_all_from_github(cls, user_id):
-        gists = github.get('/gists', all_pages=True)
+    def fetch_all_from_github(cls, user_id, since=None):
+        all_gist_base_url = '/gists'
+        if since:
+          all_gist_base_url = all_gist_base_url + '?since=' + since.strftime(ISO_DATETIME_FORMAT)
+          print(all_gist_base_url)
+        gists = github.get(all_gist_base_url, all_pages=True)
         for gist in gists:
             if cls._is_bit(gist):
-                full_gist = cls._fetch_one_from_github(gist['id'])
-                cls._to_bit_from_gist(full_gist, upsert=True)
+              full_gist = cls._fetch_one_from_github(gist['id'])
+              cls._to_bit_from_gist(full_gist, upsert=True)
 
     @classmethod
     def _fetch_one_from_github(cls, gist_id):
@@ -180,6 +188,3 @@ class BitService(object):
             return bit
         return None
 
-    @classmethod
-    def sync(cls, user_id):
-        cls._fetch_all_from_github(user_id)
