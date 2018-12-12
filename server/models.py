@@ -41,17 +41,6 @@ class GAEModel(JSONSerializable, ndb.Model):
         instance.put()
         return instance
 
-    # @classmethod
-    # def get(cls, id):
-    #     """Returns instance of implementing class identified by given id.
-        
-    #     @param id identifier
-    #     """
-    #     try:
-    #         return ndb.Key(cls, id).get()
-    #     except ProtocolBufferDecodeError:
-    #         return None
-
     @classmethod
     def __apply_filters(cls, query, **kwargs):
         for k,v in kwargs.items():
@@ -70,6 +59,7 @@ class GAEModel(JSONSerializable, ndb.Model):
         @param limit optional fetch limit, defaults to 50
         """
         query = cls.__apply_filters(cls.query(), **filters)
+        # TODO: safe to remove??
         query = cls.__apply_filters(query, **kwargs)
         if order is not None:
             query = query.order(*order)
@@ -125,6 +115,7 @@ class User(GAEModel):
     name = ndb.StringProperty()
     avatar_url = ndb.StringProperty()
     oauth = ndb.StringProperty(required=True, indexed=True)
+    last_synced_at = ndb.DateTimeProperty()
 
     def to_json(self):
         """Returns the serializable JSON version of this model.
