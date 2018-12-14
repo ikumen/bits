@@ -1,6 +1,5 @@
 import logging
 
-from bson import json_util
 from flask import Blueprint, request, jsonify, Response
 from ..helpers import handle_error
 from ..security import authorized, current_user
@@ -99,11 +98,3 @@ def api_current_user():
     else:
         return Response(status=401)
 
-
-@bp.route('/user/sync', methods=['get'])
-@authorized
-def api_sync(user):
-    """Syncs local cache of bits with gist source by pulling all gists 
-    for currently authenticated user."""
-    BitService.sync(user.get('id'))
-    return 'OK'
