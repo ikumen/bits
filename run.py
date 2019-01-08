@@ -1,10 +1,11 @@
 from werkzeug.serving import run_simple
 from werkzeug.wsgi import DispatcherMiddleware
 
-from server import api, frontend
+from server import api, frontend, tasks
 
 app = DispatcherMiddleware(frontend.create_app(), {
-        '/api': api.create_app()
+        '/api': api.create_app(),
+        '/tasks': tasks.create_app()
     })
 
 if __name__ == "__main__":
