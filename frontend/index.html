@@ -6,8 +6,8 @@
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="https://unpkg.com/tachyons@4.11.1/css/tachyons.min.css">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/tachyons@4.11.1/css/tachyons.min.css">
   <style>
     .material-icons.md-36 { font-size: 36px; }
     .material-icons.md-48 { font-size: 48px; }  
@@ -27,13 +27,13 @@
       hyphens: auto;
     }
 
-    button:focus, button:active, textarea, h1 {
+    button:focus, button:active, textarea, h1, input {
       outline: none;
     }
     button:hover {
       cursor: pointer;
     }
-    textarea {
+    textarea, input {
       border: none;
       overflow: auto;
 
@@ -69,10 +69,11 @@
       font-weight: bold;
     }
 
-    .CodeMirror pre.CodeMirror-placeholder, .CodeMirror-placeholder { 
+    ::placeholder, .CodeMirror pre.CodeMirror-placeholder, .CodeMirror-placeholder { 
       color: #ddd;
       font-weight: 200; 
     }
+
     .CodeMirror-gutters {
       /* border-right: 1px solid #ddd; */
       background-color: #fff;
@@ -91,9 +92,20 @@
       background-color: #eee;
     }
 
+    .modal {
+      /* Height & width depends on how you want to reveal the overlay (see JS below) */    
+      height: 100%;
+      width: 100%;
+      position: fixed; /* Stay in place */
+      z-index: 100; /* Sit on top */
+      left: 0;
+      top: 0;
+      overflow-x: hidden; /* Disable horizontal scroll */  
+    }
+
   </style>
 </head>
 <body class="avenir sans-serif bg-washed-gray">
-  <div id="app" class=""></div>
+  <div id="app" class="fl w-100"></div>
 </body>
 </html>

@@ -7,27 +7,33 @@ import BitPage from './pages/bit';
 import AboutPage from './pages/about';
 import ErrorPage from './pages/errors';
 import SettingsPage from './pages/settings';
-import { UserService, getDateParts } from './services'
+import Search from './search';
+import { UserService, getDateParts } from './services';
 
 
 class Header extends React.Component {
   constructor(props) {
     super(props);
+    this.state = {
+      search: false
+    }
   }
 
   render() {
     const { user={} } = this.props;
-    return <nav className="dt w-100 border-box pv1 ph3 ph5-m ph6-ns bg-white">
-      <Link className="dtc v-mid dark-gray link dim w-20" to="/" title="Home">
+    return <nav className="flex w-100 border-box pv1 ph3 ph5-m ph6-ns bg-white">
+      <Link className="v-mid dark-gray link dim w-20" to="/" title="Home">
         <h1 className="f4 fw6 f1-ns">bits</h1>
       </Link>
-      <div className="dtc v-mid w-80 tr dn-">
-        <a href="">
-           <i className="material-icons dim lighter-gray v-btm md-36">search</i>
-        </a>
+      <div className="flex justify-end items-center w-80 tr">
+        {/* <i className="f3 f2-ns material-icons dim lighter-gray pointer" 
+            onClick={()=> this.setState({search: true})}
+          >search
+        </i> */}
+        {/* <Search /> */}
       { user.authenticated && 
         <Link className="link dim gray dib" to="/bits/new/edit">
-          <i className="material-icons dim green ml3 md-36">playlist_add</i>
+          <i className="f3 f2-ns material-icons dim green ml3">playlist_add</i>
         </Link> }
       </div>
     </nav>
