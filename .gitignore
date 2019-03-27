@@ -1,3 +1,4 @@
+dist/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -65,7 +66,13 @@ docs/_build/
 # PyBuilder
 target/
 .vscode/
-**/local.settings
-**/production.settings
-
 **/node_modules
+package-lock.json
+
+.data
+local.env
+tmp/
+old/
+.python-version
+dist/
+public/

@@ -1,16 +1,18 @@
+const path = require('path');
 const HtmlWebPackPlugin = require("html-webpack-plugin");
 const CompressionPlugin = require('compression-webpack-plugin');
 
 const htmlPlugin = new HtmlWebPackPlugin({
-  template: "./client/index.html",
+  template: "./frontend/index.html",
   filename: "./index.html"
 });
 
 module.exports = {
-  entry: __dirname + '/client/app.js',
+  entry: __dirname + '/frontend/app.js',
   output: {
-    filename: 'static/js/main.js',
-    publicPath: '/'
+    filename: 'static/js/app.js',
+    publicPath: '/',
+    path: path.resolve(__dirname, 'public')
   },
   module: {
     rules: [
@@ -24,20 +26,9 @@ module.exports = {
       },
       {
         test: /\.css$/,
-        use: ["style-loader", "css-loader"
-          // {
-          //   loader: "style-loader"
-          // },
-          // {
-          //   loader: "css-loader",
-          //   options: {
-          //     modules: true,
-          //     importLoaders: 1,
-          //     localIdentName: "[name]_[local]_[hash:base64]",
-          //     sourceMap: true,
-          //     // minimize: true
-          //   }
-          // }          
+        use: [
+            "style-loader", 
+            "css-loader"
         ],
       }
     ]
@@ -47,10 +38,11 @@ module.exports = {
       new CompressionPlugin()
   ],
   devServer: {
+    disableHostCheck: true,
     headers: {
         'Access-Control-Allow-Origin': '*'
     },  
-    contentBase: __dirname + '/client',
+    contentBase: __dirname + '/frontend',
     historyApiFallback: {
         rewrites: [
           { from: /^\/$/, to: '/index.html' },
@@ -59,7 +51,8 @@ module.exports = {
     },
     proxy: {
       '/api': 'http://localhost:5000',
-      '/signin': 'http://localhost:5000'
+      '/signin': 'http://localhost:5000',
+      '/signout': 'http://localhost:5000',
     }
   }
 };

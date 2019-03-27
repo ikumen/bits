@@ -1,4 +1,2 @@
-# bits
-My personal blog running on GAE.
-
-
+# how-to-bits
+A little how-to for glitch.com

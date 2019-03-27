@@ -1,5 +1,5 @@
 {
-    "presets": ["env", "react"],
+    "presets": ["env", "react","babel-preset-env", "babel-preset-react"],
     "plugins": [
       [ "transform-runtime", 
         {"regenerator": true}
@@ -7,4 +7,4 @@
       "transform-es2015-destructuring",
       "transform-object-rest-spread"
   ]
-  }
+}

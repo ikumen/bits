@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Welcome to Bits!</title>
+  <meta name="description" content="Gist a little bits">
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://unpkg.com/tachyons@4.11.1/css/tachyons.min.css">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <style>
+    .material-icons.md-36 { font-size: 36px; }
+    .material-icons.md-48 { font-size: 48px; }  
+    .lighter-gray { color: #bbb; }
+    .bg-washed-gray { background-color:rgba(0,0,0,.025); }
+    .break-word {
+      overflow-wrap: break-word;
+      word-wrap: break-word;
+
+      -ms-word-break: break-all;
+      word-break: break-all;
+      word-break: break-word;
+
+      -ms-hyphens: auto;
+      -moz-hyphens: auto;
+      -webkit-hyphens: auto;
+      hyphens: auto;
+    }
+
+    button:focus, button:active, textarea, h1 {
+      outline: none;
+    }
+    button:hover {
+      cursor: pointer;
+    }
+    textarea {
+      border: none;
+      overflow: auto;
+
+      -webkit-box-shadow: none;
+      -moz-box-shadow: none;
+      box-shadow: none;
+      margin: .67em 0;
+      font-weight: bold;
+      resize: none;
+      height: auto;
+    }
+
+    [contentEditable=true][placeholder]:empty::before{
+      content:attr(placeholder);
+      color: #ddd;
+      font-weight:200;
+    }
+
+    .lighter-gray {
+      color: #bbb;
+    }
+
+    .CodeMirror {
+      height: auto !important;
+      background: #fffceb !important;
+      padding-bottom: 10px;
+      padding: 0;
+    }
+
+    .CodeMirror-code .cm-header {
+      color: #0820b2 !important;
+      font-size: 1rem;
+      font-weight: bold;
+    }
+
+    .CodeMirror pre.CodeMirror-placeholder, .CodeMirror-placeholder { 
+      color: #ddd;
+      font-weight: 200; 
+    }
+    .CodeMirror-gutters {
+      /* border-right: 1px solid #ddd; */
+      background-color: #fff;
+      white-space: nowrap;
+    }
+
+    pre {
+      overflow: auto;
+      background-color: #eee;
+      padding: .9rem;
+      border-radius: 5px;
+    }
+
+    code {
+      font-family: Monospace;
+      background-color: #eee;
+    }
+
+  </style>
+</head>
+<body class="avenir sans-serif bg-washed-gray">
+  <div id="app" class=""></div>
+</body>
+</html>
