@@ -26,6 +26,7 @@ def authorized(f):
 
 def handle_error(error):
     """Return errors into appropriate Flask response"""
+    print(error)
     return make_response(error.to_dict(), status_code=error.status_code)
 
 
