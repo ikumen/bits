@@ -77,11 +77,13 @@ class BitPage extends React.Component {
   }
 
   componentWillUnmount() {
-    this.setState({status: 'Saving ...'});
-    if (this.autoSaveId) {
-      clearTimeout(this.autoSaveId);
+    const { bit } = this.state;
+    if (bit.id !== 'new' && this.props.match.params.edit === 'edit') {
+      if (this.autoSaveId) {
+        clearTimeout(this.autoSaveId);
+      }
+      BitService.save(bit);
     }
-    this.onSave();
   }
 
   onDelete() {
@@ -202,10 +204,10 @@ class Editor extends React.Component {
 const Viewer = ({ bit, user }) => {
   const { year, monthDay } = getDateParts(bit.created_at);
 
-  return <section className="fl cf w-100 mt0 border-box">
-    <h1 className="f3 cf f2-ns">{bit ? bit.description : ''}</h1>  
+  return <section className="fl cf w-100 mt0 border-box dark-gray">
+    <h1 className="f3 cf fw6 f1-ns">{bit ? bit.description : ''}</h1>  
     <time className="f5 pa0 lighter-gray">{monthDay} {year}</time> 
-    <article className="cf w-100 pt3" dangerouslySetInnerHTML={{__html: MarkedWithHljs(bit && bit.content || '')}} />
+    <article className="f4 w-100 pt3" dangerouslySetInnerHTML={{__html: MarkedWithHljs(bit && bit.content || '')}} />
   </section>
 }
 
