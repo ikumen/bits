@@ -22,9 +22,7 @@ class Header extends React.Component {
   render() {
     const { user={} } = this.props;
     return <nav className="flex w-100 border-box pv1 ph3 ph5-m ph6-ns bg-white">
-      <Link className="v-mid dark-gray link dim w-20" to="/" title="Home">
-        <h1 className="f4 fw6 f1-ns">bits</h1>
-      </Link>
+      <h1 className="f3 f1-ns fw6 v-mid dark-gray dim w-20 pointer" onClick={()=> this.props.changeRoute('/')} title="Home">bits</h1>
       <div className="flex justify-end items-center w-80 tr">
         {/* <i className="f3 f2-ns material-icons dim lighter-gray pointer" 
             onClick={()=> this.setState({search: true})}
@@ -52,12 +50,12 @@ const SignInOutLink = ({authenticated}) => {
 const Footer = ({user = {}}) => {
   const {year} = getDateParts(new Date());
   return <footer className="dt cf w-100 border-box b--light-gray pa3 ph5-m ph6-ns bt f7 f6-ns gray">
-    <div className="dtc tl f7 lighter-gray">
-      &copy; {year} Thong Nguyen
+    <div className="dtc tl lighter-gray">
+      &copy; <span className="dn dib-ns">{year}</span> Thong Nguyen
     </div>
     <div className="dtc tr">
-      <Link to="/about" className="link dim gray mr3">About</Link>
-      {(user && user.authenticated) && <Link to="/settings" className="link dim gray mr3">Settings</Link>}
+      <Link to="/about" className="link dim gray mr1 mr3-ns">About</Link>
+      {(user && user.authenticated) && <Link to="/settings" className="link dim gray mr1 mr3-ns">Settings</Link>}
       <SignInOutLink authenticated={user && user.authenticated}/>
     </div>
   </footer>
@@ -67,6 +65,7 @@ class App extends React.Component {
   constructor(props) {
     super(props);
     this.state = {};
+    this.changeRoute = this.changeRoute.bind(this);
   }
 
   componentDidMount() {
@@ -75,14 +74,16 @@ class App extends React.Component {
   }
 
   changeRoute(path, replace=false) {
-    replace === true ? this.props.history.replace(path) :
-      this.props.history.push(path);
+    if (path !== this.props.location.pathname) {
+      replace === true ? this.props.history.replace(path) :
+        this.props.history.push(path);
+    }
   }
 
   render() {
-    const {user} = this.state;
+    const user = this.state.user || {};
     return <React.Fragment>
-      {user && <Header user={user} />}
+      <Header user={user} changeRoute={this.changeRoute} />
       <Switch>
         <Route exact={true} path="/" component={HomePage} />
         <Route path={`/bits/:id/:edit?`} render={(props) => <BitPage {...props} user={user} /> } />

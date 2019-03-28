@@ -94,12 +94,11 @@ class Users(_EntityService):
     def get_for_public(self, id):
         """Return a filtered version of user for public to consume.
         """
-        entity = self.get(id)
-        return dict(
-            login=entity['login'],
-            avatar_url=entity['avatar_url'],
-            name=entity['name'] or entity['login']
-        )
+        user = self.get(id)
+
+        if user is not None:
+            return dict(login=user['login'], avatar_url=user['avatar_url'], name=user['name'] or user['login'])
+        return None
 
 
 class Bits(_EntityService):
@@ -165,9 +164,6 @@ class Bits(_EntityService):
 
     def _all_modified(self):
         return self.all(filters=[('modified_at', '>', None)], keys_only=True)
-        # # GCP comparison filters can only filter a field against known 
-        # # value (e.g. not another field, nothing computed)
-        # return [bit['modified_at'] > bit['synced_at'] for bit in all_bits]
 
     def upload_modified_to_github(self):
         """Checks to see if there have been any bits saved locally that need
