@@ -32,7 +32,7 @@
   "scripts": {
     "_prebuild": "rm -rf public/**",
     "_postbuild": "cp -R frontend/static/** public",
-    "build": "npm run _prebuild && webpack --mode development",
+    "build": "npm run _prebuild && webpack --mode production",
     "start-local": "webpack-dev-server --mode development --devtool source-map --history-api-fallback --hot",
     "start-prod": "npm run build && . start.sh",
     "start": "echo \"npm run start-local or npm run start-prod\"",

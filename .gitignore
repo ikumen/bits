@@ -71,6 +71,7 @@ package-lock.json
 
 .data
 local.env
+production.env
 tmp/
 old/
 .python-version

@@ -23,11 +23,11 @@ class HomePage extends React.Component {
     return <Page>
       <ul className="list w-100 pv3 ph0 border-box">
         { bits && bits.map((bit) => {
-          return <li key={bit.id} className="mb4">
-            <h2 className="f3 fw6 mb1">
+          return <li key={bit.id} className="mb4 mb5-ns">
+            <h2 className="f3 f2-ns fw5 mb1">
               <Link to={`/bits/${bit.id}`} className="link dim mid-gray">{bit.description || 'Untitled'}</Link>
             </h2>
-            <p className="f5 mt0 lh-copy">
+            <p className="f5 f4-ns mt0 lh-copy">
               {bit.content ? bit.content.substr(0, 300) : ''}... 
               &nbsp;<Link to={`/bits/${bit.id}`} className="link dim green">Read &rarr;</Link>
             </p>
