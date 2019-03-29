@@ -132,7 +132,7 @@ class Bits(_EntityService):
 
     def delete(self, id):
         try:
-            self.delete(id)
+            super(Bits, self).delete(id)
             self._github.delete('%s/%s' % (self._gists_url_prefix, id))
         except (GitHubError, ConnectionError):
             msg = "Error while deleting '%s'" % id
