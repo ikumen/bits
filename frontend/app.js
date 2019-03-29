@@ -22,7 +22,7 @@ class Header extends React.Component {
   render() {
     const { user={} } = this.props;
     return <nav className="flex w-100 border-box pv1 ph3 ph5-m ph6-ns bg-white">
-      <h1 className="f3 f1-ns fw6 v-mid dark-gray dim w-20 pointer" onClick={()=> this.props.changeRoute('/')} title="Home">bits</h1>
+      <h1 className="f2 f1-ns fw6 v-mid dark-gray dim w-20 pointer" onClick={()=> this.props.changeRoute('/')} title="Home">bits</h1>
       <div className="flex justify-end items-center w-80 tr">
         {/* <i className="f3 f2-ns material-icons dim lighter-gray pointer" 
             onClick={()=> this.setState({search: true})}
@@ -31,13 +31,12 @@ class Header extends React.Component {
         {/* <Search /> */}
       { user.authenticated && 
         <Link className="link dim gray dib" to="/bits/new/edit">
-          <i className="f3 f2-ns material-icons dim green ml3">playlist_add</i>
+          <i className="f2 f1-ns material-icons dim green ml3">playlist_add</i>
         </Link> }
       </div>
     </nav>
   }
 }
-
 
 const SignInOutLink = ({authenticated}) => {
   return <a 
@@ -49,7 +48,7 @@ const SignInOutLink = ({authenticated}) => {
 
 const Footer = ({user = {}}) => {
   const {year} = getDateParts(new Date());
-  return <footer className="dt cf w-100 border-box b--light-gray pa3 ph5-m ph6-ns bt f7 f6-ns gray">
+  return <footer className="dt cf w-100 border-box b--light-gray pa3 ph5-m ph6-ns bt pb5 f6 f5-ns gray">
     <div className="dtc tl lighter-gray">
       &copy; <span className="dn dib-ns">{year}</span> Thong Nguyen
     </div>
@@ -73,10 +72,11 @@ class App extends React.Component {
       .then(user => this.setState({user}));
   }
 
-  changeRoute(path, replace=false) {
-    if (path !== this.props.location.pathname) {
-      replace === true ? this.props.history.replace(path) :
-        this.props.history.push(path);
+  changeRoute(location, replace=false) {
+    const pathname = typeof location === 'string' ? location : location.pathname;
+    if (pathname !== this.props.location.pathname) {
+      replace === true ? this.props.history.replace(location) :
+        this.props.history.push(location);
     }
   }
 
@@ -85,8 +85,8 @@ class App extends React.Component {
     return <React.Fragment>
       <Header user={user} changeRoute={this.changeRoute} />
       <Switch>
-        <Route exact={true} path="/" component={HomePage} />
-        <Route path={`/bits/:id/:edit?`} render={(props) => <BitPage {...props} user={user} /> } />
+        <Route exact={true} path="/" render={(props) => <HomePage {...props} changeRoute={this.changeRoute} /> }/>
+        <Route path={`/bits/:id/:edit?`} render={(props) => <BitPage {...props} user={user} /> }/>
         <Route path={`/errors/:code`} component={ErrorPage} />
         <Route exact={true} path="/about" component={AboutPage} />
         <Route exact={true} path="/settings" component={SettingsPage} />

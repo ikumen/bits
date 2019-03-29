@@ -53,10 +53,11 @@ class BitPage extends React.Component {
     }
     this.setState({ bit })
     if (this.autoSaveId) {
-      this.setState({status: 'Changes detected ...'}); 
       clearTimeout(this.autoSaveId);
+    } else {
+      this.setState({status: 'Changes detected ...'}); 
     }
-    this.autoSaveId = setTimeout(this.onSave, 3000);
+    this.autoSaveId = setTimeout(this.onSave, 600000);
   }
 
   onSaveSuccess(prevBit, nextbit) {
@@ -189,7 +190,7 @@ class Editor extends React.Component {
           placeholder="Enter a title ..."
           onInput={this.onDescriptionChange}
       />
-      <article className="cf w-100 pt0">         
+      <article className="cf w-100 pt0 f4">         
       <textarea 
         id="content" 
         className="CodeMirror"
@@ -205,7 +206,7 @@ const Viewer = ({ bit, user }) => {
   const { year, monthDay } = getDateParts(bit.created_at);
 
   return <section className="fl cf w-100 mt0 border-box dark-gray">
-    <h1 className="f3 cf fw6 f1-ns">{bit ? bit.description : ''}</h1>  
+    <h1 className="f3 cf fw6 f2-ns">{bit ? bit.description : ''}</h1>  
     <time className="f5 pa0 lighter-gray">{monthDay} {year}</time> 
     <article className="f4 w-100 pt3" dangerouslySetInnerHTML={{__html: MarkedWithHljs(bit && bit.content || '')}} />
   </section>
