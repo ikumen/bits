@@ -13,17 +13,70 @@ const APP_JSON_HEADERS = {
   'Accept': APP_JSON_MIMETYPE 
 }
 
+/** */
+class FetchClient {
+  constructor() {
+    this.opts = {
+      headers: APP_JSON_HEADERS,
+    }
+  }
+    /**
+   * Check if endpoint returned an error, in which we forward to error page.
+   * @param {Response} resp
+   */
+  checkForErrors(resp) {
+    const {status} = resp;
+    console.log('checking for errors', resp)
+    if (status >= 400) {
+      window.location.replace(`/errors/${status}`);
+    }
+    return resp;
+  }
+
+  /**
+   * Wrapper for a fetch GET request.
+   * @param {string} url 
+   * @param {object} opts 
+   */
+  get(url, opts = {}) {
+    return this._fetch(url, {method: 'GET', ...opts});
+  }
+
+  post(url, opts = {}) {
+    return this._fetch(url, {method: 'POST', ...opts});
+  }
+
+  put(url, opts = {}) {
+    return this._fetch(url, {method: 'PUT', ...opts});
+  }
+
+  async _fetch(url, opts = {}) {
+    return await fetch(url, {
+        method: 'GET',
+        headers: APP_JSON_HEADERS, ...opts})
+      .then(this.checkForErrors)
+      .then(resp => resp.json())
+      .catch(console.warn)
+  }
+}
+
+
 function handleAsyncResponse(resp) {
     const { status } = resp;
     if (status === 200)
       return resp.json();
     if (status === 204)
       return resp;
-    //for now everything else is an error  
-    window.location.replace(`/errors/${status}`)
+    if (status >= 400)
+      window.location.replace(`/errors/${status}`)
 }
 
+
 class BitService {
+
+  constructor() {
+    this.fetchClient = new FetchClient();
+  }
 
   async reload() {
     return await fetch('/api/settings/reload')
@@ -53,9 +106,13 @@ class BitService {
       .then(handleAsyncResponse)
 }
 
-  async all() {
-    return await fetch('/api/bits')
-      .then(handleAsyncResponse);
+  // async all() {
+  //   return await fetch('/api/bits')
+  //     .then(handleAsyncResponse);
+  // }
+  all() {
+    console.log('using new fetch client')
+    return this.fetchClient.get('/api/bits');
   }
 
   async delete(id) {

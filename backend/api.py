@@ -3,6 +3,7 @@ import logging
 from flask import jsonify, Blueprint, current_app, request, session
 from . import helpers
 from . import Users, Bits
+from werkzeug.exceptions import NotFound
 
 
 bp = Blueprint('api', __name__, url_prefix='/api')
@@ -25,7 +26,7 @@ def get_bit(id):
     log.info('id=%s' % id)
     bit = Bits.get(id)
     if bit is None:
-        raise helpers.BitNotFoundError(id)
+        raise NotFound('No bit found with id: %s' % id)
     return jsonify(bit)
 
 @bp.route('/bits/<id>', methods=['post', 'patch'])

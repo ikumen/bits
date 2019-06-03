@@ -1,107 +1,16 @@
 import json
-import re
 import time
 import logging
 import datetime
-import requests
 
-from abc import ABCMeta
 from concurrent import futures
 from flask_github import GitHubError
 from requests.exceptions import ConnectionError
-from google.cloud import datastore
-from google.auth import credentials
-from . import helpers
+from .core import log, DatastoreService
+from .. import helpers
 
 
-log = logging.getLogger(__name__)
-
-
-class _EntityService(metaclass=ABCMeta):
-    # Name of entity
-    _entity = None
-    # Name of identifier field
-    _id = 'id'
-    # Fields for this entity
-    _fields = []
-    _exclude_from_indexes = []
-
-    def __init__(self, client=None):
-        self._client = client
-
-    def _key(self, id):
-        """Create entity key for this this model and it's given id.
-        """
-        return self._client.key(self._entity, id)
-
-    def _query(self):
-        return self._client.query(kind=self._entity)
-
-    def upsert(self, **kwargs):
-        """Upsert an entity with the given attributes.
-        """
-        id = kwargs[self._id]
-        # get existing or new
-        try: 
-            with self._client.transaction():
-                entity = self.get(id)
-                if entity is None:
-                    entity = datastore.Entity(key=self._key(id), exclude_from_indexes=self._exclude_from_indexes)
-                for k,v in kwargs.items():
-                    if k in self._fields:
-                        entity.update({k: v})
-                self._client.put(entity)
-                return entity
-        except: 
-            msg = 'Unable to save %s: %s' % (self._entity, kwargs)
-            log.error(msg, exc_info=1)
-            raise helpers.AppError(msg) # pylint: disable=no-member
-
-    def get(self, id):
-        return self._client.get(self._key(id))
-
-    def all(self, filters=None, projection=None, order=None, limit=None, offset=0, keys_only=False):
-        query = self._query()
-        for filter in filters or []:
-            if len(filter) == 3:
-                query.add_filter(*filter)
-
-        if keys_only:
-            query.keys_only()
-            return list(query.fetch())
-        else:
-            if order:
-                query.order = order
-            if projection:
-                query.projection = projection
-
-        return list(query.fetch(limit=limit, offset=offset))
-
-    def delete(self, id):
-        self._client.delete(self._key(id))
-            
-
-class Users(_EntityService):
-    _entity = 'User'
-    _id = 'login'
-    _fields = ['login', 'email', 'avatar_url', 'access_token', 'name']
-    _exclude_from_indexes = ['email', 'avatar_url', 'access_token', 'name']
-
-    def init_app(self, client, app):
-        self._client = client
-        self._app = app
-
-    def get_for_public(self, id):
-        """Return a filtered version of user for public to consume.
-        """
-        user = self.get(id)
-
-        if user is not None:
-            return dict(login=user['login'], avatar_url=user['avatar_url'], name=user['name'] or user['login'])
-        return None
-
-
-class Bits(_EntityService):
+class Bits(DatastoreService):
     _entity = 'Bit'
     _id = 'id'
     _fields = ['id', 'description', 'content', 'filename', 'updated_at', 'created_at', 'synced_at', 'modified_at']
@@ -151,6 +60,7 @@ class Bits(_EntityService):
         """
         since = None
         if not from_beginning:
+            log.info('getting last synced time')
             since = self._get_last_synced_datetime()
             log.debug('Loading from: %s' % (since))
 

@@ -7,9 +7,11 @@ import datetime
 
 from flask import Flask, Blueprint, current_app
 from flask_github import GitHub
+from werkzeug.exceptions import HTTPException
 from google.cloud import datastore
-from .services import Users as _Users, Bits as _Bits
+from .services import Users, Bits 
 from .helpers import AppError, handle_error, EmulatorCredentials
+
 
 # setup basic logging
 logging.basicConfig(format='[%(asctime)s] [%(levelname)-8s] %(name)s: %(message)s', level=logging.DEBUG)
@@ -17,8 +19,8 @@ log = logging.getLogger(__name__)
 
 # Create shared service instances
 github = GitHub()
-Users = _Users()
-Bits = _Bits()
+# Users = _Users()
+# Bits = _Bits()
 
 # Root of our application on filesystem
 _app_path_ = os.path.dirname(os.path.abspath(__file__))
@@ -68,12 +70,13 @@ def create_app(override_settings=None):
                 static_folder='../public/static', 
                 static_url_path='/static')
 
+    log.info('creating app ...')
     _load_config(app)
     _register_blueprints(app, __name__, __path__)
     _init_github(app)
     _init_services(app)
 
-    app.errorhandler(AppError)(handle_error)
+    app.errorhandler(HTTPException)(handle_error)
 
     return app
 

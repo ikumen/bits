@@ -57,7 +57,7 @@ class BitPage extends React.Component {
     } else {
       this.setState({status: 'Changes detected ...'}); 
     }
-    this.autoSaveId = setTimeout(this.onSave, 600000);
+    this.autoSaveId = setTimeout(this.onSave, 10000);
   }
 
   onSaveSuccess(prevBit, nextbit) {
@@ -79,11 +79,15 @@ class BitPage extends React.Component {
 
   componentWillUnmount() {
     const { bit } = this.state;
-    if (bit.id !== 'new' && this.props.match.params.edit === 'edit') {
-      if (this.autoSaveId) {
-        clearTimeout(this.autoSaveId);
+    if (this.props.match.params.edit === 'edit') {
+      if (bit.id !== 'new' 
+          || (bit.content || '').trim() !== '' 
+          || (bit.description || '').trim() !== '') {
+        if (this.autoSaveId) {
+          clearTimeout(this.autoSaveId);
+        }
+        BitService.save(bit);      
       }
-      BitService.save(bit);
     }
   }
 

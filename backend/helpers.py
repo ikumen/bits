@@ -26,8 +26,8 @@ def authorized(f):
 
 def handle_error(error):
     """Return errors into appropriate Flask response"""
-    print(error)
-    return make_response(error.to_dict(), status_code=error.status_code)
+    payload = {'status_code': error.code, 'msg': error.description}
+    return make_response(payload=payload, status_code=error.code)
 
 
 def make_response(payload=None, status_code=200, mimetype='application/json', serialize=True):
@@ -53,6 +53,7 @@ class AppError(Exception):
 
     def to_dict(self):
         return dict(message=self.message)
+
 
 class BitNotFoundError(AppError):
     status_code = 404
