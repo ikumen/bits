@@ -1,14 +1,11 @@
-from .core import log, DatastoreService
+from backend.support.repository import googlecloud
 
-class Users(DatastoreService):
+
+class UserRepository(googlecloud.DatastoreRepository):
     _entity = 'User'
     _id = 'login'
     _fields = ['login', 'email', 'avatar_url', 'access_token', 'name']
     _exclude_from_indexes = ['email', 'avatar_url', 'access_token', 'name']
-
-    def init_app(self, client, app):
-        self._client = client
-        self._app = app
 
     def get_for_public(self, id):
         """Return a filtered version of user for public to consume.

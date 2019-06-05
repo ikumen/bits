@@ -1,6 +1,7 @@
-from ..support.googlecloud import DatastoreRepository
+from backend.support.repository import googlecloud
 
-class BitRepository(DatastoreRepository):
+
+class BitRepository(googlecloud.DatastoreRepository):
     _entity = 'Bit'
     _id = 'id'
     _fields = [
@@ -14,5 +15,8 @@ class BitRepository(DatastoreRepository):
         'tags',
     ]
     _exclude_from_indexes = ['content', 'created_at', 'tags']
+
+    def all_by_created_at(self):
+        return self.all(order=['-created_at'])
 
     

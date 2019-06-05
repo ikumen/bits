@@ -1,7 +1,11 @@
 import backend
 
-from .. import TestCaseWithGCPSupport
-from backend.support import DatastoreRepository
+from tests.backend import TestCaseWithGCPSupport
+from backend.support.repository import googlecloud
+
+
+class MockDatastoreRepository(googlecloud.DatastoreRepository):
+    _entity = 'mock'
 
 
 class TestDatastoreRepository(TestCaseWithGCPSupport):
@@ -12,5 +16,3 @@ class TestDatastoreRepository(TestCaseWithGCPSupport):
         MockDatastoreRepository(with_datastore_client)
 
 
-class MockDatastoreRepository(DatastoreRepository):
-    _entity = 'mock'

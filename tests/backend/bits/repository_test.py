@@ -13,5 +13,5 @@ class TestBitRepository(TestCaseWithGCPSupport):
     #     return repository.BitRepository(with_datastore_client)
 
     def test_when_all_called_should_return_emtpy_list(self, app, with_datastore_client):
-        print(repository.BitRepository(with_datastore_client).all())
+        repository.BitRepository(with_datastore_client).all()
         #print(bit_repo.all())

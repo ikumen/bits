@@ -1,7 +1,7 @@
 import requests
 
 from abc import ABCMeta
-from . import Repository
+from .core import Repository
 from google.auth import credentials
 from google.cloud import datastore
 
@@ -59,7 +59,6 @@ class DatastoreRepository(Repository, metaclass=ABCMeta):
     _exclude_from_indexes = [] # fields we should NOT index
 
     def __init__(self, client=None):
-        print('creating datastoreRepository')
         self._client = client
         if self._entity is None:
             raise AttributeError('Implementing class should set _entity')
