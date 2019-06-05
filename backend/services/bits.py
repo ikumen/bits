@@ -11,6 +11,9 @@ from .. import helpers
 
 
 class Bits(DatastoreService):
+    """
+    Provides local CRUD services for bits against the underlying datastore.
+    """
     _entity = 'Bit'
     _id = 'id'
     _fields = ['id', 'description', 'content', 'filename', 'updated_at', 'created_at', 'synced_at', 'modified_at']
