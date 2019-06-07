@@ -1,7 +1,7 @@
 from flask import Blueprint
-from .repository import BitRepository
+from .model import BitModel
 
-repository = BitRepository()
+model = BitModel()
 # define here so backend.__init__._register_blueprints can discover
 bp = Blueprint('bits', __name__, url_prefix='/api')
 

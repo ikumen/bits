@@ -1,8 +1,8 @@
 from flask import Blueprint
-from .repository import UserRepository
+from .model import UserModel
 
 
-repository = UserRepository()
+model = UserModel()
 bp = Blueprint('user', __name__, url_prefix='/api')
 
 import backend.user.routes

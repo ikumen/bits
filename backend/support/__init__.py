@@ -1,4 +1,5 @@
 import json
+import datetime
 
 from flask import current_app
 from werkzeug.exceptions import InternalServerError
@@ -6,7 +7,9 @@ from werkzeug.exceptions import InternalServerError
 AUTHORIZED_SESSION_KEY = 'IS_AUTHORIZED'
 
 
-def strftime(dt):
+def strftime(dt=None):
+    if dt is None:
+        dt = datetime.datetime.now()
     return dt.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
 
 

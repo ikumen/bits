@@ -6,7 +6,9 @@ from concurrent import futures
 from flask import Blueprint, current_app, redirect, render_template, session
 from werkzeug.exceptions import Unauthorized, Forbidden
 from backend.support import security
-from backend import user, support
+from backend.user import model as User
+from backend import support
+
 
 log = logging.getLogger(__name__)
 bp = Blueprint('webapp', __name__)
@@ -58,7 +60,7 @@ def signin_complete(access_token):
         raise Forbidden('Sorry you are not an authorized user!')
 
     # update with latest user info
-    user.repository.upsert(access_token=access_token, **user_info)
+    User.update(access_token=access_token, **user_info)
 
     # flag this session as belonging to us
     session[support.AUTHORIZED_SESSION_KEY] = True

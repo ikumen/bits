@@ -4,7 +4,7 @@ from flask import jsonify, current_app, request, session
 from werkzeug.exceptions import NotFound
 from backend.support import security
 from backend import support
-from . import repository, bp
+from . import model as Bit, bp
 
 
 log = logging.getLogger(__name__)
@@ -12,13 +12,14 @@ log = logging.getLogger(__name__)
 
 @bp.route('/bits', methods=['get'])
 def all():
-    return jsonify(repository.all_by_created_at())
+    bits = Bit.all_by_created_at()
+    return jsonify(bits)
  
 
 @bp.route('/bits/<id>', methods=['get'])
 def get(id):
     log.info('id=%s' % id)
-    bit = repository.get(id)
+    bit = Bit.get(id)
     if bit is None:
         raise NotFound('No bit found with id: %s' % id)
     return jsonify(bit)
@@ -34,13 +35,13 @@ def save(id=None):
         status_code = 200
         bit_data.update({'id': id})
 
-    bit = repository.upsert(**bit_data)   
+    bit = Bit.save(**bit_data)   
     return support.make_response(bit, status_code=status_code)
 
 
 @bp.route('/bits/<id>', methods=['delete'])
 @security.authorized
 def delete(id):
-    repository.delete(id)
+    Bit.delete(id)
     return support.make_response()
 

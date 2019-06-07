@@ -6,7 +6,9 @@ import sys
 from abc import ABCMeta, abstractmethod
 from google.cloud import datastore
 from flask import current_app
-from backend.support.repository import googlecloud
+from backend import create_app
+from backend.support import googlecloud
+
 
 def make_headers(**kwargs):
     """Makes headers with the given arguments, along with some defaults."""
@@ -20,10 +22,15 @@ def assert_valid_response(resp, status_code=200, content_type='application/json'
     assert resp.status_code == status_code
     assert resp.content_type == content_type
 
+def create_test_app():
+    app = create_app()
+    app.config.from_pyfile('../config/test.env')
+    return app
+
 
 class TestCase:
     def create_app(self): 
-        pass 
+        return create_test_app()
         
     @pytest.fixture
     def app(self):
@@ -37,8 +44,5 @@ class TestCase:
 
 
 class TestCaseWithGCPSupport(TestCase):
-    @pytest.fixture
-    def with_datastore_client(self, app):
-        project_name = app.config.get('PROJECT_NAME') or 'gnoht-bits'
-        return googlecloud.DatastoreClientFactory.create_development_client(project_name)
+    pass
 
