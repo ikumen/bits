@@ -4,12 +4,12 @@
   "description": "Gist powered micro blog",
   "main": "index.js",
   "dependencies": {
-    "react": "^16.8.1",
-    "react-router-dom": "4.3.1",
-    "react-dom": "^16.6.3",
+    "codemirror": "5.42.2",
     "highlight.js": "9.12.0",
-    "marked": "0.5.0",
-    "codemirror": "5.42.2"
+    "marked": "0.6.2",
+    "react": "^16.8.1",
+    "react-dom": "^16.6.3",
+    "react-router-dom": "4.3.1"
   },
   "devDependencies": {
     "babel-plugin-transform-es2015-destructuring": "6.23.0",
