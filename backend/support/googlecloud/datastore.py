@@ -86,12 +86,17 @@ class GCModel(metaclass=ABCMeta):
     def delete(self, id):
         return self._client.delete(self._key(id))
 
+    def _init_entity(self, entity):
+        """Allows hook for sub classes to initialize any default attributes for an entity."""
+        return entity
+
     def new(self, kwargs):
         id = kwargs.get(self._id)
         if id is None:
             id = self._hashids.get()
             kwargs['id'] = id
         entity = datastore.Entity(key=self._key(id), exclude_from_indexes=self._exclude_from_indexes)
+        self._init_entity(entity)
         self._set_params(entity, kwargs)
         return entity
 
@@ -105,7 +110,7 @@ class GCModel(metaclass=ABCMeta):
                 entity = self.new(kwargs)
             else:
                 self._set_params(entity, kwargs)
-            self._client.put(entity)
+            entity = self.save(entity)
         return entity
 
     def save(self, entity):
@@ -114,6 +119,7 @@ class GCModel(metaclass=ABCMeta):
                 raise TypeError('Only entity/dicts are supported! %s' % (type(entity)))
             entity = self.new(entity)
         self._client.put(entity)
+        log.debug('Entity saved: %s' % (entity))
         return entity
 
     def _create_query(self):
@@ -143,7 +149,7 @@ class GCModel(metaclass=ABCMeta):
 
         if keys_only:
             query.keys_only()
-            return list(query.fetch)
+            return list(query.fetch())
         else:
             if order:
                 query.order = order

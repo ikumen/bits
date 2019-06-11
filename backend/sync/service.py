@@ -53,47 +53,62 @@ class GitHubSyncService(googlecloud.GCModel):
             log.debug('filename: %s, NOT a bit' % f)
         return None
 
+    def _get_current_bit_to_gist_mappings(self):
+        """Provide bit to gist mappings so that if we ever need to re-download, 
+        we can preserve existing bit id to gist id mappings."""
+        bits = Bit.all(projection=['id', 'gist_id'])
+        gist_to_bit_mappings = {}
+        for bit in bits:
+            gist_to_bit_mappings[bit['gist_id']] = bit['id']
+        return gist_to_bit_mappings
+
     def _download_all_gists(self, since=None):
         """Fetch all gists at or after given since datetime"""
         try:
+            gist_to_bit_mappings = self._get_current_bit_to_gist_mappings()
             url = self._gists_url_prefix
             if since is not None:
                 url = '%s?since=%s' % (url, since)
             gists = github.get(url, all_pages=True)
             log.info('%s gists to load' % (len(gists)))
             executor = futures.ThreadPoolExecutor(max_workers=1)
+
+            test_cnt = 0
+
             for gist in gists:
-                filename = self._get_bit_filename(gist)
-                if filename is not None:
-                    executor.submit(self._download_gist, gist['id'], filename)
+                if test_cnt < 10:
+                    filename = self._get_bit_filename(gist)
+                    if filename is not None:
+                        executor.submit(self._download_gist, gist['id'], filename, gist_to_bit_mappings)
+                test_cnt += 1
         except:
             log.error('Fetching all gists', exc_info=1)
 
-    def _download_gist(self, gist_id, filename):
+    def _download_gist(self, gist_id, filename, gist_to_bit_mappings):
         """Fetch gist with given id."""
         time.sleep(2)
         gist_resp = github.get('%s/%s' % (self._gists_url_prefix, gist_id))
-        self._convert_gist_to_bit(gist_resp, filename)
+        self._convert_gist_to_bit(gist_resp, filename, gist_to_bit_mappings)
 
-    def _convert_gist_to_bit(self, gist_resp, filename):
+    def _convert_gist_to_bit(self, gist_resp, filename, gist_to_bit_mappings):
         if filename is None:
             log.info('default filename to: bit.md')
             filename = self._gist_bit_filenames[0]
 
         file_entry = gist_resp.get('files', {}).get(filename)
-
         log.debug('saving file: %s = %s' % (filename, gist_resp.get('description', '')))
         
         gist_id = gist_resp.get('id')
-        bit_data = dict(
+        id = gist_to_bit_mappings.get(gist_id)
+        bit = Bit.new(dict(
+            id=id,
             gist_id=gist_id,
             description=gist_resp.get('description', ''),
             content=(file_entry['content'] or self._empty_content_filler)[len(self._empty_content_filler):],
             filename=file_entry['filename'],
             created_at=gist_resp.get('created_at')
-        )
-
-        bit = Bit.save(bit_data)        
+        ))
+        bit = Bit.save(bit)        
         return bit
 
     def upload(self):

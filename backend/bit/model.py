@@ -1,3 +1,4 @@
+from backend import support
 from backend.support import googlecloud
 
 
@@ -15,10 +16,39 @@ class BitModel(googlecloud.GCModel):
         'published_at',
         'tags',
     ]
-    _exclude_from_indexes = ['content', 'description', 'tags', 'teaser']        
+    _exclude_from_indexes = ['content', 'tags']        
+
+    def _init_entity(self, entity):
+        now = support.strftime()
+        entity.update(dict(
+            gist_id=None,
+            description=None,
+            teaser=None,
+            content=None,
+            modified_at=now,
+            created_at=now,
+            published_at=None,
+            tags=None
+        ))
+        return entity
+
+    def save(self, entity):
+        entity['teaser'] = self._make_teaser(entity.get('content'))
+        return super(BitModel, self).save(entity)
+
+    def _make_teaser(self, content=''):
+        words = content.split()
+        char_count = 0
+        teaser_words = []
+        for word in words:
+            char_count += len(word)
+            if char_count > 300:
+                break
+            teaser_words.append(word)
+        return " ".join(teaser_words)
 
     def all_by_created_at(self):
-        return self.all(order=['-created_at'])
+        return self.all(projection=['id', 'teaser', 'description', 'created_at'], order=['-created_at'])
 
     
 
