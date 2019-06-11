@@ -34,7 +34,7 @@ class HomePage extends React.Component {
 
   changeRoute(id) {
     this.setLocationState(this.props, {xOffset: window.pageXOffset, yOffset: window.pageYOffset});
-    this.props.changeRoute(`/bits/${id}`);
+    this.props.history.push(`/bits/${id}`);
   }
 
   render() {
@@ -47,7 +47,7 @@ class HomePage extends React.Component {
               {bit.description || 'Untitled'}
             </h2>
             <p className="f4 f4-ns mt0 lh-copy">
-              {bit.content ? bit.content.substr(0, 300) : ''}... 
+              {bit.teaser ? bit.teaser + '...' : ''}
               &nbsp;<Link to={`/bits/${bit.id}`} className="link dim green">Read &rarr;</Link>
             </p>
           </li>

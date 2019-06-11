@@ -20,13 +20,12 @@ class FetchClient {
       headers: APP_JSON_HEADERS,
     }
   }
-    /**
+  /**
    * Check if endpoint returned an error, in which we forward to error page.
    * @param {Response} resp
    */
   checkForErrors(resp) {
     const {status} = resp;
-    console.log('checking for errors', resp)
     if (status >= 400) {
       window.location.replace(`/errors/${status}`);
     }
@@ -42,12 +41,16 @@ class FetchClient {
     return this._fetch(url, {method: 'GET', ...opts});
   }
 
-  post(url, opts = {}) {
+  create(url, opts = {}) {
     return this._fetch(url, {method: 'POST', ...opts});
   }
 
-  put(url, opts = {}) {
-    return this._fetch(url, {method: 'PUT', ...opts});
+  update(url, opts = {}) {
+    return this._fetch(url, {method: 'PATCH', ...opts});
+  }
+
+  delete(url, opts = {}) {
+    return this._fetch(url, {method: 'DELETE', ...opts});
   }
 
   async _fetch(url, opts = {}) {
@@ -55,79 +58,67 @@ class FetchClient {
         method: 'GET',
         headers: APP_JSON_HEADERS, ...opts})
       .then(this.checkForErrors)
-      .then(resp => resp.json())
+      .then(resp => {
+        if (resp.status === 200 || resp.status === 201)
+          return resp.json();
+        return resp;
+      })
       .catch(console.warn)
   }
 }
 
-
-function handleAsyncResponse(resp) {
-    const { status } = resp;
-    if (status === 200)
-      return resp.json();
-    if (status === 204)
-      return resp;
-    if (status >= 400)
-      window.location.replace(`/errors/${status}`)
-}
-
-
 class BitService {
-
   constructor() {
     this.fetchClient = new FetchClient();
   }
 
-  async reload() {
-    return await fetch('/api/settings/reload')
-      .then(handleAsyncResponse)
-  }
-
-  async settings() {
-    return await fetch('/api/settings')
-      .then(handleAsyncResponse)
-  }
-
-  async save(bit) {
-    const method = bit.id === 'new' ? 'POST' : 'PATCH';
-    return await fetch(`/api/bits/${bit.id}`, {
-          method: method,
-          headers: APP_JSON_HEADERS,
-          body: JSON.stringify({
-            description: bit.description,
-            content: bit.content
-          })
-        })
-      .then(handleAsyncResponse)
-  }
-
-  async get(id) {
-    return await fetch(`/api/bits/${id}`)
-      .then(handleAsyncResponse)
-}
-
-  // async all() {
-  //   return await fetch('/api/bits')
-  //     .then(handleAsyncResponse);
+  // async reload() {
+  //   return await fetch('/api/settings/reload')
+  //     .then(handleAsyncResponse)
   // }
+
+  // async settings() {
+  //   return await fetch('/api/settings')
+  //     .then(handleAsyncResponse)
+  // }
+
+  create(bit) {
+    return this.fetchClient.create('/api/bits', 
+      {body: this._bitToJson(bit)});
+  }
+
+  update(bit) {
+    return this.fetchClient.update(`/api/bits/${bit.id}`,
+      {body: this._bitToJson(bit)});
+  }
+
+  _bitToJson(bit) {
+    return JSON.stringify({
+      description: bit.description,
+      content: bit.content
+    });
+  }
+
+  get(id) {
+    return this.fetchClient.get(`/api/bits/${id}`)
+  }
+
   all() {
-    console.log('using new fetch client')
     return this.fetchClient.get('/api/bits');
   }
 
-  async delete(id) {
-    return await fetch(`/api/bits/${id}`, {
-      method: 'DELETE',
-      headers: APP_JSON_HEADERS
-    })
-    .then(handleAsyncResponse)
+  delete(id) {
+    return this.fetchClient.delete(`/api/bits/${id}`);
   }
 }
 
 class UserService {
-  async getCurrentUser() {
-    return await fetch('/api/user')
-      .then(handleAsyncResponse);
+  constructor() {
+    this.fetchclient = new FetchClient()
+  }
+
+  getCurrentUser() {
+    return this.fetchclient.get('/api/user');
   }
 }
 

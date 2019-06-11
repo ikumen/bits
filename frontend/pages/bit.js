@@ -13,8 +13,9 @@ import { BitService, getDateParts, MarkedWithHljs } from '../services';
 class BitPage extends React.Component {  
   constructor(props) {
     super(props)
-    this.state = {bit:{}}
+    this.state = {bit:{}, isDeleted: false}
     this.onChange = this.onChange.bind(this);
+    this.save = this.save.bind(this);
     this.onSave = this.onSave.bind(this);
     this.onSaveSuccess = this.onSaveSuccess.bind(this);
     this.onDelete = this.onDelete.bind(this);
@@ -54,9 +55,8 @@ class BitPage extends React.Component {
     this.setState({ bit })
     if (this.autoSaveId) {
       clearTimeout(this.autoSaveId);
-    } else {
-      this.setState({status: 'Changes detected ...'}); 
     }
+    this.setState({status: 'Changes detected ...'}); 
     this.autoSaveId = setTimeout(this.onSave, 10000);
   }
 
@@ -71,35 +71,47 @@ class BitPage extends React.Component {
     const {user} = this.props;
     if (user && user.authenticated) {
       this.setState({status: 'Saving changes ...'}); 
-      const { bit } = this.state;
-      BitService.save(bit)
-          .then(savedBit => this.onSaveSuccess(bit, savedBit));
+      this.save(this.state.bit, this.onSaveSuccess);
     }
   }
 
+  save(bit, callback) {
+    const successHandler = callback === undefined ?
+      () => {} :
+      (next) => callback(bit, next);
+
+    bit.id === 'new' ?
+      BitService.create(bit).then(successHandler):
+      BitService.update(bit).then(successHandler);
+  }
+
   componentWillUnmount() {
-    const { bit } = this.state;
-    if (this.props.match.params.edit === 'edit') {
-      if (bit.id !== 'new' 
-          || (bit.content || '').trim() !== '' 
-          || (bit.description || '').trim() !== '') {
-        if (this.autoSaveId) {
-          clearTimeout(this.autoSaveId);
-        }
-        BitService.save(bit);      
+    const { bit, isDeleted } = this.state;
+    if (this.autoSaveId) {
+      clearTimeout(this.autoSaveId);
+    }
+    if (this.props.match.params.edit === 'edit' && !isDeleted) {
+      /* force autosave if: hasn't been deleted, existing bit, or new bit with some edits */
+      if (bit.id !== 'new' || (
+          (bit.description || '').trim() !== '' ||
+          (bit.content || '').trim() !== '')) {
+        this.save(bit);
       }
     }
   }
 
   onDelete() {
-    const { bit } = this.state;
-    if (bit.id === 'new') { 
-      // treat like cancel
-      this.props.history.replace('/');
-    } else {
-      BitService.delete(bit.id)
-      .then(() => this.props.history.replace('/'));
-    }
+    const {bit} = this.state;
+    /* State changes are not immediate, so delete once we've
+    cleaned up state and cleared bit. */
+    this.setState({isDeleted: true}, () => {
+      if (bit.id === 'new') {
+        this.props.history.replace('/');
+      } else {
+        BitService.delete(bit.id)
+          .then(()=> this.props.history.replace('/'));
+      }
+    });
   }
 
   render() {

@@ -22,7 +22,7 @@ class Header extends React.Component {
   render() {
     const { user={} } = this.props;
     return <nav className="flex w-100 border-box pv1 ph3 ph5-m ph6-ns bg-white">
-      <h1 className="f2 f1-ns fw6 v-mid dark-gray dim w-20 pointer" onClick={()=> this.props.changeRoute('/')} title="Home">bits</h1>
+      <h1 className="f2 f1-ns fw6 v-mid w-20"><Link className="link dark-gray dim" title="Home" to="/">bits</Link></h1>
       <div className="flex justify-end items-center w-80 tr">
         {/* <i className="f3 f2-ns material-icons dim lighter-gray pointer" 
             onClick={()=> this.setState({search: true})}
@@ -64,7 +64,6 @@ class App extends React.Component {
   constructor(props) {
     super(props);
     this.state = {};
-    this.changeRoute = this.changeRoute.bind(this);
   }
 
   componentDidMount() {
@@ -72,20 +71,13 @@ class App extends React.Component {
       .then(user => this.setState({user}));
   }
 
-  changeRoute(location, replace=false) {
-    const pathname = typeof location === 'string' ? location : location.pathname;
-    if (pathname !== this.props.location.pathname) {
-      replace === true ? this.props.history.replace(location) :
-        this.props.history.push(location);
-    }
-  }
-
   render() {
     const user = this.state.user || {};
+    const bitService = this.bitService
     return <React.Fragment>
-      <Header user={user} changeRoute={this.changeRoute} />
+      <Header user={user} />
       <Switch>
-        <Route exact={true} path="/" render={(props) => <HomePage {...props} changeRoute={this.changeRoute} /> }/>
+        <Route exact={true} path="/" render={(props) => <HomePage {...props} /> }/>
         <Route path={`/bits/:id/:edit?`} render={(props) => <BitPage {...props} user={user} /> }/>
         <Route path={`/errors/:code`} component={ErrorPage} />
         <Route exact={true} path="/about" component={AboutPage} />
