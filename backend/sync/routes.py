@@ -10,3 +10,8 @@ log = logging.getLogger(__name__)
 def download():
     sync_service.download()
     return 'OK'
+
+@bp.route('/upload')
+def upload():
+    sync_service.upload()
+    return 'OK'

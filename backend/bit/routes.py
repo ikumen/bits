@@ -37,7 +37,7 @@ def update(id):
     log.info('Updating bit: %s' % id)
     data = request.get_json()
     data['id'] = id
-    bit = Bit.save(data)
+    bit = Bit.update(**data)
     return support.make_response(bit, status_code=200)
 
 # @bp.route('/bits/<id>', methods=['post', 'patch'])

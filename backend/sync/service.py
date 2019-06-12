@@ -1,5 +1,7 @@
+import re
 import time
 import logging
+import yaml
 
 from concurrent import futures
 from backend import support
@@ -9,6 +11,12 @@ from backend.bit import model as Bit
 
 
 log = logging.getLogger(__name__)
+
+_front_matter_template = """---
+title: {title}
+published_at: {published_at}
+---
+"""
 
 
 class GitHubSyncService(googlecloud.GCModel):
@@ -20,9 +28,9 @@ class GitHubSyncService(googlecloud.GCModel):
     ]
     _exclude_from_indexes = []
     _gists_url_prefix = '/gists'
-    _empty_content_filler = '---'
 
     def init_app(self, app):
+        super(GitHubSyncService, self).init_app(app)
         self._default_bit_filename = app.config.get('DEFAULT_BIT_FILENAME', 'bit.md')
         # get the supported file names to look for that may contain a bit
         self._gist_bit_filenames = app.config.get('BIT_FILE_NAMES', [self._default_bit_filename])
@@ -96,20 +104,31 @@ class GitHubSyncService(googlecloud.GCModel):
             filename = self._gist_bit_filenames[0]
 
         file_entry = gist_resp.get('files', {}).get(filename)
-        log.debug('saving file: %s = %s' % (filename, gist_resp.get('description', '')))
-        
+        meta, content = self._parse_gist_file(file_entry)
+
         gist_id = gist_resp.get('id')
         id = gist_to_bit_mappings.get(gist_id)
+
         bit = Bit.new(dict(
             id=id,
             gist_id=gist_id,
             description=gist_resp.get('description', ''),
-            content=(file_entry['content'] or self._empty_content_filler)[len(self._empty_content_filler):],
+            content=content,
+            published_at=meta.get('published_at'),
             filename=file_entry['filename'],
             created_at=gist_resp.get('created_at')
         ))
         bit = Bit.save(bit)        
         return bit
+
+    def _parse_gist_file(self, gist_file):
+        fm_pattern = r'^---\n(.*)\n---\n(.*)'
+        matches = re.search(fm_pattern, gist_file['content'], re.DOTALL)
+        meta = {}
+        if matches:
+            meta.update(yaml.safe_load(matches.groups()[0]))
+        return meta, matches.groups()[1] or ''
+        
 
     def upload(self):
         """Uploads all modified bits to their corresponding gists.
@@ -121,8 +140,10 @@ class GitHubSyncService(googlecloud.GCModel):
         modified_bits_with_keys_only = self._get_all_modified_since_last_sync()
         synced_at = support.strftime()
         executor = futures.ThreadPoolExecutor(max_workers=1)
+        
+        log.debug('Found %s bits to upload' % len(modified_bits_with_keys_only))
         for bit in modified_bits_with_keys_only:
-            executor.submit(self._upload_bit, bit.key.id_or_name)        
+            executor.submit(self._get_bit_and_upload, bit.key.id_or_name)        
         # finally update our last synced_at time
         executor.submit(self._update_synced_at, 'upload', synced_at)
 
@@ -135,7 +156,7 @@ class GitHubSyncService(googlecloud.GCModel):
         rv = self.get('upload')
         # but if we've uploaded before, then
         if rv is not None:
-            synced_at = rv[0]['synced_at']
+            synced_at = rv['synced_at']
             operator = '>='
         # query bit repository    
         return Bit.all(
@@ -144,11 +165,12 @@ class GitHubSyncService(googlecloud.GCModel):
 
     def _get_bit_and_upload(self, id):
         """Get the bit and upload."""
-        self._upload_bit(**Bit.get(id))
+        with self._client.transaction():
+            self._upload_bit(**Bit.get(id))
 
-    def _upload_bit(self, id=None, **kwargs):
+    def _upload_bit(self, **kwargs):
         """Uploads given bit attributes to a gists."""
-        log.debug('Uploading: %s' % (id))
+        log.debug('Uploading: %s' % kwargs)
         # default is to create a new gist to hold the given bit attributes
         url, method = self._gists_url_prefix, github.post
         if kwargs.get('gist_id') is not None:
@@ -157,14 +179,23 @@ class GitHubSyncService(googlecloud.GCModel):
             method = github.patch
 
         filename = kwargs.get('filename', self._default_bit_filename)
-
         # convert bit data to a structure expected by Github API
         # https://developer.github.com/v3/gists/#create-a-gist
         gist_data = {
             'description': kwargs.get('description', ''),
-            'files': { filename: { 'content': self._empty_content_filler + kwargs.get('content', '') } }
+            'files': { filename: { 
+                'content': self._make_front_matter(**kwargs) + kwargs.get('content', '') 
+            }}
         }
 
-        return method(url, data=gist_data)
+        gist = method(url, data=gist_data)
+        if kwargs.get('gist_id') is None:
+            log.debug('Initial upload, assigning gist:%s to bit:%s' % (gist['id'], kwargs.get('id')))
+            Bit.update(id=kwargs.get('id'), gist_id=gist['id'])
+        return gist
 
+    def _make_front_matter(self, **kwargs):
+        return _front_matter_template.format(
+            title=kwargs.get('description', ''),
+            published_at=kwargs.get('published_at'))
         

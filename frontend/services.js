@@ -95,7 +95,8 @@ class BitService {
   _bitToJson(bit) {
     return JSON.stringify({
       description: bit.description,
-      content: bit.content
+      content: bit.content,
+      published_at: bit.published_at
     });
   }
 
@@ -126,7 +127,7 @@ function getDateParts(isoDateString, locale='en-US') {
   const d = new Date(isoDateString);
   return {
     year: d.toLocaleString(locale, {year: 'numeric'}),
-    monthDay: d.toLocaleString(locale, {month: 'long', day: 'numeric'})
+    monthDay: d.toLocaleString(locale, {month: 'long', day: 'numeric', timeZone: 'UTC'})
   }
 }
 

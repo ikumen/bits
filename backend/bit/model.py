@@ -34,6 +34,7 @@ class BitModel(googlecloud.GCModel):
 
     def save(self, entity):
         entity['teaser'] = self._make_teaser(entity.get('content'))
+        entity['modified_at'] = support.strftime()
         return super(BitModel, self).save(entity)
 
     def _make_teaser(self, content=''):
