@@ -29,12 +29,18 @@ class BitPage extends React.Component {
   loadBit(id) {
     if (id === 'new') {
       this.setState({
-        bit: {id: 'new', description: '', content: ''}, 
+        bit: {id: 'new', description: '', content: '', published_at: ''}, 
         status: ''
       });
     } else {
-      BitService.get(id)
-        .then(bit => this.setState({bit}))
+      BitService.get(id).then(bit => this.setState({
+        bit: {
+          id: bit.id,
+          description: bit.description,
+          content: bit.content,
+          published_at: bit.published_at
+        }
+      }))
     }
   }
 
@@ -44,14 +50,15 @@ class BitPage extends React.Component {
     }
   }
 
-  onChange({description, content}) {
+  onChange({description, content, publishedAt}) {
     const { bit } = this.state;
-    if (description !== undefined) {
+    if (description !== undefined) 
       bit.description = description;
-    }
-    if (content !== undefined) {
+    if (content !== undefined) 
       bit.content = content;
-    }
+    if (publishedAt !== undefined) 
+      bit.published_at = publishedAt;
+    
     this.setState({ bit })
     if (this.autoSaveId) {
       clearTimeout(this.autoSaveId);
@@ -118,7 +125,6 @@ class BitPage extends React.Component {
     const isEdit = this.props.match.params.edit === 'edit';
     const { user={} } = this.props;
     const { bit, status } = this.state;
-    const { year, monthDay } = getDateParts(bit.created_at);
     return <Page>
       <section className="flex items-center pa0 pt3">
         {(bit && user.authenticated) && 
@@ -144,16 +150,19 @@ const Status = ({status, isEdit}) => (
 const MarkdownBtn = ({bit, isEdit}) => (
   <Link className={`f6 link pa2 dib white ${isEdit ? 'bg-light-blue' : 'bg-blue'}`} 
     to={`/bits/${bit.id}${isEdit ? '' : '/edit'}`} 
-    replace={true}>Markdown</Link>
+    replace={false}>Markdown</Link>
 );
 
 class Editor extends React.Component {
   constructor(props) {
     super(props);
+    this.state = {isValidPublishedAt: true}
     this.descriptionRef = React.createRef();
     this.editorRef = React.createRef();
+    this.publishedAtRef = React.createRef();
     this.onContentChange = this.onContentChange.bind(this);
     this.onDescriptionChange = this.onDescriptionChange.bind(this);
+    this.onPublishedAtChange = this.onPublishedAtChange.bind(this);
   }
 
   componentDidMount() {
@@ -168,6 +177,7 @@ class Editor extends React.Component {
     this.codemirror.on('change', this.onContentChange)
     this.setContent(this.props.bit);
     this.setDescription(this.props.bit);
+    this.setPublishedAt(this.props.bit)
   }
 
   setContent({content}) {
@@ -178,14 +188,18 @@ class Editor extends React.Component {
     this.descriptionRef.current.innerText = description || '';
   }
 
+  setPublishedAt({published_at}) {
+    this.publishedAtRef.current.innerText = published_at || '';
+  }
+
   componentDidUpdate() {
     const bit = this.props.bit || {};
-    if (bit.content !== this.codemirror.getValue()) {
+    if (bit.content !== this.codemirror.getValue())
       this.setContent(bit);
-    }
-    if (bit.description !== this.descriptionRef.current.innerText) {
+    if (bit.description !== this.descriptionRef.current.innerText)
       this.setDescription(bit);
-    }
+    if (bit.published_at != this.publishedAtRef.current.innerText)
+      this.setPublishedAt(bit);
   }
 
   onContentChange(editor, changeObj) {
@@ -198,28 +212,44 @@ class Editor extends React.Component {
     this.props.onChange({description: event.target.innerText});
   }
 
+  onPublishedAtChange(event) {
+    const dateString = event.target.innerText;
+    // very naive date formatting check
+    const re = /^\d{4}\-(0[1-9]|1[012])\-(0[1-9]|[12][0-9]|3[01])$/;
+    const isValid = !isNaN(Date.parse(dateString)) && re.test(dateString);
+    this.setState({'isValidPublishedAt': isValid})
+    this.props.onChange({publishedAt: dateString});
+  }
+
   render() {
+    const { isValidPublishedAt } = this.state;
     return <section className="fl cf w-100 mt0 border-box">
-      <h1 contentEditable="true" className="f3 f2-ns bg-washed-yellow pb3"
+      <h1 contentEditable="true" className="f3 f2-ns bg-washed-yellow"
           onChange={this.onDescriptionChange}
           ref={this.descriptionRef} 
           placeholder="Enter a title ..."
           onInput={this.onDescriptionChange}
       />
-      <article className="cf w-100 pt0 f4">         
-      <textarea 
-        id="content" 
-        className="CodeMirror"
-        placeholder="Enter your markdown here ..."
-        ref={this.editorRef}
-      ></textarea>
+      <div contentEditable="true" className={`f5 cf w-25 pa0 bg-washed-yellow ba ${isValidPublishedAt ? 'b--washed-yellow' : 'b--red'}`}
+        onChange={this.onPublishedAtChange}
+        ref={this.publishedAtRef}
+        placeholder="2019-01-01"
+        onInput={this.onPublishedAtChange}>
+      </div>
+      <article className="cf w-100 pt4 f4">         
+        <textarea 
+          id="content" 
+          className="CodeMirror"
+          placeholder="Enter your markdown here ..."
+          ref={this.editorRef}
+        ></textarea>
       </article>
     </section>
   }
 }
 
 const Viewer = ({ bit, user }) => {
-  const { year, monthDay } = getDateParts(bit.created_at);
+  const { year, monthDay } = getDateParts(bit.published_at);
 
   return <section className="fl cf w-100 mt0 border-box dark-gray">
     <h1 className="f3 cf fw6 f2-ns">{bit ? bit.description : ''}</h1>  

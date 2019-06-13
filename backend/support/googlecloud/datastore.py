@@ -101,6 +101,7 @@ class GCModel(metaclass=ABCMeta):
         return entity
 
     def update(self, upsert=True, **kwargs):
+        print('Updating %s with %s' % (self._kind, kwargs))
         id = kwargs.get(self._id)
         with self._client.transaction():
             entity = self.get(id)
