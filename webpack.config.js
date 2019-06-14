@@ -7,6 +7,8 @@ const htmlPlugin = new HtmlWebPackPlugin({
   filename: "./index.html"
 });
 
+const devServer = 'http://localhost:5000'
+
 module.exports = {
   entry: __dirname + '/frontend/app.js',
   output: {
@@ -50,9 +52,10 @@ module.exports = {
         ]
     },
     proxy: {
-      '/api': 'http://localhost:5000',
-      '/signin': 'http://localhost:5000',
-      '/signout': 'http://localhost:5000',
+      '/api': devServer,
+      '/signin': devServer,
+      '/signout': devServer,
+      '/sync': devServer,
     }
   }
 };
