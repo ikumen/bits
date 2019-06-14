@@ -9,15 +9,34 @@ class HomePage extends React.Component {
   constructor(props) {
     super(props);
     this.state = {}
+    this.onBitsLoaded = this.onBitsLoaded.bind(this);
     this.changeRoute = this.changeRoute.bind(this);
   }
 
   componentDidMount() {
-    BitService.all()
-      .then(bits => {
-        this.setState({ bits});
-        this.scrollToOffsetsIfNeeded(this.props);
-    });
+    this.loadBits();
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    if (this.props.location.hash !== prevProps.location.hash) {
+      this.loadBits();
+    }
+  }
+
+  loadBits() {
+    const { hash } = this.props.location;
+    if (hash === '#drafts') {
+      BitService.allDrafts().then(this.onBitsLoaded); 
+    } else if (hash === '#published') {
+      BitService.allPublished().then(this.onBitsLoaded);
+    } else {
+      BitService.all().then(this.onBitsLoaded);
+    }
+  }
+
+  onBitsLoaded(bits) {
+    this.setState({bits});
+    this.scrollToOffsetsIfNeeded(this.props);
   }
 
   scrollToOffsetsIfNeeded(props) {
@@ -40,11 +59,11 @@ class HomePage extends React.Component {
   render() {
     const { bits } = this.state;
     return <Page>
-      {/* <div className="fr cf flex">
-        <a href="" className="mh2 link">all</a>
-        <a href="" className="mh2 link">published</a>
-        <a href="" className="mh2 link">drafts</a>
-      </div> */}
+      <div className="fr cf flex">
+        <Link className="mh2 link" to="">all</Link>
+        <Link className="mh2 link" to="#drafts">drafts</Link>
+        <Link className="mh2 link" to="#published">published</Link>
+      </div>
       <ul className="list w-100 pv3 ph0 dark-gray border-box">
         { bits && bits.map((bit) => {
           return <li key={bit.id} className="mb5">
