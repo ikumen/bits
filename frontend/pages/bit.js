@@ -249,7 +249,7 @@ class Editor extends React.Component {
 }
 
 const Viewer = ({ bit, user }) => {
-  const { year, monthDay } = getDateParts(bit.published_at);
+  const { year, monthDay } = bit.published_at ? getDateParts(bit.published_at) : '';
 
   return <section className="fl cf w-100 mt0 border-box dark-gray">
     <h1 className="f3 cf fw6 f2-ns">{bit ? bit.description : ''}</h1>  

@@ -67,20 +67,11 @@ class FetchClient {
   }
 }
 
+
 class BitService {
   constructor() {
     this.fetchClient = new FetchClient();
   }
-
-  // async reload() {
-  //   return await fetch('/api/settings/reload')
-  //     .then(handleAsyncResponse)
-  // }
-
-  // async settings() {
-  //   return await fetch('/api/settings')
-  //     .then(handleAsyncResponse)
-  // }
 
   create(bit) {
     return this.fetchClient.create('/api/bits', 
@@ -116,6 +107,14 @@ class BitService {
 class UserService {
   constructor() {
     this.fetchclient = new FetchClient()
+  }
+
+  stats() {
+    return this.fetchclient.get('/api/user/stats');
+  }
+
+  reload() {
+    return this.fetchclient.get('/sync/download')
   }
 
   getCurrentUser() {
