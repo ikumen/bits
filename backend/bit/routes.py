@@ -12,10 +12,12 @@ log = logging.getLogger(__name__)
 
 @bp.route('/bits', methods=['get'])
 def all():
-    bits = Bit.all_partial_public() \
-        if session.get(support.AUTHORIZED_SESSION_KEY) is None \
-        else Bit.all_partial()
-    return jsonify(bits)
+    published = request.args.get('published')
+    if session.get(support.AUTHORIZED_SESSION_KEY) is None or published is '1':
+        return jsonify(Bit.all_partial_published())
+    if published is '0':
+        return jsonify(Bit.all_partial_drafts())
+    return jsonify(Bit.all_partial())
  
 @bp.route('/bits/<id>', methods=['get'])
 def get(id):

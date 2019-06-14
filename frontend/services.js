@@ -84,6 +84,8 @@ class BitService {
   }
 
   _bitToJson(bit) {
+    if (bit.published_at === '')
+      bit.published_at = null;
     return JSON.stringify({
       description: bit.description,
       content: bit.content,
@@ -95,8 +97,20 @@ class BitService {
     return this.fetchClient.get(`/api/bits/${id}`)
   }
 
-  all() {
-    return this.fetchClient.get('/api/bits');
+  all(filters={}) {
+    const {published} = filters;
+    let url = '/api/bits';
+    if (typeof published !== 'undefined') 
+      url += `?published=${published ? 1 : 0}`;
+    return this.fetchClient.get(url);
+  }
+
+  allPublished() {
+    return this.all({published: true})
+  }
+
+  allDrafts() {
+    return this.all({published: false})
   }
 
   delete(id) {

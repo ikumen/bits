@@ -50,16 +50,23 @@ class BitModel(googlecloud.GCModel):
             teaser_words.append(word)
         return " ".join(teaser_words)
 
-    def all_partial_public(self):
-        return super(BitModel, self).all(
-            filters=[('published_at', '>', None)], 
-            projection=self._partial_bit_projection, 
-            order=['-published_at'])
-
     def all_partial(self):
         return super(BitModel, self).all(
             projection=self._partial_bit_projection, 
             order=['-published_at'])
+
+    def all_partial_drafts(self):
+        return super(BitModel, self).all(
+            filters=[('published_at', '<=', '')],
+            projection=self._partial_bit_projection,
+            order=['published_at', '-modified_at'])
+
+    def all_partial_published(self):
+        return super(BitModel, self).all(
+            filters=[('published_at', '>', '')],
+            projection=self._partial_bit_projection,
+            order=['-published_at']
+        )
 
     
 
