@@ -12,7 +12,9 @@ log = logging.getLogger(__name__)
 
 @bp.route('/bits', methods=['get'])
 def all():
-    bits = Bit.all_by_created_at()
+    bits = Bit.all_partial_public() \
+        if session.get(support.AUTHORIZED_SESSION_KEY) is None \
+        else Bit.all_partial()
     return jsonify(bits)
  
 @bp.route('/bits/<id>', methods=['get'])
@@ -39,21 +41,6 @@ def update(id):
     data['id'] = id
     bit = Bit.update(**data)
     return support.make_response(bit, status_code=200)
-
-# @bp.route('/bits/<id>', methods=['post', 'patch'])
-# @security.authorized
-# def save(id=None):
-#     bit_data = request.get_json()
-#     status_code = 201
-#     if id and id != 'new':
-#         # We're updating an existing bit
-#         status_code = 200
-#         bit_data.update({'id': id})
-
-#     log.debug('About to save: %s' % (bit_data))
-#     bit = Bit.save(bit_data)   
-#     return support.make_response(bit, status_code=status_code)
-
 
 @bp.route('/bits/<id>', methods=['delete'])
 @security.authorized

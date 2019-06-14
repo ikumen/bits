@@ -22,7 +22,9 @@ def authorized(f):
 
 # export it
 authorized_handler = github.authorized_handler
-authorize = github.authorize
+
+def authorize():
+    return github.authorize(scope='read:user,gist')
 
 def get_user(access_token):
     return github.get('/user', access_token=access_token)
