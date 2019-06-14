@@ -18,7 +18,6 @@ published_at: {published_at}
 ---
 """
 
-
 class GitHubSyncService(googlecloud.GCModel):
     _kind = 'Sync'
     _id = 'id'
@@ -81,20 +80,17 @@ class GitHubSyncService(googlecloud.GCModel):
             log.info('%s gists to load' % (len(gists)))
             executor = futures.ThreadPoolExecutor(max_workers=1)
 
-            test_cnt = 0
-
             for gist in gists:
-                if test_cnt < 10:
-                    filename = self._get_bit_filename(gist)
-                    if filename is not None:
-                        executor.submit(self._download_gist, gist['id'], filename, gist_to_bit_mappings)
-                test_cnt += 1
+                filename = self._get_bit_filename(gist)
+                if filename is not None:
+                    executor.submit(self._download_gist, gist['id'], filename, gist_to_bit_mappings)
         except:
             log.error('Fetching all gists', exc_info=1)
 
     def _download_gist(self, gist_id, filename, gist_to_bit_mappings):
         """Fetch gist with given id."""
         time.sleep(2)
+        log.debug('Downloading gist: %s' % gist_id)
         gist_resp = github.get('%s/%s' % (self._gists_url_prefix, gist_id))
         self._convert_gist_to_bit(gist_resp, filename, gist_to_bit_mappings)
 
@@ -127,6 +123,8 @@ class GitHubSyncService(googlecloud.GCModel):
         meta = {}
         if matches:
             meta.update(yaml.safe_load(matches.groups()[0]))
+        else:
+            return meta, gist_file['content']
         return meta, matches.groups()[1] or ''
         
 
@@ -170,7 +168,7 @@ class GitHubSyncService(googlecloud.GCModel):
 
     def _upload_bit(self, **kwargs):
         """Uploads given bit attributes to a gists."""
-        log.debug('Uploading: %s' % kwargs)
+        # log.debug('Uploading: %s' % kwargs)
         # default is to create a new gist to hold the given bit attributes
         url, method = self._gists_url_prefix, github.post
         if kwargs.get('gist_id') is not None:

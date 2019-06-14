@@ -1,4 +1,4 @@
 cron:
-- description: "sync local changes with Github"
-  url: /tasks/upload
+- description: "Sync local changes with Github"
+  url: /sync/upload
   schedule: every 10 minutes

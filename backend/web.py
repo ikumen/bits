@@ -15,17 +15,21 @@ bp = Blueprint('webapp', __name__)
 
 
 @bp.route('/bits/<id>')
-@bp.route('/bits/<id>/edit')
 @bp.route('/bits')
 @bp.route('/about')
 @bp.route('/errors/<id>')
 @bp.route('/errors')
-@bp.route('/settings')
 @bp.route('/')
 def frontend(id=None):
     """Routes handled by the frontend SPA."""
     return render_template('index.html')
 
+@bp.route('/bits/<id>/edit')
+@bp.route('/settings')
+def secured_frontent(id=None):
+    if session.get(support.AUTHORIZED_SESSION_KEY) is None:
+        return redirect('/errors/401')
+    return render_template('index.html')
 
 @bp.route('/signin')
 def signin():
@@ -34,14 +38,12 @@ def signin():
     """
     if session.get(support.AUTHORIZED_SESSION_KEY):
         return redirect('/')
-    return security.authorize(scope='read:user,gist')
-
+    return security.authorize()
 
 @bp.route('/signout')
 def signout():
     session.clear()
     return redirect('/')
-
 
 @bp.route('/signin/complete')
 @security.authorized_handler

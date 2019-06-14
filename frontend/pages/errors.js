@@ -8,8 +8,9 @@ const ErrorPage = (props) => {
   return <Page>
     {(() => {
       switch(code) {
-        case '404': return <h2>Doh, we can't seem to find what you're looking for!</h2>;
+        case '401':
         case '403': return <h2>Uh-oh, you're not authorized to do that. Try <Link to="/signin" className="link dim">signing in</Link> first.</h2>;
+        case '404': return <h2>Doh, we can't seem to find what you're looking for!</h2>;
         default: return <h2>Oh noes, this doesn't look good! Looks like we're having 
           some technical issues, please try again later</h2>;
       }

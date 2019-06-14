@@ -40,6 +40,11 @@ class HomePage extends React.Component {
   render() {
     const { bits } = this.state;
     return <Page>
+      {/* <div className="fr cf flex">
+        <a href="" className="mh2 link">all</a>
+        <a href="" className="mh2 link">published</a>
+        <a href="" className="mh2 link">drafts</a>
+      </div> */}
       <ul className="list w-100 pv3 ph0 dark-gray border-box">
         { bits && bits.map((bit) => {
           return <li key={bit.id} className="mb5">
@@ -48,7 +53,7 @@ class HomePage extends React.Component {
             </h2>
             <p className="f4 f4-ns mt0 lh-copy">
               {bit.teaser ? bit.teaser + '...' : ''}
-              &nbsp;<Link to={`/bits/${bit.id}`} className="link dim green">Read &rarr;</Link>
+              &nbsp; <Link to={`/bits/${bit.id}`} className="link dim green">Read &rarr;</Link>
             </p>
           </li>
         })}

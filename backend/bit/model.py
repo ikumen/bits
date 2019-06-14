@@ -16,7 +16,9 @@ class BitModel(googlecloud.GCModel):
         'published_at',
         'tags',
     ]
-    _exclude_from_indexes = ['content', 'tags']        
+    _exclude_from_indexes = ['content', 'tags']  
+
+    _partial_bit_projection = ['id', 'teaser', 'description', 'created_at', 'published_at'] 
 
     def _init_entity(self, entity):
         now = support.strftime()
@@ -43,13 +45,21 @@ class BitModel(googlecloud.GCModel):
         teaser_words = []
         for word in words:
             char_count += len(word)
-            if char_count > 300:
+            if char_count > 155:
                 break
             teaser_words.append(word)
         return " ".join(teaser_words)
 
-    def all_by_created_at(self):
-        return self.all(projection=['id', 'teaser', 'description', 'created_at'], order=['-created_at'])
+    def all_partial_public(self):
+        return super(BitModel, self).all(
+            filters=[('published_at', '>', None)], 
+            projection=self._partial_bit_projection, 
+            order=['-published_at'])
+
+    def all_partial(self):
+        return super(BitModel, self).all(
+            projection=self._partial_bit_projection, 
+            order=['-published_at'])
 
     
 

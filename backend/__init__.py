@@ -8,8 +8,11 @@ import datetime
 from flask import Flask, Blueprint, current_app
 from werkzeug.exceptions import HTTPException
 
-from .support import github, security
-from . import user, bit, support, sync
+from backend.support import github, security
+from backend.user import model as User
+from backend.bit import model as Bit
+from backend.sync import sync_service
+from backend import support
 
 
 # setup basic logging
@@ -38,10 +41,10 @@ def _load_config(app):
 
 
 def _init_services(app):
-    github.init_app(app)
-    user.model.init_app(app)
-    bit.model.init_app(app)
-    sync.sync_service.init_app(app)
+    User.init_app(app)
+    github.init_app(app, lambda: User.get(app.config.get('GITHUB_USER_ID'))['access_token'])
+    Bit.init_app(app)
+    sync_service.init_app(app)
        
 
 def create_app(override_settings=None):
