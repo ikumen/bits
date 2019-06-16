@@ -100,7 +100,7 @@ class GitHubSyncService(googlecloud.GCModel):
             filename = self._gist_bit_filenames[0]
 
         file_entry = gist_resp.get('files', {}).get(filename)
-        meta, content = self._parse_gist_file(file_entry)
+        title, published_at, content = self._parse_gist_file(file_entry)
 
         gist_id = gist_resp.get('id')
         id = gist_to_bit_mappings.get(gist_id)
@@ -108,24 +108,25 @@ class GitHubSyncService(googlecloud.GCModel):
         bit = Bit.new(dict(
             id=id,
             gist_id=gist_id,
-            description=gist_resp.get('description', ''),
+            description=gist_resp.get('description') or '', # same as title
             content=content,
-            published_at=meta.get('published_at'),
+            published_at=published_at or None,
             filename=file_entry['filename'],
             created_at=gist_resp.get('created_at')
         ))
+
         bit = Bit.save(bit)        
         return bit
 
     def _parse_gist_file(self, gist_file):
-        fm_pattern = r'^---\n(.*)\n---\n(.*)'
+        fm_pattern = r'^---\n(title\:\s*(?P<title>.*))\n(published_at\:\s*(?P<published_at>.*))\n---\n(?P<content>.*)'
         matches = re.search(fm_pattern, gist_file['content'], re.DOTALL)
-        meta = {}
+        title, published_at, content = '', None, gist_file['content']
         if matches:
-            meta.update(yaml.safe_load(matches.groups()[0]))
-        else:
-            return meta, gist_file['content']
-        return meta, matches.groups()[1] or ''
+            title = matches.group('title')
+            published_at = matches.group('published_at')
+            content = matches.group('content')
+        return title, published_at, content
         
 
     def upload(self):
@@ -136,14 +137,16 @@ class GitHubSyncService(googlecloud.GCModel):
             - for each bit, upload
         """
         modified_bits_with_keys_only = self._get_all_modified_since_last_sync()
-        synced_at = support.strftime()
         executor = futures.ThreadPoolExecutor(max_workers=1)
         
         log.debug('Found %s bits to upload' % len(modified_bits_with_keys_only))
         for bit in modified_bits_with_keys_only:
             executor.submit(self._get_bit_and_upload, bit.key.id_or_name)        
+
         # finally update our last synced_at time
+        synced_at = support.strftime()
         executor.submit(self._update_synced_at, 'upload', synced_at)
+        return synced_at
 
     def _get_all_modified_since_last_sync(self):
         """Find all bits that have been modified since our last upload.
@@ -155,10 +158,10 @@ class GitHubSyncService(googlecloud.GCModel):
         # but if we've uploaded before, then
         if rv is not None:
             synced_at = rv['synced_at']
-            operator = '>='
+            operator = '>'
         # query bit repository    
         return Bit.all(
-            filters=[('modified_at', operator, synced_at)], 
+            filters=[('updated_at', operator, synced_at)], 
             keys_only=True)
 
     def _get_bit_and_upload(self, id):
@@ -195,5 +198,6 @@ class GitHubSyncService(googlecloud.GCModel):
     def _make_front_matter(self, **kwargs):
         return _front_matter_template.format(
             title=kwargs.get('description', ''),
-            published_at=kwargs.get('published_at'))
+            published_at=kwargs.get('published_at') or '' # avoid 'None' string
+        )
         

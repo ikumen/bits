@@ -27,5 +27,5 @@ def download():
 @bp.route('/upload')
 #@app_engine_request
 def upload():
-    sync_service.upload()
-    return support.make_response(payload=dict(msg='OK'))
+    synced_at = sync_service.upload()
+    return support.make_response(payload=dict(id='upload', synced_at=synced_at))

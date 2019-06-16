@@ -11,7 +11,7 @@ class BitModel(googlecloud.GCModel):
         'description',
         'teaser', # snippet of content
         'content',
-        'modified_at',
+        'updated_at',
         'created_at',
         'published_at',
         'tags',
@@ -27,16 +27,20 @@ class BitModel(googlecloud.GCModel):
             description=None,
             teaser=None,
             content=None,
-            modified_at=now,
+            updated_at=None,
             created_at=now,
             published_at=None,
             tags=None
         ))
         return entity
 
+    def update(self, upsert=True, **kwargs):
+        kwargs['updated_at'] = support.strftime()
+        return super(BitModel, self).update(**kwargs)
+
     def save(self, entity):
         entity['teaser'] = self._make_teaser(entity.get('content'))
-        entity['modified_at'] = support.strftime()
+        entity['published_at'] = entity.get('published_at') or None
         return super(BitModel, self).save(entity)
 
     def _make_teaser(self, content=''):
@@ -59,7 +63,7 @@ class BitModel(googlecloud.GCModel):
         return super(BitModel, self).all(
             filters=[('published_at', '<=', '')],
             projection=self._partial_bit_projection,
-            order=['published_at', '-modified_at'])
+            order=['published_at', '-updated_at'])
 
     def all_partial_published(self):
         return super(BitModel, self).all(
