@@ -77,7 +77,7 @@ class App extends React.Component {
     return <React.Fragment>
       <Header user={user} />
       <Switch>
-        <Route exact={true} path="/" render={(props) => <HomePage {...props} /> }/>
+        <Route exact={true} path="/" render={(props) => <HomePage {...props} user={user} /> }/>
         <Route path={`/bits/:id/:edit?`} render={(props) => <BitPage {...props} user={user} /> }/>
         <Route path={`/errors/:code`} component={ErrorPage} />
         <Route exact={true} path="/about" component={AboutPage} />

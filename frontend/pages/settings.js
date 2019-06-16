@@ -8,6 +8,7 @@ class SettingsPage extends React.Component {
     super(props);
     this.state = {bits: {total: 0, published: 0}};
     this.reload = this.reload.bind(this);
+    this.upload = this.upload.bind(this);
   }
 
   componentDidMount() {
@@ -27,6 +28,12 @@ class SettingsPage extends React.Component {
     UserService.reload()
       .then(s => this.setState({[s.id+'ed_at']: s.synced_at}))
   }
+
+  upload() {
+    UserService.upload()
+      .then(s => this.setState({[s.id+'ed_at']: s.synced_at}))
+  }
+  
 
   render() {
     const {bits, downloaded_at, uploaded_at} = this.state;
@@ -56,7 +63,7 @@ class SettingsPage extends React.Component {
             <div className="f6 gray i">Last uploaded at: {uploaded_at || ''}</div>
           </div>
           <div className="v-top">
-            <button onClick={this.reload} className="f6 ph3 pv2 bw0 dib white bg-blue">Upload Bits</button>
+            <button onClick={this.upload} className="f6 ph3 pv2 bw0 dib white bg-blue">Uploads Bits</button>
           </div>
         </li>
       </ul>

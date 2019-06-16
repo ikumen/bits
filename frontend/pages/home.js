@@ -58,12 +58,15 @@ class HomePage extends React.Component {
 
   render() {
     const { bits } = this.state;
+    const { user={} } = this.props;
     return <Page>
+      {user.authenticated &&
       <div className="fr cf flex">
         <Link className="mh2 link" to="">all</Link>
         <Link className="mh2 link" to="#drafts">drafts</Link>
         <Link className="mh2 link" to="#published">published</Link>
-      </div>
+      </div>}
+      
       <ul className="list w-100 pv3 ph0 dark-gray border-box">
         { bits && bits.map((bit) => {
           return <li key={bit.id} className="mb5">
