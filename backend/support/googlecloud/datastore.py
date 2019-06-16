@@ -101,7 +101,7 @@ class GCModel(metaclass=ABCMeta):
         return entity
 
     def update(self, upsert=True, **kwargs):
-        print('Updating %s with %s' % (self._kind, kwargs))
+        log.info('Updating %s with %s' % (self._kind, kwargs))
         id = kwargs.get(self._id)
         with self._client.transaction():
             entity = self.get(id)
@@ -120,7 +120,7 @@ class GCModel(metaclass=ABCMeta):
                 raise TypeError('Only entity/dicts are supported! %s' % (type(entity)))
             entity = self.new(entity)
         self._client.put(entity)
-        log.debug('Entity saved: %s' % (entity))
+        # log.debug('Entity saved: %s' % (entity))
         return entity
 
     def _create_query(self):

@@ -84,12 +84,13 @@ class BitService {
   }
 
   _bitToJson(bit) {
-    if (bit.published_at === '')
-      bit.published_at = null;
+    let published_at = (bit.published_at || '').trim()
+    if (published_at === '')
+      published_at = null;
     return JSON.stringify({
       description: bit.description,
       content: bit.content,
-      published_at: bit.published_at
+      published_at: published_at
     });
   }
 
@@ -128,7 +129,11 @@ class UserService {
   }
 
   reload() {
-    return this.fetchclient.get('/sync/download')
+    return this.fetchclient.get('/sync/download');
+  }
+
+  upload() {
+    return this.fetchclient.get('/sync/upload');
   }
 
   getCurrentUser() {
