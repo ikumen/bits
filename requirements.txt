@@ -1,7 +1,0 @@
-Flask
-GitHub-Flask
-google-cloud-datastore
-PyYAML
-pylint==2.3.1
-pytest
-hashids
