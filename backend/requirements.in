@@ -1,0 +1,4 @@
+google-cloud-firestore
+python-dotenv
+starlette
+uvicorn
