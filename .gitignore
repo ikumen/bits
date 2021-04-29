@@ -69,11 +69,13 @@ target/
 **/node_modules
 package-lock.json
 
+# local settings
+.env
 .data
 local.env
 production.env
-tmp/
-old/
 .python-version
+
+# frontend generated
 dist/
 public/
