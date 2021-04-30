@@ -1,4 +1,17 @@
-<script lang="ts">
+<script>
+  import { Router, Route } from "svelte-routing";
+  import User from "./pages/User.svelte";
+  import Home from "./pages/Home.svelte";
+  import Bit from "./pages/Bit.svelte";
+</script>
+
+<Router>
+  <Route path="/@:user" component={User} />
+  <Route path="/bits/:id" component={Bit} />
+  <Route path="*" component={Home} />
+</Router>
+
+<!-- <script lang="ts">
 import { onMount } from "svelte";
 
 	import Editor from "./editor.svelte";
@@ -45,12 +58,14 @@ import { onMount } from "svelte";
   {#await newBit()}
     <div>... loading bits</div>
   {:then bit} 
-    <div>{bit.id}</div>
+    <div>{bit.user}</div>
   {/await}
 
 	<Editor bind:editor {options} />	
   <Viewer {content} />
 </main>
 
+
+
 <style>
-</style>
+</style> -->
