@@ -1,14 +1,23 @@
 <script>
   import { Router, Route } from "svelte-routing";
-  import User from "./pages/User.svelte";
-  import Home from "./pages/Home.svelte";
-  import Bit from "./pages/Bit.svelte";
+  import UserPage from "./pages/UserPage.svelte";
+  import HomePage from "./pages/HomePage.svelte";
+  import BitPage from "./pages/BitPage.svelte";
+  import BitEditPage from "./pages/BitEditPage.svelte";
 </script>
 
 <Router>
-  <Route path="/@:user" component={User} />
-  <Route path="/bits/:id" component={Bit} />
-  <Route path="*" component={Home} />
+  <Route path="/@:user" component={UserPage} />
+  <Route path="/bits/new">
+    <BitEditPage id="new" />
+  </Route>
+  <Route path="/bits/:id/edit" let:params>
+    <BitEditPage id={params.id} />
+  </Route>
+  <Route path="/bits/:id" let:params>
+    <BitPage id={params.id} />
+  </Route>
+  <Route path="*" component={HomePage} />
 </Router>
 
 <!-- <script lang="ts">

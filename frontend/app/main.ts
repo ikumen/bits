@@ -6,4 +6,6 @@ const app = new App({
 	}
 });
 
+function test(id: string) {}
+
 export default app;
